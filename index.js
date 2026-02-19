@@ -8,6 +8,7 @@ configDotenv();
 await mongoconnect();
 
 const bot = createbot(process.env.TOKEN);
+
 bot.on("message", message(bot));
 
 console.log("Server running.")

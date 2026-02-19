@@ -6,11 +6,45 @@ const model = "moonshotai/kimi-k2-instruct-0905"
 const imagemodel = "meta-llama/llama-4-maverick-17b-128e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
 
+//Styling
+function escapeMarkdownSafe(text) {
+  const parts = text.split(/```/);
+
+  return parts
+    .map((part, i) => {
+      if (i % 2 === 0) {
+        return part.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
+      } else {
+        return "```" + part + "```";
+      }
+    })
+    .join("");
+}
+
+function detectFormat(text) {
+  if (/```[\s\S]*```/.test(text)) return "MarkdownV2";
+  if (/<\/?[a-z]+>/.test(text)) return "HTML";         
+  return "plain";                                     
+}
+
+async function sendBotMessage(bot, chatid, text) {
+  const format = detectFormat(text);
+
+  if (format === "plain") {
+    await bot.sendMessage(chatid, text);
+  } else if (format === "MarkdownV2") {
+    await bot.sendMessage(chatid, escapeMarkdownSafe(text), { parse_mode: "MarkdownV2" });
+  } else if (format === "HTML") {
+    await bot.sendMessage(chatid, text, { parse_mode: "HTML" });
+  }
+}
+
+
+
 export const message = (bot) => async (msg) => {
     const chatid = msg.chat.id;
     console.log(msg);
 
-    
     //Message route
     if (msg.text) {
         const message = `text : ${msg.text}`;
@@ -38,7 +72,7 @@ export const message = (bot) => async (msg) => {
                     role: "system",
                     content: systemprompt
                 },
-                ...historymessage.messages.map((element) => (
+                ...historymessage.messages.slice(-6).map((element) => (
                     {
                         role: element.role,
                         content: element.content
@@ -61,7 +95,7 @@ export const message = (bot) => async (msg) => {
             upsert: true
         });
 
-        bot.sendMessage(chatid, aimessage);
+      await sendBotMessage(bot, chatid, aimessage);
     }
     //Photo route
     else if (msg.photo) {
@@ -123,7 +157,7 @@ export const message = (bot) => async (msg) => {
                     role: "system",
                     content: systemprompt
                 },
-                ...historymessage.messages.map((element) => (
+                ...historymessage.messages.slice(-6).map((element) => (
                     {
                         role: element.role,
                         content: element.content
@@ -147,7 +181,7 @@ export const message = (bot) => async (msg) => {
             upsert: true
         });
 
-        bot.sendMessage(chatid, aimessage2);
+         await sendBotMessage(bot, chatid, aimessage2);
     }
     //Voiceroute
     else if (msg.voice) {
@@ -188,7 +222,7 @@ export const message = (bot) => async (msg) => {
                     role: "system",
                     content: systemprompt
                 },
-                ...historymessage.messages.map((element) => (
+                ...historymessage.messages.slice(-6).map((element) => (
                     {
                         role: element.role,
                         content: element.content
@@ -211,6 +245,6 @@ export const message = (bot) => async (msg) => {
         }, {
             upsert: true
         });
-        bot.sendMessage(chatid, aimessage);
+        await sendBotMessage(bot, chatid, aimessage);
     }
 }
