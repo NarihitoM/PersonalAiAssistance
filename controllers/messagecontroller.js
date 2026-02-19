@@ -4,10 +4,12 @@ import userquery from "../model/userquery.js";
 
 const model = "moonshotai/kimi-k2-instruct-0905"
 const imagemodel = "meta-llama/llama-4-maverick-17b-128e-instruct"
-
+const transcriptmodel = "whisper-large-v3-turbo"
 
 export const message = (bot) => async (msg) => {
     const chatid = msg.chat.id;
+    console.log(msg);
+
     
     //Message route
     if (msg.text) {
@@ -67,8 +69,8 @@ export const message = (bot) => async (msg) => {
         const filelink = await bot.getFileLink(fileid);
         const captionmsg = msg.caption ? `Caption : ${msg.caption}` : "";
 
-
         bot.sendChatAction(chatid, "upload_photo")
+
         const response1 = await groq.chat.completions.create({
             model: imagemodel,
             messages: [
@@ -137,7 +139,7 @@ export const message = (bot) => async (msg) => {
         }, {
             $push: {
                 messages: {
-                    role: "user",
+                    role: "assistant",
                     content: aimessage2
                 }
             }
@@ -146,5 +148,69 @@ export const message = (bot) => async (msg) => {
         });
 
         bot.sendMessage(chatid, aimessage2);
+    }
+    //Voiceroute
+    else if (msg.voice) {
+        const fileid = msg.voice.file_id;
+        const filelink = await bot.getFileLink(fileid);
+
+        bot.sendChatAction(chatid, 'upload_audio')
+
+        const transcription = await groq.audio.transcriptions.create({
+            model: transcriptmodel,
+            prompt: "Please reply only in english. with correct grammar and vocabulary.",
+            language: "en",
+            url: filelink
+        })
+
+        const transcripttext = `Voice : ${transcription.text}`;
+
+        bot.sendChatAction(chatid, "typing");
+        await userquery.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $push: {
+                messages: {
+                    role: "user",
+                    content: transcripttext
+                }
+            }
+        }, {
+            upsert: true
+        });
+
+        const historymessage = await userquery.findOne({ userid: chatid });
+
+        const response = await groq.chat.completions.create({
+            model: model,
+            messages: [
+                {
+                    role: "system",
+                    content: systemprompt
+                },
+                ...historymessage.messages.map((element) => (
+                    {
+                        role: element.role,
+                        content: element.content
+                    }
+                ))
+            ]
+        });
+
+        const aimessage = response.choices[0].message.content;
+
+        await userquery.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $push: {
+                messages: {
+                    role: "assistant",
+                    content: aimessage
+                }
+            }
+        }, {
+            upsert: true
+        });
+        bot.sendMessage(chatid, aimessage);
     }
 }
