@@ -8,7 +8,7 @@ const imagemodel = "meta-llama/llama-4-maverick-17b-128e-instruct"
 export const message = (bot) => async (msg) => {
     const chatid = msg.chat.id;
     console.log(msg.text);
-    bot.sendMessage(chatid,"Hello");
+    await bot.sendMessage(chatid,"Hello");
     /*Message route
     if (msg.text) {
         const message = `text : ${msg.text}`;
