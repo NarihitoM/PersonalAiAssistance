@@ -1,6 +1,9 @@
 import { createbot } from "../config/botservice.js";
+import { message } from "../controllers/messagecontroller.js";
+
 
 const bot = createbot(process.env.TOKEN);
+bot.on("message", message(bot));
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
