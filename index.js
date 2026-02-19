@@ -1,5 +1,5 @@
-import { message } from "../controllers/messagecontroller.js";
-import { createbot } from "../config/botservice.js";
+import { message } from "./controllers/messagecontroller.js";
+import { createbot } from "./config/botservice.js";
 import { configDotenv } from "dotenv";
 
 configDotenv();
