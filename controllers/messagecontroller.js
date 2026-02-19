@@ -7,9 +7,8 @@ const imagemodel = "meta-llama/llama-4-maverick-17b-128e-instruct"
 
 export const message = (bot) => async (msg) => {
     const chatid = msg.chat.id;
-    console.log(msg.text);
-    await bot.sendMessage(chatid,"Hello");
-    /*Message route
+
+    //Message route
     if (msg.text) {
         const message = `text : ${msg.text}`;
         bot.sendChatAction(chatid, "typing");
@@ -82,6 +81,5 @@ export const message = (bot) => async (msg) => {
         const aimessage2 = response2.choices[0].message.content;
 
         bot.sendMessage(chatid,aimessage2);
-    }*/
-
+    }
 }
