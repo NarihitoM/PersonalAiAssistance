@@ -1,5 +1,6 @@
 import { groq } from "../config/aiservice.js";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
+import userquery from "../model/userquery.js";
 
 const model = "moonshotai/kimi-k2-instruct-0905"
 const imagemodel = "meta-llama/llama-4-maverick-17b-128e-instruct"
@@ -7,10 +8,26 @@ const imagemodel = "meta-llama/llama-4-maverick-17b-128e-instruct"
 
 export const message = (bot) => async (msg) => {
     const chatid = msg.chat.id;
-
+    
     //Message route
     if (msg.text) {
         const message = `text : ${msg.text}`;
+
+        await userquery.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $push: {
+                messages: {
+                    role: "user",
+                    content: message
+                }
+            }
+        }, {
+            upsert: true
+        });
+
+        const historymessage = await userquery.findOne({ userid: chatid });
+
         bot.sendChatAction(chatid, "typing");
         const response = await groq.chat.completions.create({
             model: model,
@@ -19,13 +36,29 @@ export const message = (bot) => async (msg) => {
                     role: "system",
                     content: systemprompt
                 },
-                {
-                    role: "user",
-                    content: message
-                }
+                ...historymessage.messages.map((element) => (
+                    {
+                        role: element.role,
+                        content: element.content
+                    }
+                ))
             ]
         });
         const aimessage = response.choices[0].message.content;
+
+        await userquery.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $push: {
+                messages: {
+                    role: "assistant",
+                    content: aimessage
+                }
+            }
+        }, {
+            upsert: true
+        });
+
         bot.sendMessage(chatid, aimessage);
     }
     //Photo route
@@ -33,6 +66,7 @@ export const message = (bot) => async (msg) => {
         const fileid = msg.photo[msg.photo.length - 1].file_id;
         const filelink = await bot.getFileLink(fileid);
         const captionmsg = msg.caption ? `Caption : ${msg.caption}` : "";
+
 
         bot.sendChatAction(chatid, "upload_photo")
         const response1 = await groq.chat.completions.create({
@@ -64,6 +98,22 @@ export const message = (bot) => async (msg) => {
 
         bot.sendChatAction(chatid, "typing");
 
+
+        await userquery.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $push: {
+                messages: {
+                    role: "user",
+                    content: `${aimessage1},${captionmsg}`
+                }
+            }
+        }, {
+            upsert: true
+        });
+
+        const historymessage = await userquery.findOne({ userid: chatid });
+
         const response2 = await groq.chat.completions.create({
             model: model,
             messages: [
@@ -71,15 +121,30 @@ export const message = (bot) => async (msg) => {
                     role: "system",
                     content: systemprompt
                 },
-                {
-                    role: "user",
-                    content: `${aimessage1},${captionmsg}`
-                }
+                ...historymessage.messages.map((element) => (
+                    {
+                        role: element.role,
+                        content: element.content
+                    }
+                ))
             ]
         });
 
         const aimessage2 = response2.choices[0].message.content;
 
-        bot.sendMessage(chatid,aimessage2);
+        await userquery.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $push: {
+                messages: {
+                    role: "user",
+                    content: aimessage2
+                }
+            }
+        }, {
+            upsert: true
+        });
+
+        bot.sendMessage(chatid, aimessage2);
     }
 }
