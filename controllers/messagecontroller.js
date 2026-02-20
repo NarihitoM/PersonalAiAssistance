@@ -10,7 +10,6 @@ import fs from "fs";
 import supabase from "../config/supabaseservice.js";
 
 
-
 const model = "moonshotai/kimi-k2-instruct-0905"
 const imagemodel = "meta-llama/llama-4-maverick-17b-128e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
@@ -389,7 +388,6 @@ export const message = (bot) => async (msg) => {
         const finalaudiourl = data.publicUrl;
 
 
-        console.log(finalaudiourl);
 
         bot.sendChatAction(chatid, "upload_video");
 
@@ -408,7 +406,7 @@ export const message = (bot) => async (msg) => {
         }
 
         const datalist = `VideoTranscript : ${JSON.stringify(transcript.segments)}`;
-        const captiontext = msg.caption ? `text : ${msg.caption}` : "Please transcript this";
+        const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please transcript this";
 
         await userquery.findOneAndUpdate({
             userid: chatid
