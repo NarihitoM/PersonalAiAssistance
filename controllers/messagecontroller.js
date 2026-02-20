@@ -309,13 +309,12 @@ export const message = (bot) => async (msg) => {
 
         console.log(finalaudiourl);
 
-
         bot.sendChatAction(chatid, "upload_video");
 
         const transcript = await groq.audio.transcriptions.create({
             model: transcriptmodel,
             url: finalaudiourl,
-            language: "en",
+            language : "en",
             response_format: "verbose_json",
             timestamp_granularities: ["word", "segment"]
         });
