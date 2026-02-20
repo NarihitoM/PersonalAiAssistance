@@ -1,42 +1,53 @@
 import { groq } from "../config/aiservice.js";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import userquery from "../model/userquery.js";
+import ffmpeg from "fluent-ffmpeg";
+import ffmpegPath from "ffmpeg-static";
+import path from "path";
+import os from "os";
+import https from "https";
+import fs from "fs";
+import supabase from "../config/supabaseservice.js";
+
+
 
 const model = "moonshotai/kimi-k2-instruct-0905"
 const imagemodel = "meta-llama/llama-4-maverick-17b-128e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
 
+ffmpeg.setFfmpegPath(ffmpegPath);
+
 //Styling
 function escapeMarkdownSafe(text) {
-  const parts = text.split(/```/);
+    const parts = text.split(/```/);
 
-  return parts
-    .map((part, i) => {
-      if (i % 2 === 0) {
-        return part.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
-      } else {
-        return "```" + part + "```";
-      }
-    })
-    .join("");
+    return parts
+        .map((part, i) => {
+            if (i % 2 === 0) {
+                return part.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
+            } else {
+                return "```" + part + "```";
+            }
+        })
+        .join("");
 }
 
 function detectFormat(text) {
-  if (/```[\s\S]*```/.test(text)) return "MarkdownV2";
-  if (/<\/?[a-z]+>/.test(text)) return "HTML";         
-  return "plain";                                     
+    if (/```[\s\S]*```/.test(text)) return "MarkdownV2";
+    if (/<\/?[a-z]+>/.test(text)) return "HTML";
+    return "plain";
 }
 
 async function sendBotMessage(bot, chatid, text) {
-  const format = detectFormat(text);
+    const format = detectFormat(text);
 
-  if (format === "plain") {
-    await bot.sendMessage(chatid, text);
-  } else if (format === "MarkdownV2") {
-    await bot.sendMessage(chatid, escapeMarkdownSafe(text), { parse_mode: "MarkdownV2" });
-  } else if (format === "HTML") {
-    await bot.sendMessage(chatid, text, { parse_mode: "HTML" });
-  }
+    if (format === "plain") {
+        await bot.sendMessage(chatid, text);
+    } else if (format === "MarkdownV2") {
+        await bot.sendMessage(chatid, escapeMarkdownSafe(text), { parse_mode: "MarkdownV2" });
+    } else if (format === "HTML") {
+        await bot.sendMessage(chatid, text, { parse_mode: "HTML" });
+    }
 }
 
 
@@ -95,7 +106,7 @@ export const message = (bot) => async (msg) => {
             upsert: true
         });
 
-      await sendBotMessage(bot, chatid, aimessage);
+        await sendBotMessage(bot, chatid, aimessage);
     }
     //Photo route
     else if (msg.photo) {
@@ -181,7 +192,7 @@ export const message = (bot) => async (msg) => {
             upsert: true
         });
 
-         await sendBotMessage(bot, chatid, aimessage2);
+        await sendBotMessage(bot, chatid, aimessage2);
     }
     //Voiceroute
     else if (msg.voice) {
@@ -245,6 +256,125 @@ export const message = (bot) => async (msg) => {
         }, {
             upsert: true
         });
+        await sendBotMessage(bot, chatid, aimessage);
+    }
+    //Video Transcript
+    else if (msg.video) {
+        const fileid = msg.video.file_id;
+        const filelink = await bot.getFileLink(fileid);
+
+        bot.sendChatAction(chatid, "upload_video");
+        const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}.mp4`);
+        const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}.mp3`);
+        const audiofilename = `Audio-${Date.now()}.mp3`
+
+        bot.sendChatAction(chatid, "upload_video");
+
+        await new Promise((resolve, reject) => {
+            const file = fs.createWriteStream(tmpVideoPath);
+            https.get(filelink, (res) => {
+                res.pipe(file);
+                file.on("finish", resolve);
+                file.on("error", reject);
+            }).on("error", reject);
+        });
+
+        bot.sendChatAction(chatid, "upload_video");
+
+        await new Promise((resolve, reject) => {
+            ffmpeg(tmpVideoPath)
+                .noVideo()
+                .audioCodec("libmp3lame")
+                .audioBitrate(128)
+                .format("mp3")
+                .save(tmpAudioPath)
+                .on("end", resolve)
+                .on("error", reject);
+        });
+
+        const audiobuffer = fs.createReadStream(tmpAudioPath);
+
+        bot.sendChatAction(chatid, "upload_video");
+
+        const { error } = await supabase.storage.from("audio").upload(audiofilename, audiobuffer, {
+            upsert: true
+        })
+        if (error) {
+            console.log(error);
+        }
+
+        const { data } = await supabase.storage.from("audio").getPublicUrl(audiofilename);
+        const finalaudiourl = data.publicUrl;
+
+
+        console.log(finalaudiourl);
+
+
+        bot.sendChatAction(chatid, "upload_video");
+
+        const transcript = await groq.audio.transcriptions.create({
+            model: transcriptmodel,
+            url: finalaudiourl,
+            language: "en",
+            response_format: "verbose_json",
+            timestamp_granularities: ["word", "segment"]
+        });
+
+
+        const { error: err } = await supabase.storage.from("audio").remove(audiofilename);
+        if (err) {
+            console.log(err);
+        }
+
+        const datalist = `VideoTranscript : ${JSON.stringify(transcript.segments)}`;
+
+        await userquery.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $push: {
+                messages: {
+                    role: "user",
+                    content: datalist
+                }
+            }
+        }, {
+            upsert: true
+        });
+
+        const historymessage = await userquery.findOne({ userid: chatid });
+        bot.sendChatAction(chatid, "typing");
+
+        const response = await groq.chat.completions.create({
+            model: model,
+            messages: [
+                {
+                    role: "system",
+                    content: systemprompt
+                },
+                ...historymessage.messages.slice(-6).map((element) => (
+                    {
+                        role: element.role,
+                        content: element.content
+                    }
+                ))
+            ]
+        });
+
+        const aimessage = response.choices[0].message.content;
+
+        await userquery.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $push: {
+                messages: {
+                    role: "assistant",
+                    content: aimessage
+                }
+            }
+        }, {
+            upsert: true
+        });
+
         await sendBotMessage(bot, chatid, aimessage);
     }
 }
