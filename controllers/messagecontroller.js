@@ -92,21 +92,48 @@ export const message = (bot) => async (msg) => {
             ]
         });
         const aimessage = response.choices[0].message.content;
-
-        await userquery.findOneAndUpdate({
-            userid: chatid
-        }, {
-            $push: {
-                messages: {
-                    role: "assistant",
-                    content: aimessage
+        //Fileroute
+        if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
+            const fileroute = JSON.parse(aimessage);
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "assistant",
+                        content: aimessage
+                    }
                 }
-            }
-        }, {
-            upsert: true
-        });
+            }, {
+                upsert: true
+            })
 
-        await sendBotMessage(bot, chatid, aimessage);
+            const filename = fileroute.filename;
+
+            fs.writeFileSync(filename, fileroute.filecontent, (err) => {
+                console.log(err);
+            })
+
+            await bot.sendDocument(chatid, filename, {
+                caption: fileroute.message
+            });
+        }
+        else {
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "assistant",
+                        content: aimessage
+                    }
+                }
+            }, {
+                upsert: true
+            });
+
+            await sendBotMessage(bot, chatid, aimessage);
+        }
     }
     //Photo route
     else if (msg.photo) {
@@ -179,20 +206,47 @@ export const message = (bot) => async (msg) => {
 
         const aimessage2 = response2.choices[0].message.content;
 
-        await userquery.findOneAndUpdate({
-            userid: chatid
-        }, {
-            $push: {
-                messages: {
-                    role: "assistant",
-                    content: aimessage2
+        //File route
+        if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
+            const fileroute = JSON.parse(aimessage2);
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "assistant",
+                        content: aimessage2
+                    }
                 }
-            }
-        }, {
-            upsert: true
-        });
+            }, {
+                upsert: true
+            })
 
-        await sendBotMessage(bot, chatid, aimessage2);
+            const filename = fileroute.filename;
+            fs.writeFileSync(filename, fileroute.filecontent, (err) => {
+                console.log(err);
+            })
+
+            await bot.sendDocument(chatid, filename, {
+                caption: fileroute.message
+            });
+        }
+        else {
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "assistant",
+                        content: aimessage2
+                    }
+                }
+            }, {
+                upsert: true
+            });
+
+            await sendBotMessage(bot, chatid, aimessage2);
+        }
     }
     //Voiceroute
     else if (msg.voice) {
@@ -243,26 +297,54 @@ export const message = (bot) => async (msg) => {
         });
 
         const aimessage = response.choices[0].message.content;
-
-        await userquery.findOneAndUpdate({
-            userid: chatid
-        }, {
-            $push: {
-                messages: {
-                    role: "assistant",
-                    content: aimessage
+        //File route
+        if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
+            const fileroute = JSON.parse(aimessage);
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "assistant",
+                        content: aimessage
+                    }
                 }
-            }
-        }, {
-            upsert: true
-        });
-        await sendBotMessage(bot, chatid, aimessage);
+            }, {
+                upsert: true
+            })
+
+            const filename = fileroute.filename;
+            fs.writeFileSync(filename, fileroute.filecontent, (err) => {
+                console.log(err);
+            })
+
+            await bot.sendDocument(chatid, filename, {
+                caption: fileroute.message
+            });
+        }
+        else {
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "assistant",
+                        content: aimessage
+                    }
+                }
+            }, {
+                upsert: true
+            });
+            await sendBotMessage(bot, chatid, aimessage);
+        }
     }
     //Video Transcript
     else if (msg.video) {
+        console.log(msg.caption);
+
         const fileid = msg.video.file_id;
         const filelink = await bot.getFileLink(fileid);
-
+        
         bot.sendChatAction(chatid, "upload_video");
         const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}.mp4`);
         const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}.mp3`);
@@ -314,7 +396,7 @@ export const message = (bot) => async (msg) => {
         const transcript = await groq.audio.transcriptions.create({
             model: transcriptmodel,
             url: finalaudiourl,
-            language : "en",
+            language: "en",
             response_format: "verbose_json",
             timestamp_granularities: ["word", "segment"]
         });
@@ -326,6 +408,7 @@ export const message = (bot) => async (msg) => {
         }
 
         const datalist = `VideoTranscript : ${JSON.stringify(transcript.segments)}`;
+        const captiontext = msg.caption ? `text : ${msg.caption}` : "Please transcript this";
 
         await userquery.findOneAndUpdate({
             userid: chatid
@@ -333,7 +416,7 @@ export const message = (bot) => async (msg) => {
             $push: {
                 messages: {
                     role: "user",
-                    content: datalist
+                    content: `${datalist},${captiontext}`
                 }
             }
         }, {
@@ -360,20 +443,46 @@ export const message = (bot) => async (msg) => {
         });
 
         const aimessage = response.choices[0].message.content;
-
-        await userquery.findOneAndUpdate({
-            userid: chatid
-        }, {
-            $push: {
-                messages: {
-                    role: "assistant",
-                    content: aimessage
+        //Fileroute
+        if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
+            const fileroute = JSON.parse(aimessage);
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "assistant",
+                        content: aimessage
+                    }
                 }
-            }
-        }, {
-            upsert: true
-        });
+            }, {
+                upsert: true
+            })
 
-        await sendBotMessage(bot, chatid, aimessage);
+            const filename = fileroute.filename;
+            fs.writeFileSync(filename, fileroute.filecontent, (err) => {
+                console.log(err);
+            })
+
+            await bot.sendDocument(chatid, filename, {
+                caption: fileroute.message
+            });
+        }
+        else {
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "assistant",
+                        content: aimessage
+                    }
+                }
+            }, {
+                upsert: true
+            });
+
+            await sendBotMessage(bot, chatid, aimessage);
+        }
     }
 }
