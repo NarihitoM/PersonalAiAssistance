@@ -55,452 +55,10 @@ export const message = (bot) => async (msg) => {
     const chatid = msg.chat.id;
     console.log(msg);
 
-    //Message route
-    if (msg.text) {
-        const message = `text : ${msg.text}`;
-
-        await userquery.findOneAndUpdate({
-            userid: chatid
-        }, {
-            $push: {
-                messages: {
-                    role: "user",
-                    content: message
-                }
-            }
-        }, {
-            upsert: true
-        });
-
-        const historymessage = await userquery.findOne({ userid: chatid });
-
-        bot.sendChatAction(chatid, "typing");
-        const response = await groq.chat.completions.create({
-            model: model,
-            messages: [
-                {
-                    role: "system",
-                    content: systemprompt
-                },
-                ...historymessage.messages.slice(-6).map((element) => (
-                    {
-                        role: element.role,
-                        content: element.content
-                    }
-                ))
-            ]
-        });
-        const aimessage = response.choices[0].message.content;
-        //Fileroute
-        if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
-            const fileroute = JSON.parse(aimessage);
-            await userquery.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $push: {
-                    messages: {
-                        role: "assistant",
-                        content: aimessage
-                    }
-                }
-            }, {
-                upsert: true
-            })
-
-            const filename = fileroute.filename;
-
-            fs.writeFileSync(filename, fileroute.filecontent, (err) => {
-                console.log(err);
-            })
-
-            await bot.sendDocument(chatid, filename, {
-                caption: fileroute.message
-            });
-        }
-        else {
-            await userquery.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $push: {
-                    messages: {
-                        role: "assistant",
-                        content: aimessage
-                    }
-                }
-            }, {
-                upsert: true
-            });
-
-            await sendBotMessage(bot, chatid, aimessage);
-        }
-    }
-    //Photo route
-    else if (msg.photo) {
-        const fileid = msg.photo[msg.photo.length - 1].file_id;
-        const filelink = await bot.getFileLink(fileid);
-        const captionmsg = msg.caption ? `Caption : ${msg.caption}` : "";
-
-        bot.sendChatAction(chatid, "upload_photo")
-
-        const response1 = await groq.chat.completions.create({
-            model: imagemodel,
-            messages: [
-                {
-                    role: "system",
-                    content: systempromptforimage
-                },
-                {
-                    role: "user",
-                    "content": [
-                        {
-                            type: "text",
-                            text: captionmsg
-                        },
-                        {
-                            type: "image_url",
-                            image_url: {
-                                url: filelink
-                            }
-                        }
-                    ]
-                }
-            ]
-        });
-
-        const aimessage1 = `image : ${response1.choices[0].message.content}`;
-
-        bot.sendChatAction(chatid, "typing");
-
-
-        await userquery.findOneAndUpdate({
-            userid: chatid
-        }, {
-            $push: {
-                messages: {
-                    role: "user",
-                    content: `${aimessage1},${captionmsg}`
-                }
-            }
-        }, {
-            upsert: true
-        });
-
-        const historymessage = await userquery.findOne({ userid: chatid });
-
-        const response2 = await groq.chat.completions.create({
-            model: model,
-            messages: [
-                {
-                    role: "system",
-                    content: systemprompt
-                },
-                ...historymessage.messages.slice(-6).map((element) => (
-                    {
-                        role: element.role,
-                        content: element.content
-                    }
-                ))
-            ]
-        });
-
-        const aimessage2 = response2.choices[0].message.content;
-
-        //File route
-        if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
-            const fileroute = JSON.parse(aimessage2);
-            await userquery.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $push: {
-                    messages: {
-                        role: "assistant",
-                        content: aimessage2
-                    }
-                }
-            }, {
-                upsert: true
-            })
-
-            const filename = fileroute.filename;
-            fs.writeFileSync(filename, fileroute.filecontent, (err) => {
-                console.log(err);
-            })
-
-            await bot.sendDocument(chatid, filename, {
-                caption: fileroute.message
-            });
-        }
-        else {
-            await userquery.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $push: {
-                    messages: {
-                        role: "assistant",
-                        content: aimessage2
-                    }
-                }
-            }, {
-                upsert: true
-            });
-
-            await sendBotMessage(bot, chatid, aimessage2);
-        }
-    }
-    //Voiceroute
-    else if (msg.voice) {
-        const fileid = msg.voice.file_id;
-        const filelink = await bot.getFileLink(fileid);
-
-        bot.sendChatAction(chatid, 'upload_audio')
-
-        const transcription = await groq.audio.transcriptions.create({
-            model: transcriptmodel,
-            prompt: "Please reply only in english. with correct grammar and vocabulary.",
-            language: "en",
-            url: filelink
-        })
-
-        const transcripttext = `Voice : ${transcription.text}`;
-
-        bot.sendChatAction(chatid, "typing");
-        await userquery.findOneAndUpdate({
-            userid: chatid
-        }, {
-            $push: {
-                messages: {
-                    role: "user",
-                    content: transcripttext
-                }
-            }
-        }, {
-            upsert: true
-        });
-
-        const historymessage = await userquery.findOne({ userid: chatid });
-
-        const response = await groq.chat.completions.create({
-            model: model,
-            messages: [
-                {
-                    role: "system",
-                    content: systemprompt
-                },
-                ...historymessage.messages.slice(-6).map((element) => (
-                    {
-                        role: element.role,
-                        content: element.content
-                    }
-                ))
-            ]
-        });
-
-        const aimessage = response.choices[0].message.content;
-        //File route
-        if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
-            const fileroute = JSON.parse(aimessage);
-            await userquery.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $push: {
-                    messages: {
-                        role: "assistant",
-                        content: aimessage
-                    }
-                }
-            }, {
-                upsert: true
-            })
-
-            const filename = fileroute.filename;
-            fs.writeFileSync(filename, fileroute.filecontent, (err) => {
-                console.log(err);
-            })
-
-            await bot.sendDocument(chatid, filename, {
-                caption: fileroute.message
-            });
-        }
-        else {
-            await userquery.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $push: {
-                    messages: {
-                        role: "assistant",
-                        content: aimessage
-                    }
-                }
-            }, {
-                upsert: true
-            });
-            await sendBotMessage(bot, chatid, aimessage);
-        }
-    }
-    //Video Transcript
-    else if (msg.video) {
-        console.log(msg.caption);
-
-        const fileid = msg.video.file_id;
-        const filelink = await bot.getFileLink(fileid);
-
-        bot.sendChatAction(chatid, "upload_video");
-        const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}.mp4`);
-        const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}.mp3`);
-        const audiofilename = `Audio-${Date.now()}.mp3`
-
-        bot.sendChatAction(chatid, "upload_video");
-
-        await new Promise((resolve, reject) => {
-            const file = fs.createWriteStream(tmpVideoPath);
-            https.get(filelink, (res) => {
-                res.pipe(file);
-                file.on("finish", resolve);
-                file.on("error", reject);
-            }).on("error", reject);
-        });
-
-        bot.sendChatAction(chatid, "upload_video");
-
-        await new Promise((resolve, reject) => {
-            ffmpeg(tmpVideoPath)
-                .noVideo()
-                .audioCodec("libmp3lame")
-                .audioBitrate(128)
-                .format("mp3")
-                .save(tmpAudioPath)
-                .on("end", resolve)
-                .on("error", reject);
-        });
-
-        const audiobuffer = fs.createReadStream(tmpAudioPath);
-
-        bot.sendChatAction(chatid, "upload_video");
-
-        const { error } = await supabase.storage.from("audio").upload(audiofilename, audiobuffer, {
-            upsert: true
-        })
-        if (error) {
-            console.log(error);
-        }
-
-        const { data } = await supabase.storage.from("audio").getPublicUrl(audiofilename);
-        const finalaudiourl = data.publicUrl;
-
-
-
-        bot.sendChatAction(chatid, "upload_video");
-
-        const transcript = await groq.audio.transcriptions.create({
-            model: transcriptmodel,
-            url: finalaudiourl,
-            language: "en",
-            response_format: "verbose_json",
-            timestamp_granularities: ["word", "segment"]
-        });
-
-
-        const { error: err } = await supabase.storage.from("audio").remove(audiofilename);
-        if (err) {
-            console.log(err);
-        }
-
-        const datalist = `VideoTranscript : ${JSON.stringify(transcript.segments)}`;
-        const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please transcript this";
-
-        await userquery.findOneAndUpdate({
-            userid: chatid
-        }, {
-            $push: {
-                messages: {
-                    role: "user",
-                    content: `${datalist},${captiontext}`
-                }
-            }
-        }, {
-            upsert: true
-        });
-
-        const historymessage = await userquery.findOne({ userid: chatid });
-        bot.sendChatAction(chatid, "typing");
-
-        const response = await groq.chat.completions.create({
-            model: model,
-            messages: [
-                {
-                    role: "system",
-                    content: systemprompt
-                },
-                ...historymessage.messages.slice(-6).map((element) => (
-                    {
-                        role: element.role,
-                        content: element.content
-                    }
-                ))
-            ]
-        });
-
-        const aimessage = response.choices[0].message.content;
-        //Fileroute
-        if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
-            const fileroute = JSON.parse(aimessage);
-            await userquery.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $push: {
-                    messages: {
-                        role: "assistant",
-                        content: aimessage
-                    }
-                }
-            }, {
-                upsert: true
-            })
-
-            const filename = fileroute.filename;
-            fs.writeFileSync(filename, fileroute.filecontent, (err) => {
-                console.log(err);
-            })
-
-            await bot.sendDocument(chatid, filename, {
-                caption: fileroute.message
-            });
-        }
-        else {
-            await userquery.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $push: {
-                    messages: {
-                        role: "assistant",
-                        content: aimessage
-                    }
-                }
-            }, {
-                upsert: true
-            });
-
-            await sendBotMessage(bot, chatid, aimessage);
-        }
-    }
-    //File route
-    else if (msg.document) {
-        const fileid = msg.document.file_id;
-        const filelink = await bot.getFileLink(fileid);
-
-
-        bot.sendChatAction(chatid, "upload_document");
-
-        const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please analyse this file";
-
-        const filecontent = await fetch(filelink);
-
-        //Txt file route
-        if (msg.document.mime_type === "text/plain") {
-
-            const data = await filecontent.text();
-
-            const textfiledata = `File(txt) : ${data}`;
+    try {
+        //Message route
+        if (msg.text) {
+            const message = `text : ${msg.text}`;
 
             await userquery.findOneAndUpdate({
                 userid: chatid
@@ -508,14 +66,14 @@ export const message = (bot) => async (msg) => {
                 $push: {
                     messages: {
                         role: "user",
-                        content: `${textfiledata},${captiontext}`
+                        content: message
                     }
                 }
             }, {
                 upsert: true
             });
 
-            const historymessage = await userquery.findOne({userid : chatid})
+            const historymessage = await userquery.findOne({ userid: chatid });
 
             bot.sendChatAction(chatid, "typing");
             const response = await groq.chat.completions.create({
@@ -533,23 +91,495 @@ export const message = (bot) => async (msg) => {
                     ))
                 ]
             });
-
             const aimessage = response.choices[0].message.content;
+            //Fileroute
+            if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
+                const fileroute = JSON.parse(aimessage);
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "assistant",
+                            content: aimessage
+                        }
+                    }
+                }, {
+                    upsert: true
+                })
+
+                const filename = fileroute.filename;
+
+                fs.writeFileSync(filename, fileroute.filecontent, (err) => {
+                    console.log(err);
+                })
+
+                await bot.sendDocument(chatid, filename, {
+                    caption: fileroute.message
+                });
+            }
+            else {
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "assistant",
+                            content: aimessage
+                        }
+                    }
+                }, {
+                    upsert: true
+                });
+
+                await sendBotMessage(bot, chatid, aimessage);
+            }
+        }
+        //Photo route
+        else if (msg.photo) {
+            const fileid = msg.photo[msg.photo.length - 1].file_id;
+            const filelink = await bot.getFileLink(fileid);
+            const captionmsg = msg.caption ? `Caption : ${msg.caption}` : "";
+
+            bot.sendChatAction(chatid, "upload_photo")
+
+            const response1 = await groq.chat.completions.create({
+                model: imagemodel,
+                messages: [
+                    {
+                        role: "system",
+                        content: systempromptforimage
+                    },
+                    {
+                        role: "user",
+                        "content": [
+                            {
+                                type: "text",
+                                text: captionmsg
+                            },
+                            {
+                                type: "image_url",
+                                image_url: {
+                                    url: filelink
+                                }
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            const aimessage1 = `image : ${response1.choices[0].message.content}`;
+
+            bot.sendChatAction(chatid, "typing");
+
 
             await userquery.findOneAndUpdate({
                 userid: chatid
             }, {
                 $push: {
                     messages: {
-                        role: "assistant",
-                        content: aimessage
+                        role: "user",
+                        content: `${aimessage1},${captionmsg}`
                     }
                 }
             }, {
                 upsert: true
             });
 
-            await sendBotMessage(bot,chatid,aimessage);
+            const historymessage = await userquery.findOne({ userid: chatid });
+
+            const response2 = await groq.chat.completions.create({
+                model: model,
+                messages: [
+                    {
+                        role: "system",
+                        content: systemprompt
+                    },
+                    ...historymessage.messages.slice(-6).map((element) => (
+                        {
+                            role: element.role,
+                            content: element.content
+                        }
+                    ))
+                ]
+            });
+
+            const aimessage2 = response2.choices[0].message.content;
+
+            //File route
+            if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
+                const fileroute = JSON.parse(aimessage2);
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "assistant",
+                            content: aimessage2
+                        }
+                    }
+                }, {
+                    upsert: true
+                })
+
+                const filename = fileroute.filename;
+                fs.writeFileSync(filename, fileroute.filecontent, (err) => {
+                    console.log(err);
+                })
+
+                await bot.sendDocument(chatid, filename, {
+                    caption: fileroute.message
+                });
+            }
+            else {
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "assistant",
+                            content: aimessage2
+                        }
+                    }
+                }, {
+                    upsert: true
+                });
+
+                await sendBotMessage(bot, chatid, aimessage2);
+            }
         }
+        //Voiceroute
+        else if (msg.voice) {
+            const fileid = msg.voice.file_id;
+            const filelink = await bot.getFileLink(fileid);
+
+            bot.sendChatAction(chatid, 'upload_audio')
+
+            const transcription = await groq.audio.transcriptions.create({
+                model: transcriptmodel,
+                prompt: "Please reply only in english. with correct grammar and vocabulary.",
+                language: "en",
+                url: filelink
+            })
+
+            const transcripttext = `Voice : ${transcription.text}`;
+
+            bot.sendChatAction(chatid, "typing");
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "user",
+                        content: transcripttext
+                    }
+                }
+            }, {
+                upsert: true
+            });
+
+            const historymessage = await userquery.findOne({ userid: chatid });
+
+            const response = await groq.chat.completions.create({
+                model: model,
+                messages: [
+                    {
+                        role: "system",
+                        content: systemprompt
+                    },
+                    ...historymessage.messages.slice(-6).map((element) => (
+                        {
+                            role: element.role,
+                            content: element.content
+                        }
+                    ))
+                ]
+            });
+
+            const aimessage = response.choices[0].message.content;
+            //File route
+            if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
+                const fileroute = JSON.parse(aimessage);
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "assistant",
+                            content: aimessage
+                        }
+                    }
+                }, {
+                    upsert: true
+                })
+
+                const filename = fileroute.filename;
+                fs.writeFileSync(filename, fileroute.filecontent, (err) => {
+                    console.log(err);
+                })
+
+                await bot.sendDocument(chatid, filename, {
+                    caption: fileroute.message
+                });
+            }
+            else {
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "assistant",
+                            content: aimessage
+                        }
+                    }
+                }, {
+                    upsert: true
+                });
+                await sendBotMessage(bot, chatid, aimessage);
+            }
+        }
+        //Video Transcript
+        else if (msg.video) {
+            console.log(msg.caption);
+
+            const fileid = msg.video.file_id;
+            const filelink = await bot.getFileLink(fileid);
+
+            bot.sendChatAction(chatid, "upload_video");
+            const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}.mp4`);
+            const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}.mp3`);
+            const audiofilename = `Audio-${Date.now()}.mp3`
+
+            bot.sendChatAction(chatid, "upload_video");
+
+            await new Promise((resolve, reject) => {
+                const file = fs.createWriteStream(tmpVideoPath);
+                https.get(filelink, (res) => {
+                    res.pipe(file);
+                    file.on("finish", resolve);
+                    file.on("error", reject);
+                }).on("error", reject);
+            });
+
+            bot.sendChatAction(chatid, "upload_video");
+
+            await new Promise((resolve, reject) => {
+                ffmpeg(tmpVideoPath)
+                    .noVideo()
+                    .audioCodec("libmp3lame")
+                    .audioBitrate(128)
+                    .format("mp3")
+                    .save(tmpAudioPath)
+                    .on("end", resolve)
+                    .on("error", reject);
+            });
+
+            const audiobuffer = fs.createReadStream(tmpAudioPath);
+
+            bot.sendChatAction(chatid, "upload_video");
+
+            const { error } = await supabase.storage.from("audio").upload(audiofilename, audiobuffer, {
+                upsert: true
+            })
+            if (error) {
+                console.log(error);
+            }
+
+            const { data } = await supabase.storage.from("audio").getPublicUrl(audiofilename);
+            const finalaudiourl = data.publicUrl;
+
+
+
+            bot.sendChatAction(chatid, "upload_video");
+
+            const transcript = await groq.audio.transcriptions.create({
+                model: transcriptmodel,
+                url: finalaudiourl,
+                language: "en",
+                response_format: "verbose_json",
+                timestamp_granularities: ["word", "segment"]
+            });
+
+
+            const { error: err } = await supabase.storage.from("audio").remove(audiofilename);
+            if (err) {
+                console.log(err);
+            }
+
+            const datalist = `VideoTranscript : ${JSON.stringify(transcript.segments)}`;
+            const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please transcript this";
+
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "user",
+                        content: `${datalist},${captiontext}`
+                    }
+                }
+            }, {
+                upsert: true
+            });
+
+            const historymessage = await userquery.findOne({ userid: chatid });
+            bot.sendChatAction(chatid, "typing");
+
+            const response = await groq.chat.completions.create({
+                model: model,
+                messages: [
+                    {
+                        role: "system",
+                        content: systemprompt
+                    },
+                    ...historymessage.messages.slice(-6).map((element) => (
+                        {
+                            role: element.role,
+                            content: element.content
+                        }
+                    ))
+                ]
+            });
+
+            const aimessage = response.choices[0].message.content;
+            //Fileroute
+            if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
+                const fileroute = JSON.parse(aimessage);
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "assistant",
+                            content: aimessage
+                        }
+                    }
+                }, {
+                    upsert: true
+                })
+
+                const filename = fileroute.filename;
+                fs.writeFileSync(filename, fileroute.filecontent, (err) => {
+                    console.log(err);
+                })
+
+                await bot.sendDocument(chatid, filename, {
+                    caption: fileroute.message
+                });
+            }
+            else {
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "assistant",
+                            content: aimessage
+                        }
+                    }
+                }, {
+                    upsert: true
+                });
+
+                await sendBotMessage(bot, chatid, aimessage);
+            }
+        }
+        //File route
+        else if (msg.document) {
+            const fileid = msg.document.file_id;
+            const filelink = await bot.getFileLink(fileid);
+
+
+            bot.sendChatAction(chatid, "upload_document");
+
+            const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please analyse this file";
+
+            const filecontent = await fetch(filelink);
+
+            //Txt file route
+            if (msg.document.mime_type === "text/plain") {
+
+                const data = await filecontent.text();
+
+                const textfiledata = `File(txt) : ${data}`;
+
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "user",
+                            content: `${textfiledata},${captiontext}`
+                        }
+                    }
+                }, {
+                    upsert: true
+                });
+
+                const historymessage = await userquery.findOne({ userid: chatid })
+
+                bot.sendChatAction(chatid, "typing");
+                const response = await groq.chat.completions.create({
+                    model: model,
+                    messages: [
+                        {
+                            role: "system",
+                            content: systemprompt
+                        },
+                        ...historymessage.messages.slice(-6).map((element) => (
+                            {
+                                role: element.role,
+                                content: element.content
+                            }
+                        ))
+                    ]
+                });
+
+                const aimessage = response.choices[0].message.content;
+                if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
+                    const fileroute = JSON.parse(aimessage);
+                    await userquery.findOneAndUpdate({
+                        userid: chatid
+                    }, {
+                        $push: {
+                            messages: {
+                                role: "assistant",
+                                content: aimessage
+                            }
+                        }
+                    }, {
+                        upsert: true
+                    })
+
+                    const filename = fileroute.filename;
+                    fs.writeFileSync(filename, fileroute.filecontent, (err) => {
+                        console.log(err);
+                    })
+
+                    await bot.sendDocument(chatid, filename, {
+                        caption: fileroute.message
+                    });
+                }
+                else {
+                    await userquery.findOneAndUpdate({
+                        userid: chatid
+                    }, {
+                        $push: {
+                            messages: {
+                                role: "assistant",
+                                content: aimessage
+                            }
+                        }
+                    }, {
+                        upsert: true
+                    });
+
+                    await sendBotMessage(bot, chatid, aimessage);
+                }
+            }
+        }
+    } catch (err) {
+        console.log(err);
+        await sendBotMessage(bot, chatid, "Something went wrong. please try again.")
     }
 }
