@@ -1,4 +1,6 @@
 import { groq } from "../config/aiservice.js";
+import { PDFParse } from "pdf-parse";
+import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import userquery from "../model/userquery.js";
 import ffmpeg from "fluent-ffmpeg";
@@ -108,11 +110,10 @@ export const message = (bot) => async (msg) => {
                     upsert: true
                 })
 
-                const filename = fileroute.filename;
+                const tempDir = os.tmpdir();
+                const filename = path.join(tempDir, fileroute.filename);
 
-                fs.writeFileSync(filename, fileroute.filecontent, (err) => {
-                    console.log(err);
-                })
+                fs.writeFileSync(filename, fileroute.filecontent);
 
                 await bot.sendDocument(chatid, filename, {
                     caption: fileroute.message
@@ -222,10 +223,10 @@ export const message = (bot) => async (msg) => {
                     upsert: true
                 })
 
-                const filename = fileroute.filename;
-                fs.writeFileSync(filename, fileroute.filecontent, (err) => {
-                    console.log(err);
-                })
+                const tempDir = os.tmpdir();
+                const filename = path.join(tempDir, fileroute.filename);
+
+                fs.writeFileSync(filename, fileroute.filecontent);
 
                 await bot.sendDocument(chatid, filename, {
                     caption: fileroute.message
@@ -313,10 +314,10 @@ export const message = (bot) => async (msg) => {
                     upsert: true
                 })
 
-                const filename = fileroute.filename;
-                fs.writeFileSync(filename, fileroute.filecontent, (err) => {
-                    console.log(err);
-                })
+                const tempDir = os.tmpdir();
+                const filename = path.join(tempDir, fileroute.filename);
+
+                fs.writeFileSync(filename, fileroute.filecontent);
 
                 await bot.sendDocument(chatid, filename, {
                     caption: fileroute.message
@@ -458,10 +459,10 @@ export const message = (bot) => async (msg) => {
                     upsert: true
                 })
 
-                const filename = fileroute.filename;
-                fs.writeFileSync(filename, fileroute.filecontent, (err) => {
-                    console.log(err);
-                })
+                const tempDir = os.tmpdir();
+                const filename = path.join(tempDir, fileroute.filename);
+
+                fs.writeFileSync(filename, fileroute.filecontent);
 
                 await bot.sendDocument(chatid, filename, {
                     caption: fileroute.message
@@ -488,13 +489,12 @@ export const message = (bot) => async (msg) => {
         else if (msg.document) {
             const fileid = msg.document.file_id;
             const filelink = await bot.getFileLink(fileid);
-
-
+            const filecontent = await fetch(filelink);
+            const filebuffer = await filecontent.arrayBuffer();
             bot.sendChatAction(chatid, "upload_document");
-
             const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please analyse this file";
 
-            const filecontent = await fetch(filelink);
+
 
             //Txt file route
             if (msg.document.mime_type === "text/plain") {
@@ -551,10 +551,172 @@ export const message = (bot) => async (msg) => {
                         upsert: true
                     })
 
-                    const filename = fileroute.filename;
-                    fs.writeFileSync(filename, fileroute.filecontent, (err) => {
-                        console.log(err);
+                    const tempDir = os.tmpdir();
+                    const filename = path.join(tempDir, fileroute.filename);
+
+                    fs.writeFileSync(filename, fileroute.filecontent);
+
+                    await bot.sendDocument(chatid, filename, {
+                        caption: fileroute.message
+                    });
+                }
+                else {
+                    await userquery.findOneAndUpdate({
+                        userid: chatid
+                    }, {
+                        $push: {
+                            messages: {
+                                role: "assistant",
+                                content: aimessage
+                            }
+                        }
+                    }, {
+                        upsert: true
+                    });
+
+                    await sendBotMessage(bot, chatid, aimessage);
+                }
+            }
+            //PDF file route
+            else if (msg.document.mime_type === "application/pdf") {
+
+                const data = new PDFParse({ url: filelink })
+
+                const result = await data.getText();
+
+                const pdffiledata = `PDF : ${result.text}`;
+
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "user",
+                            content: `${pdffiledata},${captiontext}`
+                        }
+                    }
+                }, {
+                    upsert: true
+                });
+
+                const historymessage = await userquery.findOne({ userid: chatid })
+
+                bot.sendChatAction(chatid, "typing");
+                const response = await groq.chat.completions.create({
+                    model: model,
+                    messages: [
+                        {
+                            role: "system",
+                            content: systemprompt
+                        },
+                        ...historymessage.messages.slice(-6).map((element) => (
+                            {
+                                role: element.role,
+                                content: element.content
+                            }
+                        ))
+                    ]
+                });
+
+                const aimessage = response.choices[0].message.content;
+                if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
+                    const fileroute = JSON.parse(aimessage);
+                    await userquery.findOneAndUpdate({
+                        userid: chatid
+                    }, {
+                        $push: {
+                            messages: {
+                                role: "assistant",
+                                content: aimessage
+                            }
+                        }
+                    }, {
+                        upsert: true
                     })
+
+                    const tempDir = os.tmpdir();
+                    const filename = path.join(tempDir, fileroute.filename);
+
+                    fs.writeFileSync(filename, fileroute.filecontent);
+
+                    await bot.sendDocument(chatid, filename, {
+                        caption: fileroute.message
+                    });
+                }
+                else {
+                    await userquery.findOneAndUpdate({
+                        userid: chatid
+                    }, {
+                        $push: {
+                            messages: {
+                                role: "assistant",
+                                content: aimessage
+                            }
+                        }
+                    }, {
+                        upsert: true
+                    });
+
+                    await sendBotMessage(bot, chatid, aimessage);
+                }
+            }
+            //DOCX File route
+            else if (msg.document.mime_type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+                const buffer = await Buffer.from(filebuffer);
+                const result = await mammoth.extractRawText({ buffer: buffer });
+                const docxfiledata = `DOCX : ${result.value}`;
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "user",
+                            content: `${docxfiledata},${captiontext}`
+                        }
+                    }
+                }, {
+                    upsert: true
+                });
+
+                const historymessage = await userquery.findOne({ userid: chatid })
+
+                bot.sendChatAction(chatid, "typing");
+                const response = await groq.chat.completions.create({
+                    model: model,
+                    messages: [
+                        {
+                            role: "system",
+                            content: systemprompt
+                        },
+                        ...historymessage.messages.slice(-6).map((element) => (
+                            {
+                                role: element.role,
+                                content: element.content
+                            }
+                        ))
+                    ]
+                });
+
+                const aimessage = response.choices[0].message.content;
+                if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
+                    const fileroute = JSON.parse(aimessage);
+                    await userquery.findOneAndUpdate({
+                        userid: chatid
+                    }, {
+                        $push: {
+                            messages: {
+                                role: "assistant",
+                                content: aimessage
+                            }
+                        }
+                    }, {
+                        upsert: true
+                    })
+
+                    const tempDir = os.tmpdir();
+                    const filename = path.join(tempDir, fileroute.filename);
+
+                    fs.writeFileSync(filename, fileroute.filecontent);
 
                     await bot.sendDocument(chatid, filename, {
                         caption: fileroute.message
