@@ -13,6 +13,7 @@ import supabase from "../config/supabaseservice.js";
 
 
 const model = "moonshotai/kimi-k2-instruct-0905"
+const modelaudio = "canopylabs/orpheus-v1-english"
 const imagemodel = "meta-llama/llama-4-maverick-17b-128e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
 
@@ -51,8 +52,7 @@ async function sendBotMessage(bot, chatid, text) {
     }
 }
 
-
-
+//SUPER MESSAGE
 export const message = (bot) => async (msg) => {
     const chatid = msg.chat.id;
     console.log(msg);
@@ -97,27 +97,46 @@ export const message = (bot) => async (msg) => {
             //Fileroute
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-                await userquery.findOneAndUpdate({
-                    userid: chatid
-                }, {
-                    $push: {
-                        messages: {
-                            role: "assistant",
-                            content: aimessage
+                if (fileroute.type === "audio") {
+                    const response = await groq.audio.speech.create({
+                        model: modelaudio,
+                        voice: "hannah",
+
+                        input: fileroute.audiocontent,
+                        response_format: "wav"
+                    });
+
+                    const buffer = Buffer.from(await response.arrayBuffer());
+
+                    bot.sendAudio(chatid, buffer, {
+                        caption: fileroute.message,
+                        title: fileroute.audioname,
+                        performer: fileroute.performer
+                    })
+                }
+                else {
+                    await userquery.findOneAndUpdate({
+                        userid: chatid
+                    }, {
+                        $push: {
+                            messages: {
+                                role: "assistant",
+                                content: aimessage
+                            }
                         }
-                    }
-                }, {
-                    upsert: true
-                })
+                    }, {
+                        upsert: true
+                    })
 
-                const tempDir = os.tmpdir();
-                const filename = path.join(tempDir, fileroute.filename);
+                    const tempDir = os.tmpdir();
+                    const filename = path.join(tempDir, fileroute.filename);
 
-                fs.writeFileSync(filename, fileroute.filecontent);
+                    fs.writeFileSync(filename, fileroute.filecontent);
 
-                await bot.sendDocument(chatid, filename, {
-                    caption: fileroute.message
-                });
+                    await bot.sendDocument(chatid, filename, {
+                        caption: fileroute.message
+                    });
+                }
             }
             else {
                 await userquery.findOneAndUpdate({
@@ -210,27 +229,46 @@ export const message = (bot) => async (msg) => {
             //File route
             if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage2);
-                await userquery.findOneAndUpdate({
-                    userid: chatid
-                }, {
-                    $push: {
-                        messages: {
-                            role: "assistant",
-                            content: aimessage2
+                if (fileroute.type === "audio") {
+                    const response = await groq.audio.speech.create({
+                        model: modelaudio,
+                        voice: "hannah",
+
+                        input: fileroute.audiocontent,
+                        response_format: "wav"
+                    });
+
+                    const buffer = Buffer.from(await response.arrayBuffer());
+
+                    bot.sendAudio(chatid, buffer, {
+                        caption: fileroute.message,
+                        title: fileroute.audioname,
+                        performer: fileroute.performer
+                    })
+                }
+                else {
+                    await userquery.findOneAndUpdate({
+                        userid: chatid
+                    }, {
+                        $push: {
+                            messages: {
+                                role: "assistant",
+                                content: aimessage2
+                            }
                         }
-                    }
-                }, {
-                    upsert: true
-                })
+                    }, {
+                        upsert: true
+                    })
 
-                const tempDir = os.tmpdir();
-                const filename = path.join(tempDir, fileroute.filename);
+                    const tempDir = os.tmpdir();
+                    const filename = path.join(tempDir, fileroute.filename);
 
-                fs.writeFileSync(filename, fileroute.filecontent);
+                    fs.writeFileSync(filename, fileroute.filecontent);
 
-                await bot.sendDocument(chatid, filename, {
-                    caption: fileroute.message
-                });
+                    await bot.sendDocument(chatid, filename, {
+                        caption: fileroute.message
+                    });
+                }
             }
             else {
                 await userquery.findOneAndUpdate({
@@ -301,27 +339,46 @@ export const message = (bot) => async (msg) => {
             //File route
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-                await userquery.findOneAndUpdate({
-                    userid: chatid
-                }, {
-                    $push: {
-                        messages: {
-                            role: "assistant",
-                            content: aimessage
+                if (fileroute.type === "audio") {
+                    const response = await groq.audio.speech.create({
+                        model: modelaudio,
+                        voice: "hannah",
+
+                        input: fileroute.audiocontent,
+                        response_format: "wav"
+                    });
+
+                    const buffer = Buffer.from(await response.arrayBuffer());
+
+                    bot.sendAudio(chatid, buffer, {
+                        caption: fileroute.message,
+                        title: fileroute.audioname,
+                        performer: fileroute.performer
+                    })
+                }
+                else {
+                    await userquery.findOneAndUpdate({
+                        userid: chatid
+                    }, {
+                        $push: {
+                            messages: {
+                                role: "assistant",
+                                content: aimessage
+                            }
                         }
-                    }
-                }, {
-                    upsert: true
-                })
+                    }, {
+                        upsert: true
+                    })
 
-                const tempDir = os.tmpdir();
-                const filename = path.join(tempDir, fileroute.filename);
+                    const tempDir = os.tmpdir();
+                    const filename = path.join(tempDir, fileroute.filename);
 
-                fs.writeFileSync(filename, fileroute.filecontent);
+                    fs.writeFileSync(filename, fileroute.filecontent);
 
-                await bot.sendDocument(chatid, filename, {
-                    caption: fileroute.message
-                });
+                    await bot.sendDocument(chatid, filename, {
+                        caption: fileroute.message
+                    });
+                }
             }
             else {
                 await userquery.findOneAndUpdate({
@@ -446,27 +503,46 @@ export const message = (bot) => async (msg) => {
             //Fileroute
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-                await userquery.findOneAndUpdate({
-                    userid: chatid
-                }, {
-                    $push: {
-                        messages: {
-                            role: "assistant",
-                            content: aimessage
+                if (fileroute.type === "audio") {
+                    const response = await groq.audio.speech.create({
+                        model: modelaudio,
+                        voice: "hannah",
+
+                        input: fileroute.audiocontent,
+                        response_format: "wav"
+                    });
+
+                    const buffer = Buffer.from(await response.arrayBuffer());
+
+                    bot.sendAudio(chatid, buffer, {
+                        caption: fileroute.message,
+                        title: fileroute.audioname,
+                        performer: fileroute.performer
+                    })
+                }
+                else {
+                    await userquery.findOneAndUpdate({
+                        userid: chatid
+                    }, {
+                        $push: {
+                            messages: {
+                                role: "assistant",
+                                content: aimessage
+                            }
                         }
-                    }
-                }, {
-                    upsert: true
-                })
+                    }, {
+                        upsert: true
+                    })
 
-                const tempDir = os.tmpdir();
-                const filename = path.join(tempDir, fileroute.filename);
+                    const tempDir = os.tmpdir();
+                    const filename = path.join(tempDir, fileroute.filename);
 
-                fs.writeFileSync(filename, fileroute.filecontent);
+                    fs.writeFileSync(filename, fileroute.filecontent);
 
-                await bot.sendDocument(chatid, filename, {
-                    caption: fileroute.message
-                });
+                    await bot.sendDocument(chatid, filename, {
+                        caption: fileroute.message
+                    });
+                }
             }
             else {
                 await userquery.findOneAndUpdate({
@@ -493,7 +569,6 @@ export const message = (bot) => async (msg) => {
             const filebuffer = await filecontent.arrayBuffer();
             bot.sendChatAction(chatid, "upload_document");
             const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please analyse this file";
-
 
 
             //Txt file route
@@ -538,27 +613,46 @@ export const message = (bot) => async (msg) => {
                 const aimessage = response.choices[0].message.content;
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
-                    await userquery.findOneAndUpdate({
-                        userid: chatid
-                    }, {
-                        $push: {
-                            messages: {
-                                role: "assistant",
-                                content: aimessage
+                    if (fileroute.type === "audio") {
+                        const response = await groq.audio.speech.create({
+                            model: modelaudio,
+                            voice: "hannah",
+
+                            input: fileroute.audiocontent,
+                            response_format: "wav"
+                        });
+
+                        const buffer = Buffer.from(await response.arrayBuffer());
+
+                        bot.sendAudio(chatid, buffer, {
+                            caption: fileroute.message,
+                            title: fileroute.audioname,
+                            performer: fileroute.performer
+                        })
+                    }
+                    else {
+                        await userquery.findOneAndUpdate({
+                            userid: chatid
+                        }, {
+                            $push: {
+                                messages: {
+                                    role: "assistant",
+                                    content: aimessage
+                                }
                             }
-                        }
-                    }, {
-                        upsert: true
-                    })
+                        }, {
+                            upsert: true
+                        })
 
-                    const tempDir = os.tmpdir();
-                    const filename = path.join(tempDir, fileroute.filename);
+                        const tempDir = os.tmpdir();
+                        const filename = path.join(tempDir, fileroute.filename);
 
-                    fs.writeFileSync(filename, fileroute.filecontent);
+                        fs.writeFileSync(filename, fileroute.filecontent);
 
-                    await bot.sendDocument(chatid, filename, {
-                        caption: fileroute.message
-                    });
+                        await bot.sendDocument(chatid, filename, {
+                            caption: fileroute.message
+                        });
+                    }
                 }
                 else {
                     await userquery.findOneAndUpdate({
@@ -621,27 +715,46 @@ export const message = (bot) => async (msg) => {
                 const aimessage = response.choices[0].message.content;
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
-                    await userquery.findOneAndUpdate({
-                        userid: chatid
-                    }, {
-                        $push: {
-                            messages: {
-                                role: "assistant",
-                                content: aimessage
+                    if (fileroute.type === "audio") {
+                        const response = await groq.audio.speech.create({
+                            model: modelaudio,
+                            voice: "hannah",
+
+                            input: fileroute.audiocontent,
+                            response_format: "wav"
+                        });
+
+                        const buffer = Buffer.from(await response.arrayBuffer());
+
+                        bot.sendAudio(chatid, buffer, {
+                            caption: fileroute.message,
+                            title: fileroute.audioname,
+                            performer: fileroute.performer
+                        })
+                    }
+                    else {
+                        await userquery.findOneAndUpdate({
+                            userid: chatid
+                        }, {
+                            $push: {
+                                messages: {
+                                    role: "assistant",
+                                    content: aimessage
+                                }
                             }
-                        }
-                    }, {
-                        upsert: true
-                    })
+                        }, {
+                            upsert: true
+                        })
 
-                    const tempDir = os.tmpdir();
-                    const filename = path.join(tempDir, fileroute.filename);
+                        const tempDir = os.tmpdir();
+                        const filename = path.join(tempDir, fileroute.filename);
 
-                    fs.writeFileSync(filename, fileroute.filecontent);
+                        fs.writeFileSync(filename, fileroute.filecontent);
 
-                    await bot.sendDocument(chatid, filename, {
-                        caption: fileroute.message
-                    });
+                        await bot.sendDocument(chatid, filename, {
+                            caption: fileroute.message
+                        });
+                    }
                 }
                 else {
                     await userquery.findOneAndUpdate({
@@ -700,27 +813,46 @@ export const message = (bot) => async (msg) => {
                 const aimessage = response.choices[0].message.content;
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
-                    await userquery.findOneAndUpdate({
-                        userid: chatid
-                    }, {
-                        $push: {
-                            messages: {
-                                role: "assistant",
-                                content: aimessage
+                    if (fileroute.type === "audio") {
+                        const response = await groq.audio.speech.create({
+                            model: modelaudio,
+                            voice: "hannah",
+
+                            input: fileroute.audiocontent,
+                            response_format: "wav"
+                        });
+
+                        const buffer = Buffer.from(await response.arrayBuffer());
+
+                        bot.sendAudio(chatid, buffer, {
+                            caption: fileroute.message,
+                            title: fileroute.audioname,
+                            performer: fileroute.performer
+                        })
+                    }
+                    else {
+                        await userquery.findOneAndUpdate({
+                            userid: chatid
+                        }, {
+                            $push: {
+                                messages: {
+                                    role: "assistant",
+                                    content: aimessage
+                                }
                             }
-                        }
-                    }, {
-                        upsert: true
-                    })
+                        }, {
+                            upsert: true
+                        })
 
-                    const tempDir = os.tmpdir();
-                    const filename = path.join(tempDir, fileroute.filename);
+                        const tempDir = os.tmpdir();
+                        const filename = path.join(tempDir, fileroute.filename);
 
-                    fs.writeFileSync(filename, fileroute.filecontent);
+                        fs.writeFileSync(filename, fileroute.filecontent);
 
-                    await bot.sendDocument(chatid, filename, {
-                        caption: fileroute.message
-                    });
+                        await bot.sendDocument(chatid, filename, {
+                            caption: fileroute.message
+                        });
+                    }
                 }
                 else {
                     await userquery.findOneAndUpdate({
