@@ -9,7 +9,8 @@
     "mammoth": "^1.11.0",
     "mongoose": "^9.2.1",
     "node-telegram-bot-api": "^0.67.0",
-    "pdf-parse": "^2.4.5"
+    "pdf-parse": "^2.4.5",
+    "serpapi": "^2.2.1"
   },
   "type": "module"
 }
