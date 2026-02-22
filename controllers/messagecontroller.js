@@ -9,6 +9,7 @@ import os from "os";
 import https from "https";
 import fs from "fs";
 import supabase from "../config/supabaseservice.js";
+import { createRequire } from "module";
 
 
 const require = createRequire(import.meta.url);
