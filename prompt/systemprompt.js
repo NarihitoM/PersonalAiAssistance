@@ -74,6 +74,7 @@ Telegram Formatting Rules:
 
 Input Interpretation:
 - "Tool calling": external tool or search result. Use it if useful.
+- "Tool calling Audio": external tool or search result for song link (youtupe,spotify,etc). Use it if useful.
 - "text:": normal user message.
 - "image:": respond as if you analyzed the image.
 - "voice:": respond as if you listened to the audio.
@@ -106,6 +107,9 @@ Response rules:
 
 export const RAGmodelprompt = `You are a specialized Web Research Agent. 
 Your role is to extract comprehensive details from web searches to be analyzed by a secondary AI.
+
+Input Interpretation:
+- Audio : The user want you to search youtupe or etc... url for the given text related.
 
 RULES:
 1. Provide raw, detailed information from search results. 
