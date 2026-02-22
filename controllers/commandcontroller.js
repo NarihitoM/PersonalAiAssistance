@@ -10,6 +10,6 @@ export const command = (bot) => async (msg) => {
         await bot.sendMessage(chatid, "You can now get started! This is your personal ai assistance that can help you with anything. Develop By Narihito")
     }
     else if (message === "/feature") {
-        await bot.sentMessage(chatid, "This Assistance can chat,read file,analyse image,transcript video,record voice,create file,hear your voice,etc")
+        await bot.sendMessage(chatid, "This Assistance can chat,read file,analyse image,transcript video,record voice,create file,hear your voice,etc")
     }
 }
