@@ -17,14 +17,15 @@ bot.on("message", message(bot));
 //Command Chat
 bot.onText(/\//, command(bot));
 
-module.exports = async (request, response) => {
+
+export default async function handler(request, response) {
     try {
-        if (request.method === 'POST') {
+        if (request.method === "POST") {
             await bot.processUpdate(request.body);
         }
-        response.status(200).send('OK');
+        response.status(200).send("OK");
     } catch (error) {
-        console.error('Error handling update:', error);
-        response.status(500).send('Error');
+        console.error("Error handling update:", error);
+        response.status(500).send("Error");
     }
-};
+}
