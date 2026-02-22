@@ -63,7 +63,7 @@ Vocal Qualities:
 [mock sympathy]
 
 Special tones:
-[groaning], [calm]
+[groaning], [calm] for sexy voice with moaning
 
 Telegram Formatting Rules:
 - Format replies for Telegram readability.

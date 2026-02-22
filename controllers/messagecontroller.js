@@ -492,12 +492,14 @@ export const message = (bot) => async (msg) => {
             const filelink = await bot.getFileLink(fileid);
 
             await bot.sendChatAction(chatid, "upload_video");
+            
             const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}.mp4`);
             const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}.mp3`);
             const audiofilename = `Audio-${Date.now()}.mp3`
 
             await bot.sendChatAction(chatid, "upload_video");
 
+            //Read the buffer value from url
             await new Promise((resolve, reject) => {
                 const file = fs.createWriteStream(tmpVideoPath);
                 https.get(filelink, (res) => {
@@ -509,6 +511,7 @@ export const message = (bot) => async (msg) => {
 
             await bot.sendChatAction(chatid, "upload_video");
 
+            //Put the content into audio path
             await new Promise((resolve, reject) => {
                 ffmpeg(tmpVideoPath)
                     .noVideo()
@@ -520,6 +523,7 @@ export const message = (bot) => async (msg) => {
                     .on("error", reject);
             });
 
+            //content to change buffer
             const audiobuffer = fs.createReadStream(tmpAudioPath);
 
             await bot.sendChatAction(chatid, "upload_video");
