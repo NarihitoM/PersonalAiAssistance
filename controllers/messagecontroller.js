@@ -10,6 +10,7 @@ import https from "https";
 import fs from "fs";
 import supabase from "../config/supabaseservice.js";
 import axios from "axios";
+import PDFParser from "pdf2json";
 
 //Model
 const model = "moonshotai/kimi-k2-instruct-0905"
