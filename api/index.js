@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     if (req.body.message) {
         const msg = req.body.message;
 
-        if (msg.text?.startsWith("/")) {
+        if (msg.text.startsWith("/")) {
             await command(bot)(msg);
         } else {
             await message(bot)(msg);

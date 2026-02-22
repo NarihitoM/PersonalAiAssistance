@@ -79,9 +79,7 @@ export const message = (bot) => async (msg) => {
     console.log(msg);
     console.log(typeof (msg));
 
-    if (msg.text.startsWith("/")) {
-        return;
-    }
+   
 
     try {
         //Message route
