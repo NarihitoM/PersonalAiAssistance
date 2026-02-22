@@ -1,5 +1,4 @@
 import { groq } from "../config/aiservice.js";
-import pdf from "pdf-parse";
 import mammoth from "mammoth";
 import { RAGmodelprompt, systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import userquery from "../model/userquery.js";
@@ -10,6 +9,10 @@ import os from "os";
 import https from "https";
 import fs from "fs";
 import supabase from "../config/supabaseservice.js";
+
+
+const require = createRequire(import.meta.url);
+const pdf = require("pdf-parse");
 
 //Model
 const model = "moonshotai/kimi-k2-instruct-0905"
