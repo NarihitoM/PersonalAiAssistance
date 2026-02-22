@@ -11,7 +11,7 @@ import https from "https";
 import fs from "fs";
 import supabase from "../config/supabaseservice.js";
 
-
+//Model
 const model = "moonshotai/kimi-k2-instruct-0905"
 const modelRAG = "groq/compound"
 const modelaudio = "canopylabs/orpheus-v1-english"
@@ -57,6 +57,10 @@ async function sendBotMessage(bot, chatid, text) {
 export const message = (bot) => async (msg) => {
     const chatid = msg.chat.id;
     console.log(msg);
+
+    if (msg.text.startsWith("/")) {
+        return;
+    }
 
     try {
         //Message route
@@ -120,6 +124,8 @@ export const message = (bot) => async (msg) => {
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
                 if (fileroute.type === "audio") {
+                    bot.sendChatAction(chatid, "upload_document")
+
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
                         voice: "hannah",
