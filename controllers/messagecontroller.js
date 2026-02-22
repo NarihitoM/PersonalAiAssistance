@@ -1132,7 +1132,7 @@ export const message = (bot) => async (msg) => {
             bot.sendChatAction(chatid, "upload_document");
 
             const result = await groq.audio.transcriptions.create({
-                model: modelaudio,
+                model: transcriptmodel,
                 url: filelink
             });
 
