@@ -1133,7 +1133,6 @@ export const message = (bot) => async (msg) => {
 
             const result = await groq.audio.transcriptions.create({
                 model: modelaudio,
-                language: "en",
                 url: filelink
             });
 
