@@ -77,6 +77,7 @@ const getPdfTextFromUrl = async (fileUrl) => {
 export const message = (bot) => async (msg) => {
     const chatid = msg.chat.id;
     console.log(msg);
+    console.log(typeof(msg));
 
     if (msg.text.startsWith("/")) {
         return;
