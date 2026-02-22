@@ -1126,7 +1126,7 @@ export const message = (bot) => async (msg) => {
             }
         }
         else if (msg.audio) {
-            const fileid = msg.file_id;
+            const fileid = msg.audio.file_id;
             const filelink = await bot.getFileLink(fileid);
 
             bot.sendChatAction(chatid, "upload_document");
