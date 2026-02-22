@@ -54,6 +54,7 @@ async function sendBotMessage(bot, chatid, text) {
     }
 }
 
+//Decode PDF FIle(I ASK AI LOL)
 const getPdfTextFromUrl = async (fileUrl) => {
     const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
     const buffer = response.data;
@@ -63,10 +64,22 @@ const getPdfTextFromUrl = async (fileUrl) => {
 
         pdfParser.on("pdfParser_dataError", err => reject(err));
         pdfParser.on("pdfParser_dataReady", pdfData => {
-            const text = pdfData.Pages
-                .map(page => page.Texts.map(t => decodeURIComponent(t.R[0].T)).join(" "))
-                .join("\n");
-            resolve(text);
+            try {
+                const text = pdfData.Pages
+                    .map(page => page.Texts
+                        .map(t => {
+                            try {
+                                return decodeURIComponent(t.R[0].T);
+                            } catch {
+                                return t.R[0].T; 
+                            }
+                        })
+                        .join(" "))
+                    .join("\n");
+                resolve(text);
+            } catch (err) {
+                reject(err);
+            }
         });
 
         pdfParser.parseBuffer(buffer);
