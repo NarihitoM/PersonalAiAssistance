@@ -14,10 +14,10 @@ export default async function handler(req, res) {
     if (!botInstance) botInstance = await createbot(token);
     const bot = botInstance;
 
-    if (req.body.message) {
-        const msg = req.body.message;
+    if (req.body) {
+        const msg = req.body;
 
-        if (msg.text.startsWith("/")) {
+        if (msg.text?.startsWith("/")) {
             await command(bot)(msg);
         } else {
             await message(bot)(msg);

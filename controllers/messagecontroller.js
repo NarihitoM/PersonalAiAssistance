@@ -79,8 +79,6 @@ export const message = (bot) => async (msg) => {
     console.log(msg);
     console.log(typeof (msg));
 
-   
-
     try {
         //Message route
         if (msg.text) {
