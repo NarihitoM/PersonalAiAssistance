@@ -1,5 +1,5 @@
 import { groq } from "../config/aiservice.js";
-import { PDFParse } from "pdf-parse";
+import pdf from "pdf-parse";
 import mammoth from "mammoth";
 import { RAGmodelprompt, systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import userquery from "../model/userquery.js";
@@ -756,9 +756,10 @@ export const message = (bot) => async (msg) => {
             //PDF file route
             else if (msg.document.mime_type === "application/pdf") {
 
-                const data = new PDFParse({ url: filelink })
+                const resultpdf = await axios.get(filelink, { responseType: "arraybuffer" });
+                const pdfData = await pdf(resultpdf.data); 
 
-                const result = await data.getText();
+                const result = await pdfData.text;
 
                 const pdffiledata = `PDF : ${result.text}`;
 
