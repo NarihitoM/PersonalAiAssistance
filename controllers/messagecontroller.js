@@ -9,11 +9,7 @@ import os from "os";
 import https from "https";
 import fs from "fs";
 import supabase from "../config/supabaseservice.js";
-import { createRequire } from "module";
-
-
-const require = createRequire(import.meta.url);
-const pdf = require("pdf-parse");
+import axios from "axios";
 
 //Model
 const model = "moonshotai/kimi-k2-instruct-0905"
@@ -56,6 +52,26 @@ async function sendBotMessage(bot, chatid, text) {
         await bot.sendMessage(chatid, text, { parse_mode: "HTML" });
     }
 }
+
+const getPdfTextFromUrl = async (fileUrl) => {
+    const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
+    const buffer = response.data;
+
+    return new Promise((resolve, reject) => {
+        const pdfParser = new PDFParser();
+
+        pdfParser.on("pdfParser_dataError", err => reject(err));
+        pdfParser.on("pdfParser_dataReady", pdfData => {
+            const text = pdfData.Pages
+                .map(page => page.Texts.map(t => decodeURIComponent(t.R[0].T)).join(" "))
+                .join("\n");
+            resolve(text);
+        });
+
+        pdfParser.parseBuffer(buffer);
+    });
+};
+
 
 //SUPER MESSAGE
 export const message = (bot) => async (msg) => {
@@ -760,12 +776,9 @@ export const message = (bot) => async (msg) => {
             //PDF file route
             else if (msg.document.mime_type === "application/pdf") {
 
-                const resultpdf = await axios.get(filelink, { responseType: "arraybuffer" });
-                const pdfData = await pdf(resultpdf.data); 
+                const pdfText = await getPdfTextFromUrl(filelink);
 
-                const result = await pdfData.text;
-
-                const pdffiledata = `PDF : ${result.text}`;
+                const pdffiledata = `PDF : ${pdfText}`;
 
                 await userquery.findOneAndUpdate({
                     userid: chatid
