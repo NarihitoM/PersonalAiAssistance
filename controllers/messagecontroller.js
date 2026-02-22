@@ -77,7 +77,7 @@ const getPdfTextFromUrl = async (fileUrl) => {
 export const message = (bot) => async (msg) => {
     const chatid = msg.chat.id;
     console.log(msg);
-    console.log(typeof(msg));
+    console.log(typeof (msg));
 
     if (msg.text.startsWith("/")) {
         return;
@@ -90,7 +90,7 @@ export const message = (bot) => async (msg) => {
             const message = `text : ${msg.text}`;
 
 
-            bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing");
 
             const RAGmodel = await groq.chat.completions.create({
                 model: modelRAG,
@@ -123,7 +123,7 @@ export const message = (bot) => async (msg) => {
             });
 
             const historymessage = await userquery.findOne({ userid: chatid });
-            bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing");
 
             const response = await groq.chat.completions.create({
                 model: model,
@@ -145,7 +145,7 @@ export const message = (bot) => async (msg) => {
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
                 if (fileroute.type === "audio") {
-                    bot.sendChatAction(chatid, "upload_document")
+                    await bot.sendChatAction(chatid, "upload_document")
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -157,14 +157,14 @@ export const message = (bot) => async (msg) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    bot.sendAudio(chatid, buffer, {
+                    await bot.sendAudio(chatid, buffer, {
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
                     })
                 }
                 else {
-                    bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_document");
 
                     await userquery.findOneAndUpdate({
                         userid: chatid
@@ -212,7 +212,7 @@ export const message = (bot) => async (msg) => {
             const filelink = await bot.getFileLink(fileid);
             const captionmsg = msg.caption ? `Caption : ${msg.caption}` : "";
 
-            bot.sendChatAction(chatid, "upload_photo")
+            await bot.sendChatAction(chatid, "upload_photo")
 
             const response1 = await groq.chat.completions.create({
                 model: imagemodel,
@@ -241,7 +241,7 @@ export const message = (bot) => async (msg) => {
 
             const aimessage1 = `image : ${response1.choices[0].message.content}`;
 
-            bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing");
 
 
             await userquery.findOneAndUpdate({
@@ -283,7 +283,7 @@ export const message = (bot) => async (msg) => {
             if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage2);
                 if (fileroute.type === "audio") {
-                    bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_document");
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -294,14 +294,14 @@ export const message = (bot) => async (msg) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    bot.sendAudio(chatid, buffer, {
+                    await bot.sendAudio(chatid, buffer, {
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
                     })
                 }
                 else {
-                    bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_document");
 
                     await userquery.findOneAndUpdate({
                         userid: chatid
@@ -348,7 +348,7 @@ export const message = (bot) => async (msg) => {
             const fileid = msg.voice.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            bot.sendChatAction(chatid, 'upload_document')
+            await bot.sendChatAction(chatid, 'upload_document')
 
             const transcription = await groq.audio.transcriptions.create({
                 model: transcriptmodel,
@@ -376,7 +376,7 @@ export const message = (bot) => async (msg) => {
             const Result = RAGmodel.choices[0].message.content;
             const RAGresult = `Tool Calling : ${Result}`;
 
-            bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing");
 
             await userquery.findOneAndUpdate({
                 userid: chatid
@@ -414,7 +414,7 @@ export const message = (bot) => async (msg) => {
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
                 if (fileroute.type === "audio") {
-                    bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_document");
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -426,14 +426,14 @@ export const message = (bot) => async (msg) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    bot.sendAudio(chatid, buffer, {
+                    await bot.sendAudio(chatid, buffer, {
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
                     })
                 }
                 else {
-                    bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_document");
 
                     await userquery.findOneAndUpdate({
                         userid: chatid
@@ -481,12 +481,12 @@ export const message = (bot) => async (msg) => {
             const fileid = msg.video.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            bot.sendChatAction(chatid, "upload_video");
+            await bot.sendChatAction(chatid, "upload_video");
             const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}.mp4`);
             const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}.mp3`);
             const audiofilename = `Audio-${Date.now()}.mp3`
 
-            bot.sendChatAction(chatid, "upload_video");
+            await bot.sendChatAction(chatid, "upload_video");
 
             await new Promise((resolve, reject) => {
                 const file = fs.createWriteStream(tmpVideoPath);
@@ -497,7 +497,7 @@ export const message = (bot) => async (msg) => {
                 }).on("error", reject);
             });
 
-            bot.sendChatAction(chatid, "upload_video");
+            await bot.sendChatAction(chatid, "upload_video");
 
             await new Promise((resolve, reject) => {
                 ffmpeg(tmpVideoPath)
@@ -512,7 +512,7 @@ export const message = (bot) => async (msg) => {
 
             const audiobuffer = fs.createReadStream(tmpAudioPath);
 
-            bot.sendChatAction(chatid, "upload_video");
+            await bot.sendChatAction(chatid, "upload_video");
 
             const { error } = await supabase.storage.from("audio").upload(audiofilename, audiobuffer, {
                 upsert: true
@@ -526,7 +526,7 @@ export const message = (bot) => async (msg) => {
 
 
 
-            bot.sendChatAction(chatid, "upload_video");
+            await bot.sendChatAction(chatid, "upload_video");
 
             const transcript = await groq.audio.transcriptions.create({
                 model: transcriptmodel,
@@ -559,7 +559,7 @@ export const message = (bot) => async (msg) => {
             });
 
             const historymessage = await userquery.findOne({ userid: chatid });
-            bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing");
 
             const response = await groq.chat.completions.create({
                 model: model,
@@ -582,7 +582,7 @@ export const message = (bot) => async (msg) => {
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
                 if (fileroute.type === "audio") {
-                    bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_document");
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -594,14 +594,14 @@ export const message = (bot) => async (msg) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    bot.sendAudio(chatid, buffer, {
+                    await bot.sendAudio(chatid, buffer, {
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
                     })
                 }
                 else {
-                    bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_document");
 
                     await userquery.findOneAndUpdate({
                         userid: chatid
@@ -649,7 +649,7 @@ export const message = (bot) => async (msg) => {
             const filelink = await bot.getFileLink(fileid);
             const filecontent = await fetch(filelink);
             const filebuffer = await filecontent.arrayBuffer();
-            bot.sendChatAction(chatid, "upload_document");
+            await bot.sendChatAction(chatid, "upload_document");
             const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please analyse this file";
 
 
@@ -692,7 +692,7 @@ export const message = (bot) => async (msg) => {
 
                 const historymessage = await userquery.findOne({ userid: chatid })
 
-                bot.sendChatAction(chatid, "typing");
+                await bot.sendChatAction(chatid, "typing");
                 const response = await groq.chat.completions.create({
                     model: model,
                     messages: [
@@ -713,7 +713,7 @@ export const message = (bot) => async (msg) => {
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
                     if (fileroute.type === "audio") {
-                        bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_document");
 
                         const response = await groq.audio.speech.create({
                             model: modelaudio,
@@ -725,14 +725,14 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = Buffer.from(await response.arrayBuffer());
 
-                        bot.sendAudio(chatid, buffer, {
+                        await bot.sendAudio(chatid, buffer, {
                             caption: fileroute.message,
                             title: fileroute.audioname,
                             performer: fileroute.performer
                         })
                     }
                     else {
-                        bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_document");
 
                         await userquery.findOneAndUpdate({
                             userid: chatid
@@ -796,7 +796,7 @@ export const message = (bot) => async (msg) => {
 
                 const historymessage = await userquery.findOne({ userid: chatid })
 
-                bot.sendChatAction(chatid, "typing");
+                await bot.sendChatAction(chatid, "typing");
                 const response = await groq.chat.completions.create({
                     model: model,
                     messages: [
@@ -817,7 +817,7 @@ export const message = (bot) => async (msg) => {
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
                     if (fileroute.type === "audio") {
-                        bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_document");
 
                         const response = await groq.audio.speech.create({
                             model: modelaudio,
@@ -829,14 +829,14 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = Buffer.from(await response.arrayBuffer());
 
-                        bot.sendAudio(chatid, buffer, {
+                        await bot.sendAudio(chatid, buffer, {
                             caption: fileroute.message,
                             title: fileroute.audioname,
                             performer: fileroute.performer
                         })
                     }
                     else {
-                        bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_document");
 
                         await userquery.findOneAndUpdate({
                             userid: chatid
@@ -898,7 +898,7 @@ export const message = (bot) => async (msg) => {
 
                 const historymessage = await userquery.findOne({ userid: chatid })
 
-                bot.sendChatAction(chatid, "typing");
+                await bot.sendChatAction(chatid, "typing");
                 const response = await groq.chat.completions.create({
                     model: model,
                     messages: [
@@ -919,7 +919,7 @@ export const message = (bot) => async (msg) => {
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
                     if (fileroute.type === "audio") {
-                        bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_document");
 
                         const response = await groq.audio.speech.create({
                             model: modelaudio,
@@ -931,14 +931,14 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = Buffer.from(await response.arrayBuffer());
 
-                        bot.sendAudio(chatid, buffer, {
+                        await bot.sendAudio(chatid, buffer, {
                             caption: fileroute.message,
                             title: fileroute.audioname,
                             performer: fileroute.performer
                         })
                     }
                     else {
-                        bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_document");
 
                         await userquery.findOneAndUpdate({
                             userid: chatid
@@ -1009,7 +1009,7 @@ export const message = (bot) => async (msg) => {
 
                 const aimessage1 = `image : ${response1.choices[0].message.content}`;
 
-                bot.sendChatAction(chatid, "typing");
+                await bot.sendChatAction(chatid, "typing");
 
                 await userquery.findOneAndUpdate({
                     userid: chatid
@@ -1050,7 +1050,7 @@ export const message = (bot) => async (msg) => {
                 if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage2);
                     if (fileroute.type === "audio") {
-                        bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_document");
 
                         const response = await groq.audio.speech.create({
                             model: modelaudio,
@@ -1061,14 +1061,14 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = Buffer.from(await response.arrayBuffer());
 
-                        bot.sendAudio(chatid, buffer, {
+                        await bot.sendAudio(chatid, buffer, {
                             caption: fileroute.message,
                             title: fileroute.audioname,
                             performer: fileroute.performer
                         })
                     }
                     else {
-                        bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_document");
 
                         await userquery.findOneAndUpdate({
                             userid: chatid
