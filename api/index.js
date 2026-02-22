@@ -1,31 +1,29 @@
-import { message } from "../controllers/messagecontroller.js";
-import { command } from "../controllers/commandcontroller.js";
-import { createbot } from "../config/botservice.js";
 import { configDotenv } from "dotenv";
-import { mongoconnect } from "../config/mongoservice.js";
+import { createbot } from "../config/botservice.js";
 
 configDotenv();
 
 const token = process.env.TOKEN;
 
-await mongoconnect();
-
-const bot = createbot(token);
-
-//Global Chat
-bot.on("message", message(bot));
-//Command Chat
-bot.onText(/\//, command(bot));
-
+let botPromise;
 
 export default async function handler(request, response) {
     try {
-        if (request.method === "POST") {
-            await bot.processUpdate(request.body);
+        if (request.method !== "POST") {
+            return response.status(200).send("Telegram bot is running ✅");
         }
-        response.status(200).send("OK");
+
+        if (!botPromise) {
+            botPromise = createbot(token);
+        }
+
+        const bot = await botPromise;
+
+        await bot.processUpdate(request.body);
+
+        return response.status(200).send("OK");
     } catch (error) {
-        console.error("Error handling update:", error);
-        response.status(500).send("Error");
+        console.error("Webhook error:", error);
+        return response.status(500).send("Internal Server Error");
     }
 }
