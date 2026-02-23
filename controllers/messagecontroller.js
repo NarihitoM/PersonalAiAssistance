@@ -461,10 +461,12 @@ export const message = (bot) => async (msg) => {
                         role: "system",
                         content: systemprompt
                     },
-                    ...historymessage.map((element, index) => ({
-                        role: element.role,
-                        content: element.content
-                    }))
+                    ...historymessage.messages.slice(-6).map((element) => (
+                        {
+                            role: element.role,
+                            content: element.content
+                        }
+                    ))
                 ]
             })
 
