@@ -91,10 +91,11 @@ const getPdfTextFromUrl = async (fileUrl) => {
 
 //SUPER MESSAGE 
 export const message = (bot) => async (msg) => {
+
+    const chatid = msg.chat.id;
+    console.log(msg);
+    //Message route
     try {
-        const chatid = msg.chat.id;
-        console.log(msg);
-        //Message route
         if (msg.text) {
 
             const message = `text : ${msg.text}`;
