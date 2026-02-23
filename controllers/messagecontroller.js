@@ -191,12 +191,20 @@ export const message = (bot) => async (msg) => {
 
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
+                    if (fileroute.filetype === "pdf") {
+                        fs.writeFileSync(filename, Buffer.from(fileroute.filecontent, "base64"));
 
-                    fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+                        await bot.sendDocument(chatid, filename, {
+                            caption: fileroute.message
+                        });
+                    }
+                    else {
+                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                    await bot.sendDocument(chatid, filename, {
-                        caption: fileroute.message
-                    });
+                        await bot.sendDocument(chatid, filename, {
+                            caption: fileroute.message
+                        });
+                    }
                 }
             }
             else {
