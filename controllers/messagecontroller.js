@@ -408,7 +408,7 @@ export const message = (bot) => async (msg) => {
             }
         }
         else if (msg.sticker) {
-            const fileid = msg.file_id;
+            const fileid = msg.sticker.file_id;
             const filelink = await bot.getFileLink(fileid);
 
             await bot.sendChatAction(chatid, "upload_photo");
@@ -451,7 +451,7 @@ export const message = (bot) => async (msg) => {
             const historymessage = await userquery.findOne({ userid: chatid });
 
             await bot.sendChatAction(chatid, "typing");
-            
+
             const response = await groq.chat.completions.create({
                 model: model,
                 messages: [
