@@ -214,7 +214,7 @@ export const message = (bot) => async (msg) => {
                         const buffer = writableStream.getContents();
 
                         await bot.sendDocument(chatid, buffer, {
-                            title : fileroute.filename,
+                            title: fileroute.filename,
                             caption: fileroute.message
                         });
                     }
@@ -357,11 +357,38 @@ export const message = (bot) => async (msg) => {
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
 
-                    fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+                    if (fileroute.filetype === "pdf") {
+                        const pdfDoc = new PDFDocument({ margin: 50 });
+                        const writableStream = new streamBuffers.WritableStreamBuffer();
 
-                    await bot.sendDocument(chatid, filename, {
-                        caption: fileroute.message
-                    });
+                        pdfDoc.pipe(writableStream);
+
+                        pdfDoc.font("Helvetica")
+                            .fontSize(12)
+                            .text(fileroute.filecontent, {
+                                align: "left"
+                            });
+
+                        pdfDoc.end();
+
+                        await new Promise(resolve =>
+                            writableStream.on("close", resolve)
+                        );
+
+                        const buffer = writableStream.getContents();
+
+                        await bot.sendDocument(chatid, buffer, {
+                            title: fileroute.filename,
+                            caption: fileroute.message
+                        });
+                    }
+                    else {
+                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+
+                        await bot.sendDocument(chatid, filename, {
+                            caption: fileroute.message
+                        });
+                    }
                 }
             }
             else {
@@ -489,11 +516,38 @@ export const message = (bot) => async (msg) => {
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
 
-                    fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+                    if (fileroute.filetype === "pdf") {
+                        const pdfDoc = new PDFDocument({ margin: 50 });
+                        const writableStream = new streamBuffers.WritableStreamBuffer();
 
-                    await bot.sendDocument(chatid, filename, {
-                        caption: fileroute.message
-                    });
+                        pdfDoc.pipe(writableStream);
+
+                        pdfDoc.font("Helvetica")
+                            .fontSize(12)
+                            .text(fileroute.filecontent, {
+                                align: "left"
+                            });
+
+                        pdfDoc.end();
+
+                        await new Promise(resolve =>
+                            writableStream.on("close", resolve)
+                        );
+
+                        const buffer = writableStream.getContents();
+
+                        await bot.sendDocument(chatid, buffer, {
+                            title: fileroute.filename,
+                            caption: fileroute.message
+                        });
+                    }
+                    else {
+                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+
+                        await bot.sendDocument(chatid, filename, {
+                            caption: fileroute.message
+                        });
+                    }
                 }
             }
             else {
@@ -661,11 +715,38 @@ export const message = (bot) => async (msg) => {
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
 
-                    fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+                    if (fileroute.filetype === "pdf") {
+                        const pdfDoc = new PDFDocument({ margin: 50 });
+                        const writableStream = new streamBuffers.WritableStreamBuffer();
 
-                    await bot.sendDocument(chatid, filename, {
-                        caption: fileroute.message
-                    });
+                        pdfDoc.pipe(writableStream);
+
+                        pdfDoc.font("Helvetica")
+                            .fontSize(12)
+                            .text(fileroute.filecontent, {
+                                align: "left"
+                            });
+
+                        pdfDoc.end();
+
+                        await new Promise(resolve =>
+                            writableStream.on("close", resolve)
+                        );
+
+                        const buffer = writableStream.getContents();
+
+                        await bot.sendDocument(chatid, buffer, {
+                            title: fileroute.filename,
+                            caption: fileroute.message
+                        });
+                    }
+                    else {
+                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+
+                        await bot.sendDocument(chatid, filename, {
+                            caption: fileroute.message
+                        });
+                    }
                 }
             }
             else {
@@ -792,11 +873,38 @@ export const message = (bot) => async (msg) => {
                         const tempDir = os.tmpdir();
                         const filename = path.join(tempDir, fileroute.filename);
 
-                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+                        if (fileroute.filetype === "pdf") {
+                            const pdfDoc = new PDFDocument({ margin: 50 });
+                            const writableStream = new streamBuffers.WritableStreamBuffer();
 
-                        await bot.sendDocument(chatid, filename, {
-                            caption: fileroute.message
-                        });
+                            pdfDoc.pipe(writableStream);
+
+                            pdfDoc.font("Helvetica")
+                                .fontSize(12)
+                                .text(fileroute.filecontent, {
+                                    align: "left"
+                                });
+
+                            pdfDoc.end();
+
+                            await new Promise(resolve =>
+                                writableStream.on("close", resolve)
+                            );
+
+                            const buffer = writableStream.getContents();
+
+                            await bot.sendDocument(chatid, buffer, {
+                                title: fileroute.filename,
+                                caption: fileroute.message
+                            });
+                        }
+                        else {
+                            fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+
+                            await bot.sendDocument(chatid, filename, {
+                                caption: fileroute.message
+                            });
+                        }
                     }
                 }
                 else {
@@ -896,11 +1004,38 @@ export const message = (bot) => async (msg) => {
                         const tempDir = os.tmpdir();
                         const filename = path.join(tempDir, fileroute.filename);
 
-                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+                        if (fileroute.filetype === "pdf") {
+                            const pdfDoc = new PDFDocument({ margin: 50 });
+                            const writableStream = new streamBuffers.WritableStreamBuffer();
 
-                        await bot.sendDocument(chatid, filename, {
-                            caption: fileroute.message
-                        });
+                            pdfDoc.pipe(writableStream);
+
+                            pdfDoc.font("Helvetica")
+                                .fontSize(12)
+                                .text(fileroute.filecontent, {
+                                    align: "left"
+                                });
+
+                            pdfDoc.end();
+
+                            await new Promise(resolve =>
+                                writableStream.on("close", resolve)
+                            );
+
+                            const buffer = writableStream.getContents();
+
+                            await bot.sendDocument(chatid, buffer, {
+                                title: fileroute.filename,
+                                caption: fileroute.message
+                            });
+                        }
+                        else {
+                            fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+
+                            await bot.sendDocument(chatid, filename, {
+                                caption: fileroute.message
+                            });
+                        }
                     }
                 }
                 else {
@@ -998,11 +1133,38 @@ export const message = (bot) => async (msg) => {
                         const tempDir = os.tmpdir();
                         const filename = path.join(tempDir, fileroute.filename);
 
-                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+                        if (fileroute.filetype === "pdf") {
+                            const pdfDoc = new PDFDocument({ margin: 50 });
+                            const writableStream = new streamBuffers.WritableStreamBuffer();
 
-                        await bot.sendDocument(chatid, filename, {
-                            caption: fileroute.message
-                        });
+                            pdfDoc.pipe(writableStream);
+
+                            pdfDoc.font("Helvetica")
+                                .fontSize(12)
+                                .text(fileroute.filecontent, {
+                                    align: "left"
+                                });
+
+                            pdfDoc.end();
+
+                            await new Promise(resolve =>
+                                writableStream.on("close", resolve)
+                            );
+
+                            const buffer = writableStream.getContents();
+
+                            await bot.sendDocument(chatid, buffer, {
+                                title: fileroute.filename,
+                                caption: fileroute.message
+                            });
+                        }
+                        else {
+                            fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+
+                            await bot.sendDocument(chatid, filename, {
+                                caption: fileroute.message
+                            });
+                        }
                     }
                 }
 
@@ -1128,11 +1290,38 @@ export const message = (bot) => async (msg) => {
                         const tempDir = os.tmpdir();
                         const filename = path.join(tempDir, fileroute.filename);
 
-                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+                        if (fileroute.filetype === "pdf") {
+                            const pdfDoc = new PDFDocument({ margin: 50 });
+                            const writableStream = new streamBuffers.WritableStreamBuffer();
 
-                        await bot.sendDocument(chatid, filename, {
-                            caption: fileroute.message
-                        });
+                            pdfDoc.pipe(writableStream);
+
+                            pdfDoc.font("Helvetica")
+                                .fontSize(12)
+                                .text(fileroute.filecontent, {
+                                    align: "left"
+                                });
+
+                            pdfDoc.end();
+
+                            await new Promise(resolve =>
+                                writableStream.on("close", resolve)
+                            );
+
+                            const buffer = writableStream.getContents();
+
+                            await bot.sendDocument(chatid, buffer, {
+                                title: fileroute.filename,
+                                caption: fileroute.message
+                            });
+                        }
+                        else {
+                            fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+
+                            await bot.sendDocument(chatid, filename, {
+                                caption: fileroute.message
+                            });
+                        }
                     }
                 }
                 else {
@@ -1256,11 +1445,38 @@ export const message = (bot) => async (msg) => {
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
 
-                    fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+                    if (fileroute.filetype === "pdf") {
+                        const pdfDoc = new PDFDocument({ margin: 50 });
+                        const writableStream = new streamBuffers.WritableStreamBuffer();
 
-                    await bot.sendDocument(chatid, filename, {
-                        caption: fileroute.message
-                    });
+                        pdfDoc.pipe(writableStream);
+
+                        pdfDoc.font("Helvetica")
+                            .fontSize(12)
+                            .text(fileroute.filecontent, {
+                                align: "left"
+                            });
+
+                        pdfDoc.end();
+
+                        await new Promise(resolve =>
+                            writableStream.on("close", resolve)
+                        );
+
+                        const buffer = writableStream.getContents();
+
+                        await bot.sendDocument(chatid, buffer, {
+                            title: fileroute.filename,
+                            caption: fileroute.message
+                        });
+                    }
+                    else {
+                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
+
+                        await bot.sendDocument(chatid, filename, {
+                            caption: fileroute.message
+                        });
+                    }
                 }
             }
             else {
