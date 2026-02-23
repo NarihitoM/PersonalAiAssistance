@@ -213,7 +213,7 @@ export const message = (bot) => async (msg) => {
                         const buffer = writableStream.getContents();
 
                         await bot.sendDocument(chatid, {
-                            source: pdfBuffer,
+                            source: buffer,
                             filename: fileroute.filename
                         }, {
                             caption: fileroute.message
