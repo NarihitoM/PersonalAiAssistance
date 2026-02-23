@@ -100,7 +100,6 @@ export const message = (bot) => async (msg) => {
 
             const message = `text : ${msg.text}`;
 
-
             await bot.sendChatAction(chatid, "typing");
 
             const RAGmodel = await groq.chat.completions.create({
@@ -192,6 +191,7 @@ export const message = (bot) => async (msg) => {
 
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
+
                     if (fileroute.filetype === "pdf") {
                         const pdfDoc = new PDFDocument({ margin: 50 });
                         const writableStream = new streamBuffers.WritableStreamBuffer();
@@ -200,7 +200,7 @@ export const message = (bot) => async (msg) => {
 
                         pdfDoc.font("Helvetica")
                             .fontSize(12)
-                            .text(text, {
+                            .text(fileroute.filecontent, {
                                 align: "left"
                             });
 
