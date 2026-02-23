@@ -18,7 +18,7 @@ import streamBuffers from "stream-buffers";
 const model = "moonshotai/kimi-k2-instruct-0905"
 const modelRAG = "groq/compound"
 const modelaudio = "canopylabs/orpheus-v1-english"
-const imagemodel = "meta-llama/llama-4-maverick-17b-128e-instruct"
+const imagemodel = "meta-llama/llama-4-scout-17b-16e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
 
 ffmpeg.setFfmpegPath(ffmpegPath);
