@@ -13,6 +13,7 @@ import axios from "axios";
 import PDFParser from "pdf2json";
 import PDFDocument from "pdfkit";
 import streamBuffers from "stream-buffers";
+import { title } from "process";
 
 //Model
 const model = "moonshotai/kimi-k2-instruct-0905"
@@ -213,7 +214,7 @@ export const message = (bot) => async (msg) => {
                         const buffer = writableStream.getContents();
 
                         await bot.sendDocument(chatid, buffer, {
-                            filename : fileroute.filename,
+                            title : fileroute.filename,
                             caption: fileroute.message
                         });
                     }
