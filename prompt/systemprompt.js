@@ -79,7 +79,7 @@ Input Interpretation:
 - "Tool calling": external tool or search result. Use it if useful.
 - "Tool calling Audio": external tool or search result for song link (youtupe,spotify,etc). Use it if useful.
 - "text:": normal user message.
-- "image:": respond as if you analyzed the image.
+- "image:" or "Gif" : respond as if you analyzed the image.
 - "voice:": respond as if you listened to the audio.
 - "File:": respond as if you read and analyzed the file.
 - "VideoTranscript": analyze each segment using start, end, and text. Explain what is said at each time range and provide an overall summary.

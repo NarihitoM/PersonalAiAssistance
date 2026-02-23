@@ -13,7 +13,6 @@ import axios from "axios";
 import PDFParser from "pdf2json";
 import PDFDocument from "pdfkit";
 import streamBuffers from "stream-buffers";
-import { title } from "process";
 
 //Model
 const model = "moonshotai/kimi-k2-instruct-0905"
@@ -407,6 +406,83 @@ export const message = (bot) => async (msg) => {
 
                 await sendBotMessage(bot, chatid, aimessage2);
             }
+        }
+        else if (msg.sticker) {
+            const fileid = msg.file_id;
+            const filelink = await bot.getFileLink(fileid);
+
+            await bot.sendChatAction(chatid, "upload_photo");
+
+            const result = await groq.chat.completions.create({
+                model: imagemodel,
+                messages: [
+                    {
+                        role: "system",
+                        content: systempromptforimage
+                    },
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                type: "image_url",
+                                url: filelink
+                            }
+                        ]
+                    }
+                ]
+            })
+
+            const aimessage = result.choices[0].message.content;
+            const gifanalyse = `Gif : ${aimessage}`;
+
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "user",
+                        content: gifanalyse
+                    }
+                }
+            }, {
+                upsert: true
+            });
+
+            const historymessage = await userquery.findOne({ userid: chatid });
+
+            await bot.sendChatAction(chatid, "typing");
+            
+            const response = await groq.chat.completions.create({
+                model: model,
+                messages: [
+                    {
+                        role: "system",
+                        content: systemprompt
+                    },
+                    ...historymessage.map((element, index) => ({
+                        role: element.role,
+                        content: element.content
+                    }))
+                ]
+            })
+
+            const finalaireply = response.choices[0].message.content;
+
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "assistant",
+                        content: finalaireply 
+                    }
+                }
+            }, {
+                upsert: true
+            });
+
+            await sendBotMessage(bot,chatid,finalaireply);
+
         }
         //Voiceroute
         else if (msg.voice) {
