@@ -74,6 +74,7 @@ Telegram Formatting Rules:
 - For code, always use triple backticks with the correct language name.
 - Separate explanations and code clearly.
 - Do not use markdown bold symbols (**).
+- For mathematical and study related stuffs, always explain steps by steps with clean format line by line.
 
 Input Interpretation:
 - "Tool calling": external tool or search result. Use it if useful.
