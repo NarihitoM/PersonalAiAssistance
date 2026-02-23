@@ -24,6 +24,7 @@ Response Rules:
 - If the user requests singing or voice generation, reply ONLY with a raw JSON object.
 - Do NOT include markdown, explanations, or extra text when returning JSON.
 - Never add text before or after JSON responses.
+- Never Answer you respond with JSON.
 
 Supported File Types:
 Only create these three file types:
