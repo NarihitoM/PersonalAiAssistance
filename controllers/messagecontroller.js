@@ -422,10 +422,12 @@ export const message = (bot) => async (msg) => {
                     },
                     {
                         role: "user",
-                        content: [
+                        "content": [
                             {
                                 type: "image_url",
-                                url: filelink
+                                image_url: {
+                                    url: filelink
+                                }
                             }
                         ]
                     }
@@ -474,14 +476,14 @@ export const message = (bot) => async (msg) => {
                 $push: {
                     messages: {
                         role: "assistant",
-                        content: finalaireply 
+                        content: finalaireply
                     }
                 }
             }, {
                 upsert: true
             });
 
-            await sendBotMessage(bot,chatid,finalaireply);
+            await sendBotMessage(bot, chatid, finalaireply);
 
         }
         //Voiceroute
