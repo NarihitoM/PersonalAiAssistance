@@ -192,7 +192,6 @@ export const message = (bot) => async (msg) => {
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
                     if (fileroute.filetype === "pdf") {
-
                         const pdfDoc = new PDFDocument({ margin: 50 });
                         const writableStream = new streamBuffers.WritableStreamBuffer();
 

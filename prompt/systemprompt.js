@@ -35,7 +35,7 @@ File JSON format:
 {
   "message": "<your message>",
   "filename": "<filename>",
-  "filetype" : "pdf,text,html",(Write these three only)
+  "filetype" : "pdf,text,html",(Write on of these three only what user requested.)
   "filecontent": "<content. If video transcript, include timestamps and overall lessons>"
 }
 
