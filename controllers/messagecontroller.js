@@ -11,6 +11,8 @@ import fs from "fs";
 import supabase from "../config/supabaseservice.js";
 import axios from "axios";
 import PDFParser from "pdf2json";
+import PDFDocument from "pdfkit";
+import streamBuffers from "stream-buffers";
 
 //Model
 const model = "moonshotai/kimi-k2-instruct-0905"
@@ -89,11 +91,9 @@ const getPdfTextFromUrl = async (fileUrl) => {
 
 //SUPER MESSAGE 
 export const message = (bot) => async (msg) => {
-    const chatid = msg.chat.id;
-    console.log(msg);
-    console.log(typeof (msg));
-
     try {
+        const chatid = msg.chat.id;
+        console.log(msg);
         //Message route
         if (msg.text) {
 
@@ -192,9 +192,30 @@ export const message = (bot) => async (msg) => {
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
                     if (fileroute.filetype === "pdf") {
-                        fs.writeFileSync(filename, Buffer.from(fileroute.filecontent, "base64"));
 
-                        await bot.sendDocument(chatid, filename, {
+                        const pdfDoc = new PDFDocument({ margin: 50 });
+                        const writableStream = new streamBuffers.WritableStreamBuffer();
+
+                        pdfDoc.pipe(writableStream);
+
+                        pdfDoc.font("Helvetica")
+                            .fontSize(12)
+                            .text(text, {
+                                align: "left"
+                            });
+
+                        pdfDoc.end();
+
+                        await new Promise(resolve =>
+                            writableStream.on("close", resolve)
+                        );
+
+                        const buffer = writableStream.getContents();
+
+                        await bot.sendDocument(chatid, {
+                            source: pdfBuffer,
+                            filename: fileroute.filename
+                        }, {
                             caption: fileroute.message
                         });
                     }
