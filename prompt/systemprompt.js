@@ -26,9 +26,10 @@ Response Rules:
 - Never add text before or after JSON responses.
 
 Supported File Types:
-Only create these two file types:
+Only create these three file types:
 1. text file
 2. html file
+3. pdf file
 
 File JSON format:
 {

@@ -192,7 +192,7 @@ export const message = (bot) => async (msg) => {
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
 
-                    fs.writeFileSync(filename, fileroute.filecontent);
+                    fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
                     await bot.sendDocument(chatid, filename, {
                         caption: fileroute.message
@@ -329,7 +329,7 @@ export const message = (bot) => async (msg) => {
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
 
-                    fs.writeFileSync(filename, fileroute.filecontent);
+                    fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
                     await bot.sendDocument(chatid, filename, {
                         caption: fileroute.message
@@ -461,7 +461,7 @@ export const message = (bot) => async (msg) => {
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
 
-                    fs.writeFileSync(filename, fileroute.filecontent);
+                    fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
                     await bot.sendDocument(chatid, filename, {
                         caption: fileroute.message
@@ -633,7 +633,7 @@ export const message = (bot) => async (msg) => {
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
 
-                    fs.writeFileSync(filename, fileroute.filecontent);
+                    fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
                     await bot.sendDocument(chatid, filename, {
                         caption: fileroute.message
@@ -764,7 +764,7 @@ export const message = (bot) => async (msg) => {
                         const tempDir = os.tmpdir();
                         const filename = path.join(tempDir, fileroute.filename);
 
-                        fs.writeFileSync(filename, fileroute.filecontent);
+                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
                         await bot.sendDocument(chatid, filename, {
                             caption: fileroute.message
@@ -868,7 +868,7 @@ export const message = (bot) => async (msg) => {
                         const tempDir = os.tmpdir();
                         const filename = path.join(tempDir, fileroute.filename);
 
-                        fs.writeFileSync(filename, fileroute.filecontent);
+                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
                         await bot.sendDocument(chatid, filename, {
                             caption: fileroute.message
@@ -970,7 +970,7 @@ export const message = (bot) => async (msg) => {
                         const tempDir = os.tmpdir();
                         const filename = path.join(tempDir, fileroute.filename);
 
-                        fs.writeFileSync(filename, fileroute.filecontent);
+                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
                         await bot.sendDocument(chatid, filename, {
                             caption: fileroute.message
@@ -1100,7 +1100,7 @@ export const message = (bot) => async (msg) => {
                         const tempDir = os.tmpdir();
                         const filename = path.join(tempDir, fileroute.filename);
 
-                        fs.writeFileSync(filename, fileroute.filecontent);
+                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
                         await bot.sendDocument(chatid, filename, {
                             caption: fileroute.message
@@ -1228,7 +1228,7 @@ export const message = (bot) => async (msg) => {
                     const tempDir = os.tmpdir();
                     const filename = path.join(tempDir, fileroute.filename);
 
-                    fs.writeFileSync(filename, fileroute.filecontent);
+                    fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
                     await bot.sendDocument(chatid, filename, {
                         caption: fileroute.message
