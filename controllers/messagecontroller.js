@@ -1,4 +1,4 @@
-import { groq } from "../config/aiservice.js";
+import { groq, Gemini } from "../config/aiservice.js";
 import mammoth from "mammoth";
 import { RAGmodelprompt, systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import userquery from "../model/userquery.js";
@@ -88,6 +88,75 @@ const getPdfTextFromUrl = async (fileUrl) => {
     });
 };
 
+
+export const image = (bot) => async (msg) => {
+    const chatid = msg.chat.id;
+    console.log(msg);
+    const text = msg.split(/(.*)/);
+
+    const usertext = `Image creation : ${text[1]}`;
+
+    try {
+        await userquery.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $push: {
+                messages: {
+                    role: "user",
+                    content: usertext
+                }
+            }
+        },
+            {
+                upsert: true
+            });
+
+        const historymessage = await userquery.findOne({ userid: chatid });
+        bot.sendChatAction(chatid, "typing");
+
+        const response = await groq.chat.completions.create({
+            model: model,
+            messages: [
+                {
+                    role: "system",
+                    content: systemprompt
+                },
+                ...historymessage.messages.map((element, index) => (
+                    {
+                        role: element.role,
+                        content: element.content
+                    }
+                ))
+            ]
+        })
+
+        const requestprompt = response.choices[0].message.content;
+
+        let airequestprompt;
+        if (requestprompt.startsWith("{") && requestprompt.endsWith("}")) {
+            airequestprompt = JSON.parse(requestprompt);
+        }
+
+        const imageresponse = await Gemini.models.generateImages({
+            model: "imagen-4.0-generate-001",
+            prompt: airequestprompt.imageprompt,
+            config: {
+                numberOfImages: 1
+            },
+        })
+
+        const imageBytes = imageresponse.generatedImages[0].image.imageBytes;
+        const buffer = Buffer.from(imageBytes, "base64");
+
+        await bot.sendPhoto(chatid, buffer, {
+            title: airequestprompt.imagename,
+            caption: airequestprompt.message
+        })
+    }
+    catch (err) {
+        await sendBotMessage(bot, chatid, "It seems something went wrong.")
+    }
+}
 
 //SUPER MESSAGE 
 export const message = (bot) => async (msg) => {

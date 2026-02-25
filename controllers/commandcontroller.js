@@ -1,6 +1,8 @@
 
 //Command
 
+import { image } from "./messagecontroller";
+
 export const command = (bot) => async (msg) => {
     const chatid = msg.chat.id;
     const message = msg.text;
@@ -11,6 +13,9 @@ export const command = (bot) => async (msg) => {
     }
     else if (message === "/feature") {
         await bot.sendMessage(chatid, "This Assistance can chat,read file,analyse image,transcript video,record voice,create file,hear your voice,etc")
+    }
+    else if(message.startsWith("/image")){
+        await image(bot)(msg);
     }
     else {
         await bot.sendMessage(chatid, "Sorry There is no command with that function.")
