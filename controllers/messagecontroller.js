@@ -145,9 +145,9 @@ export const image = (bot) => async (msg) => {
             model: "imagen-4.0-generate-001",
             prompt: airequestprompt.imageprompt,
             config: {
-                numberOfImages: 1
+                numberOfImages: 1,
+                aspectRatio: "1:1"
             },
-
         })
 
         const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
