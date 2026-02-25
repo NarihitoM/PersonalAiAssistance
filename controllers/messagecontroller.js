@@ -20,6 +20,7 @@ const modelRAG = "groq/compound"
 const modelaudio = "canopylabs/orpheus-v1-english"
 const imagemodel = "meta-llama/llama-4-scout-17b-16e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
+const imagecreatemodel = "imagen-4.0-generate-001"
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -88,85 +89,6 @@ const getPdfTextFromUrl = async (fileUrl) => {
     });
 };
 
-//Image creation route
-export const image = (bot) => async (msg) => {
-    const chatid = msg.chat.id;
-    console.log(msg);
-    const text = msg.text.replace(/^\/image\s*/i, "");
-
-    const usertext = `Image creation : ${text}`;
-
-    console.log(usertext)
-
-    try {
-        await userquery.findOneAndUpdate({
-            userid: chatid
-        }, {
-            $push: {
-                messages: {
-                    role: "user",
-                    content: usertext
-                }
-            }
-        },
-            {
-                upsert: true
-            });
-
-        const historymessage = await userquery.findOne({ userid: chatid });
-        bot.sendChatAction(chatid, "typing");
-
-        const response = await groq.chat.completions.create({
-            model: model,
-            messages: [
-                {
-                    role: "system",
-                    content: systemprompt
-                },
-                ...historymessage.messages.slice(-6).map((element) => (
-                    {
-                        role: element.role,
-                        content: element.content
-                    }
-                ))
-            ]
-        })
-
-        const requestprompt = response.choices[0].message.content;
-
-        let airequestprompt;
-        if (requestprompt.startsWith("{") && requestprompt.endsWith("}")) {
-            airequestprompt = JSON.parse(requestprompt);
-        }
-
-        bot.sendChatAction(chatid, "upload_photo");
-
-        const imageresponse = await Gemini.models.generateImages({
-            model: "imagen-4.0-generate-001",
-            prompt: airequestprompt.imageprompt,
-            config: {
-                numberOfImages: 1,
-                aspectRatio: "1:1",
-                safetySettings: [
-                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }
-                ]
-            },
-        })
-
-        const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
-        const buffer = Buffer.from(imageBytes, "base64");
-
-        await bot.sendPhoto(chatid, buffer, {
-            title: airequestprompt.imagename,
-            caption: airequestprompt.message
-        })
-    }
-    catch (err) {
-        console.log(err)
-        await sendBotMessage(bot, chatid, "It seems something went wrong.")
-    }
-}
 
 //SUPER MESSAGE 
 export const message = (bot) => async (msg) => {
@@ -233,7 +155,31 @@ export const message = (bot) => async (msg) => {
             //Fileroute
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-                if (fileroute.type === "audio") {
+                if (fileroute.type === "image") {
+                    bot.sendChatAction(chatid, "upload_photo");
+
+                    const imageresponse = await Gemini.models.generateImages({
+                        model : imagecreatemodel,
+                        prompt: fileroute.imageprompt,
+                        config: {
+                            numberOfImages: 1,
+                            aspectRatio: "1:1",
+                            safetySettings: [
+                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }
+                            ]
+                        },
+                    })
+
+                    const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
+                    const buffer = Buffer.from(imageBytes, "base64");
+
+                    await bot.sendPhoto(chatid, buffer, {
+                        title: fileroute.imagename,
+                        caption: fileroute.message
+                    })
+                }
+                else if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_document")
 
                     const response = await groq.audio.speech.create({
@@ -398,7 +344,31 @@ export const message = (bot) => async (msg) => {
             //File route
             if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage2);
-                if (fileroute.type === "audio") {
+                if (fileroute.type === "image") {
+                    bot.sendChatAction(chatid, "upload_photo");
+
+                    const imageresponse = await Gemini.models.generateImages({
+                        model: imagecreatemodel,
+                        prompt: fileroute.imageprompt,
+                        config: {
+                            numberOfImages: 1,
+                            aspectRatio: "1:1",
+                            safetySettings: [
+                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }
+                            ]
+                        },
+                    })
+
+                    const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
+                    const buffer = Buffer.from(imageBytes, "base64");
+
+                    await bot.sendPhoto(chatid, buffer, {
+                        title: fileroute.imagename,
+                        caption: fileroute.message
+                    })
+                }
+                else if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_document");
 
                     const response = await groq.audio.speech.create({
@@ -637,7 +607,31 @@ export const message = (bot) => async (msg) => {
             //File route
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-                if (fileroute.type === "audio") {
+                if (fileroute.type === "image") {
+                    bot.sendChatAction(chatid, "upload_photo");
+
+                    const imageresponse = await Gemini.models.generateImages({
+                        model: imagecreatemodel,
+                        prompt: fileroute.imageprompt,
+                        config: {
+                            numberOfImages: 1,
+                            aspectRatio: "1:1",
+                            safetySettings: [
+                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }
+                            ]
+                        },
+                    })
+
+                    const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
+                    const buffer = Buffer.from(imageBytes, "base64");
+
+                    await bot.sendPhoto(chatid, buffer, {
+                        title: fileroute.imagename,
+                        caption: fileroute.message
+                    })
+                }
+                else if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_document");
 
                     const response = await groq.audio.speech.create({
@@ -836,7 +830,31 @@ export const message = (bot) => async (msg) => {
             //Fileroute
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-                if (fileroute.type === "audio") {
+                if (fileroute.type === "image") {
+                    bot.sendChatAction(chatid, "upload_photo");
+
+                    const imageresponse = await Gemini.models.generateImages({
+                        model: imagecreatemodel,
+                        prompt: fileroute.imageprompt,
+                        config: {
+                            numberOfImages: 1,
+                            aspectRatio: "1:1",
+                            safetySettings: [
+                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }
+                            ]
+                        },
+                    })
+
+                    const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
+                    const buffer = Buffer.from(imageBytes, "base64");
+
+                    await bot.sendPhoto(chatid, buffer, {
+                        title: fileroute.imagename,
+                        caption: fileroute.message
+                    })
+                }
+                else if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_document");
 
                     const response = await groq.audio.speech.create({
@@ -994,7 +1012,31 @@ export const message = (bot) => async (msg) => {
                 const aimessage = response.choices[0].message.content;
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
-                    if (fileroute.type === "audio") {
+                    if (fileroute.type === "image") {
+                        bot.sendChatAction(chatid, "upload_photo");
+
+                        const imageresponse = await Gemini.models.generateImages({
+                            model: imagecreatemodel,
+                            prompt: fileroute.imageprompt,
+                            config: {
+                                numberOfImages: 1,
+                                aspectRatio: "1:1",
+                                safetySettings: [
+                                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }
+                                ]
+                            },
+                        })
+
+                        const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
+                        const buffer = Buffer.from(imageBytes, "base64");
+
+                        await bot.sendPhoto(chatid, buffer, {
+                            title: fileroute.imagename,
+                            caption: fileroute.message
+                        })
+                    }
+                    else if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_document");
 
                         const response = await groq.audio.speech.create({
@@ -1125,7 +1167,31 @@ export const message = (bot) => async (msg) => {
                 const aimessage = response.choices[0].message.content;
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
-                    if (fileroute.type === "audio") {
+                    if (fileroute.type === "image") {
+                        bot.sendChatAction(chatid, "upload_photo");
+
+                        const imageresponse = await Gemini.models.generateImages({
+                            model: imagecreatemodel,
+                            prompt: fileroute.imageprompt,
+                            config: {
+                                numberOfImages: 1,
+                                aspectRatio: "1:1",
+                                safetySettings: [
+                                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }
+                                ]
+                            },
+                        })
+
+                        const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
+                        const buffer = Buffer.from(imageBytes, "base64");
+
+                        await bot.sendPhoto(chatid, buffer, {
+                            title: fileroute.imagename,
+                            caption: fileroute.message
+                        })
+                    }
+                    else if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_document");
 
                         const response = await groq.audio.speech.create({
@@ -1254,7 +1320,31 @@ export const message = (bot) => async (msg) => {
                 const aimessage = response.choices[0].message.content;
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
-                    if (fileroute.type === "audio") {
+                    if (fileroute.type === "image") {
+                        bot.sendChatAction(chatid, "upload_photo");
+
+                        const imageresponse = await Gemini.models.generateImages({
+                            model: imagecreatemodel,
+                            prompt: fileroute.imageprompt,
+                            config: {
+                                numberOfImages: 1,
+                                aspectRatio: "1:1",
+                                safetySettings: [
+                                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }
+                                ]
+                            },
+                        })
+
+                        const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
+                        const buffer = Buffer.from(imageBytes, "base64");
+
+                        await bot.sendPhoto(chatid, buffer, {
+                            title: fileroute.imagename,
+                            caption: fileroute.message
+                        })
+                    }
+                    else if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_document");
 
                         const response = await groq.audio.speech.create({
@@ -1412,7 +1502,31 @@ export const message = (bot) => async (msg) => {
                 //File route
                 if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage2);
-                    if (fileroute.type === "audio") {
+                    if (fileroute.type === "image") {
+                        bot.sendChatAction(chatid, "upload_photo");
+
+                        const imageresponse = await Gemini.models.generateImages({
+                            model: imagecreatemodel,
+                            prompt: fileroute.imageprompt,
+                            config: {
+                                numberOfImages: 1,
+                                aspectRatio: "1:1",
+                                safetySettings: [
+                                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }
+                                ]
+                            },
+                        })
+
+                        const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
+                        const buffer = Buffer.from(imageBytes, "base64");
+
+                        await bot.sendPhoto(chatid, buffer, {
+                            title: fileroute.imagename,
+                            caption: fileroute.message
+                        })
+                    }
+                    else if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_document");
 
                         const response = await groq.audio.speech.create({
@@ -1566,7 +1680,31 @@ export const message = (bot) => async (msg) => {
             //Fileroute
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-                if (fileroute.type === "audio") {
+                if (fileroute.type === "image") {
+                    bot.sendChatAction(chatid, "upload_photo");
+
+                    const imageresponse = await Gemini.models.generateImages({
+                        model: imagecreatemodel,
+                        prompt: fileroute.imageprompt,
+                        config: {
+                            numberOfImages: 1,
+                            aspectRatio: "1:1",
+                            safetySettings: [
+                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }
+                            ]
+                        },
+                    })
+
+                    const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
+                    const buffer = Buffer.from(imageBytes, "base64");
+
+                    await bot.sendPhoto(chatid, buffer, {
+                        title: fileroute.imagename,
+                        caption: fileroute.message
+                    })
+                }
+                else if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_document")
 
                     const response = await groq.audio.speech.create({
