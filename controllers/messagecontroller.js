@@ -92,7 +92,7 @@ const getPdfTextFromUrl = async (fileUrl) => {
 export const image = (bot) => async (msg) => {
     const chatid = msg.chat.id;
     console.log(msg);
-    const text = msg.split(/(.*)/);
+    const text = msg.text.split(/(.*)/);
 
     const usertext = `Image creation : ${text[1]}`;
 
