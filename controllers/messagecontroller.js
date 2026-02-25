@@ -88,7 +88,7 @@ const getPdfTextFromUrl = async (fileUrl) => {
     });
 };
 
-
+//Image creation route
 export const image = (bot) => async (msg) => {
     const chatid = msg.chat.id;
     console.log(msg);
