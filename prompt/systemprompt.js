@@ -52,7 +52,7 @@ Voice / Singing JSON format:
 Image creation JSON format :
 {
   "message" : <Your message related to image creation like here is your image requestet etc.>,
-  "imageprompt" : <Your prompt to another ai for image>,
+  "imageprompt" : <Your prompt to another ai for image just a short one with dtail explain.>,
   "imagename" : <Image filename>
 }
 
