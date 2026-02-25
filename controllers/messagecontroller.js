@@ -123,7 +123,7 @@ export const image = (bot) => async (msg) => {
                     role: "system",
                     content: systemprompt
                 },
-                ...historymessage.messages.map((element) => (
+                ...historymessage.messages.slice(-6).map((element) => (
                     {
                         role: element.role,
                         content: element.content
