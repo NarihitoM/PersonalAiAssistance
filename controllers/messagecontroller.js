@@ -92,9 +92,9 @@ const getPdfTextFromUrl = async (fileUrl) => {
 export const image = (bot) => async (msg) => {
     const chatid = msg.chat.id;
     console.log(msg);
-    const text = msg.text.split(/(.*)/);
+    const text = msg.text.replace(/^\/image\s*/i, "");
 
-    const usertext = `Image creation : ${text[1]}`;
+    const usertext = `Image creation : ${text}`;
 
     try {
         await userquery.findOneAndUpdate({
