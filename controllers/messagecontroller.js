@@ -154,6 +154,7 @@ export const image = (bot) => async (msg) => {
         })
     }
     catch (err) {
+        console.log(err)
         await sendBotMessage(bot, chatid, "It seems something went wrong.")
     }
 }
