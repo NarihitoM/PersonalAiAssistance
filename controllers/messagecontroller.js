@@ -139,6 +139,8 @@ export const image = (bot) => async (msg) => {
             airequestprompt = JSON.parse(requestprompt);
         }
 
+        bot.sendChatAction(chatid, "upload_photo");
+
         const imageresponse = await Gemini.models.generateImages({
             model: "imagen-4.0-generate-001",
             prompt: airequestprompt.imageprompt,
