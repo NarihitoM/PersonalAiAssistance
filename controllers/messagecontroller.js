@@ -96,6 +96,8 @@ export const image = (bot) => async (msg) => {
 
     const usertext = `Image creation : ${text}`;
 
+    console.log(usertext)
+
     try {
         await userquery.findOneAndUpdate({
             userid: chatid
