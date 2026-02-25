@@ -1,8 +1,6 @@
 
 //Command
 
-import { image } from "./messagecontroller.js";
-
 export const command = (bot) => async (msg) => {
     const chatid = msg.chat.id;
     const message = msg.text;
