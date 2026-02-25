@@ -147,9 +147,10 @@ export const image = (bot) => async (msg) => {
             config: {
                 numberOfImages: 1
             },
+
         })
 
-        const imageBytes = imageresponse.generatedImages[0].image.imageBytes;
+        const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
         const buffer = Buffer.from(imageBytes, "base64");
 
         await bot.sendPhoto(chatid, buffer, {
