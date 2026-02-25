@@ -146,12 +146,12 @@ export const image = (bot) => async (msg) => {
             prompt: airequestprompt.imageprompt,
             config: {
                 numberOfImages: 1,
-                aspectRatio: "1:1"
+                aspectRatio: "1:1",
+                safetySettings: [
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }
+                ]
             },
-            safetySettings: [
-                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
-                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }
-            ]
         })
 
         const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
