@@ -15,7 +15,7 @@ import PDFDocument from "pdfkit";
 import streamBuffers from "stream-buffers";
 
 //Model
-const model = "openai/gpt-oss-120b"
+const model = "moonshotai/kimi-k2-instruct-0905"
 const modelRAG = "groq/compound"
 const modelaudio = "canopylabs/orpheus-v1-english"
 const imagemodel = "meta-llama/llama-4-scout-17b-16e-instruct"
