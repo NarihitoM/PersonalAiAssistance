@@ -1434,7 +1434,7 @@ export const message = (bot) => async (msg) => {
                     await sendBotMessage(bot, chatid, aimessage);
                 }
             }
-            else if (msg.document.mime_type === "image/png") {
+            else if (msg.document.mime_type === "image/png" || msg.document.mimetype === "image/jpeg") {
                 const response1 = await groq.chat.completions.create({
                     model: imagemodel,
                     messages: [

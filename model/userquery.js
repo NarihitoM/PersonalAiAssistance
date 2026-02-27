@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const User = await mongoose.Schema({
-    userid : {type : String},
+    userid : { type : String },
     messages : [
         {
             role : {type : String},
