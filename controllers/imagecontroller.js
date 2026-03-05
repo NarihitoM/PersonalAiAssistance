@@ -1,4 +1,4 @@
-import { GeminiImage } from "../config/aiservice.js";
+import { Gemini } from "../config/aiservice.js";
 
 export const Image = (bot) => async (msg) => {
     const chatid = msg.chat.id;
@@ -10,16 +10,26 @@ export const Image = (bot) => async (msg) => {
             const filelink = bot.getFileLink(fileid);
             const captionmsg = msg.caption ? `Prompt : ${msg.caption}` : "Recreate this image with better styling.";
 
-            const model = GeminiImage.getGenerativeModel({
-                model: "gemini-2.0-flash-exp",
-                tools: [{ urlContext: {} }]
-            })
+            const imageurl = await fetch(filelink);
+            const imagebuffer = await imageurl.arrayBuffer();
 
-            const prompt = `Image url : ${filelink} , ${captionmsg}`;
+            const base64Image = Buffer.from(imagebuffer).toString("base64");
+
+
             await bot.sendChatAction(chatid, "upload_photo");
 
-            const result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            const result = await Gemini.models.generateContent({
+                model: "gemini-2.5-pro",
+                contents: [
+                    {
+                        text: captionmsg
+                    },
+                    {
+                        inlineData: {
+                            data: base64Image,
+                        }
+                    }
+                ],
                 safetySettings: [
                     {
                         category: "HARM_CATEGORY_HATE_SPEECH",
@@ -45,7 +55,7 @@ export const Image = (bot) => async (msg) => {
 
             await bot.sendChatAction(chatid, "typing");
 
-            const imageBytes = result.response.candidates[0].content.parts[0].inlineData.data;
+            const imageBytes = result.candidates[0].content.parts[0].inlineData.data;
             const buffer = Buffer.from(imageBytes, "base64");
 
             await bot.sendPhoto(chatid, buffer);
