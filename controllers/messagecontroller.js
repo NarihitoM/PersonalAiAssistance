@@ -182,7 +182,7 @@ export const message = (bot) => async (msg) => {
                     })
                 }
                 else if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_document")
+                    await bot.sendChatAction(chatid, "upload_voice");
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -202,32 +202,38 @@ export const message = (bot) => async (msg) => {
                 }
                 else if (fileroute.type === "song") {
                     await bot.sendChatAction(chatid, "upload_voice");
+
+                    let chunks = [];
+
                     const session = await Gemini.live.music.connect({
-                        model: "models/lyria-realtime-exp"
-                    })
+                        model: "models/lyria-realtime-exp",
+                        callbacks: {
+                            onmessage: (message) => {
+                                if (message.serverContent?.audioChunks) {
+                                    for (const chunk of message.serverContent.audioChunks) {
+                                        chunks.push(Buffer.from(chunk.data, "base64"));
+                                    }
+                                }
+                            },
+                            onerror: (error) => console.error("Lyria error:", error),
+                            onclose: () => console.log("Stream finished.")
+                        },
+                    });
 
-                    await session.setWeightedPrompts(
-                        {
-                            weightedPrompts: [
-                                { text: fileroute.songcontent }
-                            ]
-                        })
+                    await session.send({
+                        text: fileroute.songcontent
+                    });
 
-                    await session.play();
+                    await new Promise(resolve => setTimeout(resolve, 25000));
+                    await session.close();
 
-                    let audioBuffer = Buffer.alloc(0);
-                    for await (const message of session.receive()) {
-                        if (message.server_content?.audio_chunks) {
-                            const chunk = Buffer.from(message.server_content.audio_chunks[0].data, 'base64');
-                            audioBuffer = Buffer.concat([audioBuffer, chunk]);
-
-                            if (audioBuffer.length > 2500000) break;
-                        }
+                   if (chunks.length > 0) {
+                        const finalAudio = Buffer.concat(chunks);
+                        await bot.sendAudio(chatid, finalAudio, {
+                            title: fileroute.songname,
+                            caption: fileroute.message || "Here is your Lyria track, bruh! 🔥"
+                        });
                     }
-                    await bot.sendAudio(chatid, audiobuffer, {
-                        title: fileroute.songname,
-                        caption: fileroute.message
-                    })
                 }
                 else {
                     await bot.sendChatAction(chatid, "upload_document");
@@ -400,7 +406,7 @@ export const message = (bot) => async (msg) => {
                     })
                 }
                 else if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_voice");
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -663,7 +669,7 @@ export const message = (bot) => async (msg) => {
                     })
                 }
                 else if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_voice");
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -886,7 +892,7 @@ export const message = (bot) => async (msg) => {
                     })
                 }
                 else if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_voice");
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -1068,7 +1074,7 @@ export const message = (bot) => async (msg) => {
                         })
                     }
                     else if (fileroute.type === "audio") {
-                        await bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_voice");
 
                         const response = await groq.audio.speech.create({
                             model: modelaudio,
@@ -1223,7 +1229,7 @@ export const message = (bot) => async (msg) => {
                         })
                     }
                     else if (fileroute.type === "audio") {
-                        await bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_voice");
 
                         const response = await groq.audio.speech.create({
                             model: modelaudio,
@@ -1376,7 +1382,7 @@ export const message = (bot) => async (msg) => {
                         })
                     }
                     else if (fileroute.type === "audio") {
-                        await bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_voice");
 
                         const response = await groq.audio.speech.create({
                             model: modelaudio,
@@ -1558,7 +1564,7 @@ export const message = (bot) => async (msg) => {
                         })
                     }
                     else if (fileroute.type === "audio") {
-                        await bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_voice");
 
                         const response = await groq.audio.speech.create({
                             model: modelaudio,
@@ -1736,7 +1742,7 @@ export const message = (bot) => async (msg) => {
                     })
                 }
                 else if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_document")
+                    await bot.sendChatAction(chatid, "upload_voice");
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
