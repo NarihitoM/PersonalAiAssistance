@@ -9,7 +9,7 @@ export const Image = (bot) => async (msg) => {
     try {
         if (msg.text) {
             const message = msg.text;
-
+            await bot.sendChatAction(chatid,"typing");
             const result = await Gemini.models.generateContent({
                 model: model,
                 contents : message,
