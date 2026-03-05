@@ -45,7 +45,15 @@ export const command = (bot) => async (msg) => {
     }
     else if (message === "/sessionstatus") {
         const user = await usersession.findOne({ userid: chatid });
-        await bot.sendMessage(chatid, `Your current session is : ${user.session === "chat" ? "Chatmode" : "Imagetool Mode"}`);
+        if (user.session === "chat") {
+            await bot.sendMessage(chatid, "You are in normal chat mode.")
+        }
+        else if (user.session === "imagetool") {
+            await bot.sendMessage(chatid, "You are in image tool mode.")
+        }
+        else if (user.session === "video") {
+            await bot.sendMessage(chatid, "You are in video tool mode.")
+        }
     }
     else {
         await bot.sendMessage(chatid, "There is no commant with that function.")
