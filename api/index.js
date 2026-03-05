@@ -20,9 +20,8 @@ export default async function handler(req, res) {
         const msg = req.body.message;
         const chatid = msg.chat.id;
 
-        const message = msg.text;
 
-        if (message === "/start") {
+        if (msg.text === "/start") {
             await usersession.findOneAndUpdate({
                 userid: chatid
             }, {
@@ -34,7 +33,7 @@ export default async function handler(req, res) {
             });
             await bot.sendMessage(chatid, "You can now get started! This is your personal ai assistance that can help you with anything. Develop By Narihito")
         }
-        else if (message === "/feature") {
+        else if (msg.text === "/feature") {
             await bot.sendMessage(chatid, "This Assistance can chat,read file,analyse image,transcript video,record voice,create file,hear your voice,etc")
         }
 
@@ -52,12 +51,10 @@ export default async function handler(req, res) {
         if (msg.text?.startsWith("/")) {
             await command(bot)(msg);
         }
-
-        if (session?.session === "chat" && !msg.text?.startsWith("/")) {
+        else if (session?.session === "chat" && !msg.text?.startsWith("/")) {
             await message(bot)(msg);
         }
-
-        if (session?.session === "imagetool" && !msg.text?.startsWith("/")) {
+        else if (session?.session === "imagetool" && !msg.text?.startsWith("/")) {
             await Image(bot)(msg);
         }
     }
