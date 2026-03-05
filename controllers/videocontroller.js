@@ -9,7 +9,7 @@ export const Video = (bot) => async (msg) => {
         if (msg.text) {
             await bot.sendChatAction(chatid, "typing");
             const message = msg.text;
-            const result = await Gemini.models.generateVideos({
+            let result = await Gemini.models.generateVideos({
                 model : model,
                 source : {
                     prompt : `${message}. Generate Only 4 seconds video.`
@@ -19,6 +19,13 @@ export const Video = (bot) => async (msg) => {
                     resolution : "720p"
                 }
             })
+            
+            while(!result.done){
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+                result = await Gemini.operations.getVideosOperation({
+                    operation : result
+                }) 
+            }
             
             await bot.sendChatAction(chatid, "upload_video");
             const Videodata = result.response.generatedVideos[0].video;
