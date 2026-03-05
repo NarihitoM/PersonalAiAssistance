@@ -2,8 +2,10 @@ import { configDotenv } from "dotenv";
 import { createbot } from "../config/botservice.js";
 import { message } from "../controllers/messagecontroller.js";
 import { command } from "../controllers/commandcontroller.js";
-import usersession from "../model/usersession.js";
+import { Video } from "../controllers/videocontroller.js";
 import { Image } from "../controllers/imagecontroller.js";
+import usersession from "../model/usersession.js";
+
 
 configDotenv();
 
@@ -27,7 +29,7 @@ export default async function handler(req, res) {
                 { upsert: true, new: true }
             );
             await bot.sendMessage(chatid, "You can now get started! Develop By Narihito");
-            return res.status(200).send("OK"); 
+            return res.status(200).send("OK");
         }
 
         if (msg.text === "/feature") {
@@ -49,12 +51,15 @@ export default async function handler(req, res) {
 
         if (msg.text?.startsWith("/")) {
             await command(bot)(msg);
-        } 
+        }
         else if (session.session === "chat") {
             await message(bot)(msg);
-        } 
+        }
         else if (session.session === "imagetool") {
             await Image(bot)(msg);
+        }
+        else if (session.session === "video") {
+            await Video(bot)(msg);
         }
     }
 

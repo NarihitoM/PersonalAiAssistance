@@ -6,7 +6,7 @@ export const command = (bot) => async (msg) => {
     const message = msg.text;
     console.log(message);
 
-   if (message === "/imagetool") {
+    if (message === "/imagetool") {
         await usersession.findOneAndUpdate({
             userid: chatid
         }, {
@@ -17,6 +17,18 @@ export const command = (bot) => async (msg) => {
             upsert: true
         });
         await bot.sendMessage(chatid, "You are now in image tool mode.")
+    }
+    else if (message === "/video") {
+        await usersession.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $set: {
+                session: "video"
+            }
+        }, {
+            upsert: true
+        });
+        await bot.sendMessage(chatid, "You are now in video tool mode.")
     }
     else if (message === "/exit") {
         await usersession.findOneAndUpdate({
