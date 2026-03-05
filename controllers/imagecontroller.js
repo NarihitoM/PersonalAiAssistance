@@ -11,7 +11,7 @@ export const Image = (bot) => async (msg) => {
             const captionmsg = msg.caption ? `Prompt : ${msg.caption}` : "Recreate this image with better styling.";
 
             const model = GeminiImage.getGenerativeModel({
-                model: "gemini-3.1-pro-preview",
+                model: "gemini-2.0-flash-exp",
                 tools: [{ urlContext: {} }]
             })
 
