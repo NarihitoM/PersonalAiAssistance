@@ -31,11 +31,7 @@ export const Image = (bot) => async (msg) => {
                         }
                     }
                 ],
-                config : {
-                    thinkingConfig : {
-                        thinkingLevel : "high"
-                    }
-                },
+             
                 safetySettings: [
                     {
                         category: "HARM_CATEGORY_HATE_SPEECH",
