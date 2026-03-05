@@ -6,6 +6,6 @@ configDotenv();
 
 export const groq = new Groq({ apiKey: process.env.AI });
 
-export const Gemini = new GoogleGenAI({apiKey : process.env.GEMINI});
+export const Gemini = new GoogleGenAI({apiKey : process.env.GEMINI, apiVersion : "v1alpha"});
 
 

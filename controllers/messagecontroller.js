@@ -158,14 +158,14 @@ export const message = (bot) => async (msg) => {
                 if (fileroute.type === "image") {
                     bot.sendChatAction(chatid, "upload_photo");
 
-                   
+
                     const imageresponse = await Gemini.models.generateImages({
-                        model : imagecreatemodel,
+                        model: imagecreatemodel,
                         prompt: fileroute.imageprompt,
                         config: {
                             numberOfImages: 1,
                             aspectRatio: "1:1",
-                            includeRaiReason : true,
+                            includeRaiReason: true,
                             safetySettings: [
                                 { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
                                 { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }
@@ -198,6 +198,35 @@ export const message = (bot) => async (msg) => {
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
+                    })
+                }
+                else if (fileroute.type === "song") {
+                    await bot.sendChatAction(chatid, "upload_voice");
+                    const session = await Gemini.live.music.connect({
+                        model: "models/lyria-realtime-exp"
+                    })
+
+                    await session.setWeightedPrompts(
+                        {
+                            weightedPrompts: [
+                                { text: fileroute.songcontent }
+                            ]
+                        })
+
+                    await session.play();
+
+                    let audioBuffer = Buffer.alloc(0);
+                    for await (const message of session.receive()) {
+                        if (message.server_content?.audio_chunks) {
+                            const chunk = Buffer.from(message.server_content.audio_chunks[0].data, 'base64');
+                            audioBuffer = Buffer.concat([audioBuffer, chunk]);
+
+                            if (audioBuffer.length > 2500000) break;
+                        }
+                    }
+                    await bot.sendAudio(chatid, audiobuffer, {
+                        title: fileroute.songname,
+                        caption: fileroute.message
                     })
                 }
                 else {
