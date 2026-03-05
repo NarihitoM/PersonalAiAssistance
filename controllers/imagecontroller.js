@@ -55,6 +55,7 @@ export const Image = (bot) => async (msg) => {
         }
     }
     catch (err) {
+        console.log(err);
         await bot.sendMessage(chatid, "It seems something went wrong");
     }
 }
