@@ -216,8 +216,20 @@ export const message = (bot) => async (msg) => {
                                 }
                             },
                             onerror: (error) => console.error("Lyria error:", error),
-                            onclose: () => console.log("Stream finished.")
-                        },
+                            onclose: async () => {
+                                console.log("Lyria RealTime stream closed.");
+
+                                if (chunks.length > 0) {
+                                    const finalAudio = Buffer.concat(chunks);
+
+                                    await bot.sendAudio(chatid, finalAudio, {
+                                        title: fileroute.songname,
+                                        caption: fileroute.message,
+                                        performer : fileroute.performer
+                                    })
+                                }
+                            }
+                        }
                     });
 
                     await session.setWeightedPrompts({
@@ -226,16 +238,6 @@ export const message = (bot) => async (msg) => {
                         ]
                     });
 
-                    await new Promise(resolve => setTimeout(resolve, 25000));
-                    await session.close();
-
-                    if (chunks.length > 0) {
-                        const finalAudio = Buffer.concat(chunks);
-                        await bot.sendAudio(chatid, finalAudio, {
-                            title: fileroute.songname,
-                            caption: fileroute.message || "Here is your Lyria track, bruh! 🔥"
-                        });
-                    }
                 }
                 else {
                     await bot.sendChatAction(chatid, "upload_document");
