@@ -23,7 +23,16 @@ export default async function handler(req, res) {
             await command(bot)(msg);
         }
 
-        const session = await usersession.findOne({ userid: msg.chat.id });
+        try {
+            const session = await usersession.findOne({ userid: msg.chat.id });
+            if (!session) {
+                await bot.sendMessage(chatid, "You have no session. Press /start to get started.")
+                return;
+            }
+        }
+        catch (err) {
+            await bot.sendMessage(chatid, "You have no session. Press /start to get started.")
+        }
 
         if (session?.session === "chat" && !msg.text?.startsWith("/")) {
             await message(bot)(msg);
