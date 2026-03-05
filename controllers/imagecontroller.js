@@ -27,6 +27,7 @@ export const Image = (bot) => async (msg) => {
                     {
                         inlineData: {
                             data: base64Image,
+                            mimeType : "image/jpeg"
                         }
                     }
                 ],
