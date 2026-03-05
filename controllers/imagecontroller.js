@@ -7,7 +7,7 @@ export const Image = (bot) => async (msg) => {
     try {
         if (msg.photo) {
             const fileid = msg.photo[msg.photo.length - 1].file_id;
-            const filelink = bot.getFileLink(fileid);
+            const filelink = await bot.getFileLink(fileid);
             const captionmsg = msg.caption ? `Prompt : ${msg.caption}` : "Recreate this image with better styling.";
 
             const imageurl = await fetch(filelink);
