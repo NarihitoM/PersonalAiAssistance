@@ -35,6 +35,18 @@ export const command = (bot) => async (msg) => {
         }, {
             upsert: true
         })
+
+        try {
+            const session = await usersession.findOne({ userid: msg.chat.id });
+            if (!session) {
+                await bot.sendMessage(chatid, "You have no session. Press /start to get started.")
+                return;
+            }
+        }
+        catch (err) {
+            await bot.sendMessage(chatid, "You have no session. Press /start to get started.")
+        }
+
         await bot.sendMessage(chatid, "You are now in normal chat mode.")
     }
     else if (message === "/sessionstatus") {
@@ -48,7 +60,7 @@ export const command = (bot) => async (msg) => {
         catch (err) {
             await bot.sendMessage(chatid, "You have no session. Press /start to get started.")
         }
-        
+
         await bot.sendMessage(chatid, `Your current session is : ${session.session === "chat" ? "Chatmode" : "Imagetool Mode"}`);
     }
     else {
