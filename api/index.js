@@ -31,7 +31,7 @@ export default async function handler(req, res) {
         }
 
         if (msg.text === "/feature") {
-            await bot.sendMessage(chatid, "This Assistance can chat, read files, etc.");
+            await bot.sendMessage(chatid, "This Assistance can chat, read files, analyse image, create image, analyse file, create file, create voice, listen to voice , etc..");
             return res.status(200).send("OK");
         }
 
