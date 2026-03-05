@@ -158,12 +158,14 @@ export const message = (bot) => async (msg) => {
                 if (fileroute.type === "image") {
                     bot.sendChatAction(chatid, "upload_photo");
 
+                   
                     const imageresponse = await Gemini.models.generateImages({
                         model : imagecreatemodel,
                         prompt: fileroute.imageprompt,
                         config: {
                             numberOfImages: 1,
                             aspectRatio: "1:1",
+                            includeRaiReason : true,
                             safetySettings: [
                                 { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
                                 { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" }

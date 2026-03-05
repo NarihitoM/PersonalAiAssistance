@@ -2,6 +2,8 @@ import { configDotenv } from "dotenv";
 import { createbot } from "../config/botservice.js";
 import { message } from "../controllers/messagecontroller.js";
 import { command } from "../controllers/commandcontroller.js";
+import usersession from "../model/usersession.js";
+import { Image } from "../controllers/imagecontroller.js";
 
 configDotenv();
 
@@ -17,10 +19,19 @@ export default async function handler(req, res) {
     if (req.body.message) {
         const msg = req.body.message;
 
+        const session = await usersession.findOne({ userid: msg.chat.id });
+
+
         if (msg.text?.startsWith("/")) {
             await command(bot)(msg);
-        } else {
+        } 
+        
+        if (session?.session === "chat"){
             await message(bot)(msg);
+        }
+
+        if(session?.session === "imagetool"){
+            await Image(bot)(msg);
         }
     }
 
