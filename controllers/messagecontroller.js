@@ -220,14 +220,16 @@ export const message = (bot) => async (msg) => {
                         },
                     });
 
-                    await session.send({
-                        text: fileroute.songcontent
+                    await session.setWeightedPrompts({
+                        weightedPrompts: [
+                            { text: fileroute.songcontent }
+                        ]
                     });
 
                     await new Promise(resolve => setTimeout(resolve, 25000));
                     await session.close();
 
-                   if (chunks.length > 0) {
+                    if (chunks.length > 0) {
                         const finalAudio = Buffer.concat(chunks);
                         await bot.sendAudio(chatid, finalAudio, {
                             title: fileroute.songname,
