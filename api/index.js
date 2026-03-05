@@ -20,7 +20,6 @@ export default async function handler(req, res) {
         const msg = req.body.message;
         const chatid = msg.chat.id;
 
-
         if (msg.text === "/start") {
             await usersession.findOneAndUpdate({
                 userid: chatid
