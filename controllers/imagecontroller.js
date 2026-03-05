@@ -59,27 +59,13 @@ export const Image = (bot) => async (msg) => {
             if (result.candidates[0].finishReason === "SAFETY") {
                 return bot.sendMessage(chatid, "This request was blocked by Google's core safety filters, bro.");
             }
-            
-            const parts = result.candidates[0].content.parts;
+            const imageBytes = result.candidates[0].content.parts[0].inlineData.data;
 
-            let textContent = "";
-            let Image = null;
+            const buffer = Buffer.from(imageBytes, "base64");
 
-            for (const part of parts) {
-                if (part.text) {
-                    textContent = part.text;
-                }
-                if (part.inlineData) {
-                    Image = part.inlineData.data;
-                }
-            }
-
-            if (Image) {
-                const buffer = Buffer.from(Image, "base64");
-                await bot.sendPhoto(chatid, buffer, { caption: textContent || "Done, bro!" });
-            } else if (textContent) {
-                await bot.sendMessage(chatid, textContent);
-            }
+            await bot.sendPhoto(chatid, buffer, {
+                caption: "Here is the image you requested!"
+            });
         }
         else {
             await bot.sendMessage(chatid, "Sorry text is not allowed here. Go To Chatmode by making the command /exit");
