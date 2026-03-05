@@ -7,6 +7,7 @@ export const Video = (bot) => async (msg) => {
     console.log(msg);
     try {
         if (msg.text) {
+            await bot.sendChatAction(chatid, "typing");
             const message = msg.text;
             const result = await Gemini.models.generateVideos({
                 model : model,
@@ -18,7 +19,8 @@ export const Video = (bot) => async (msg) => {
                     resolution : "720p"
                 }
             })
-        
+            
+            await bot.sendChatAction(chatid, "upload_video");
             const Videodata = result.response.generatedVideos[0].video;
             const buffer = Videodata.videoBytes;
             
