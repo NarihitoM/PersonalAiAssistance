@@ -25,11 +25,11 @@ export default async function handler(req, res) {
 
         const session = await usersession.findOne({ userid: msg.chat.id });
 
-        if (session?.session === "chat") {
+        if (session?.session === "chat" && !msg.text?.startsWith("/")) {
             await message(bot)(msg);
         }
 
-        if (session?.session === "imagetool") {
+        if (session?.session === "imagetool" && !msg.text?.startsWith("/")) {
             await Image(bot)(msg);
         }
     }
