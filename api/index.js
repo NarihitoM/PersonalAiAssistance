@@ -21,39 +21,39 @@ export default async function handler(req, res) {
         const chatid = msg.chat.id;
 
         if (msg.text === "/start") {
-            await usersession.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $set: {
-                    session: "chat"
-                }
-            }, {
-                upsert: true
-            });
-            await bot.sendMessage(chatid, "You can now get started! This is your personal ai assistance that can help you with anything. Develop By Narihito")
-        }
-        else if (msg.text === "/feature") {
-            await bot.sendMessage(chatid, "This Assistance can chat,read file,analyse image,transcript video,record voice,create file,hear your voice,etc")
+            await usersession.findOneAndUpdate(
+                { userid: chatid },
+                { $set: { session: "chat" } },
+                { upsert: true, new: true }
+            );
+            await bot.sendMessage(chatid, "You can now get started! Develop By Narihito");
+            return res.status(200).send("OK"); 
         }
 
+        if (msg.text === "/feature") {
+            await bot.sendMessage(chatid, "This Assistance can chat, read files, etc.");
+            return res.status(200).send("OK");
+        }
+
+        let session;
         try {
-            const session = await usersession.findOne({ userid: msg.chat.id });
+            session = await usersession.findOne({ userid: chatid });
             if (!session) {
-                await bot.sendMessage(chatid, "You have no session. Press /start to get started.")
-                return;
+                await bot.sendMessage(chatid, "You have no session. Press /start to get started.");
+                return res.status(200).send("OK");
             }
+        } catch (err) {
+            console.error(err);
+            return res.status(200).send("OK");
         }
-        catch (err) {
-            await bot.sendMessage(chatid, "You have no session. Press /start to get started.")
-        }
-        //Command route
+
         if (msg.text?.startsWith("/")) {
             await command(bot)(msg);
-        }
-        else if (session?.session === "chat" && !msg.text?.startsWith("/")) {
+        } 
+        else if (session.session === "chat") {
             await message(bot)(msg);
-        }
-        else if (session?.session === "imagetool" && !msg.text?.startsWith("/")) {
+        } 
+        else if (session.session === "imagetool") {
             await Image(bot)(msg);
         }
     }
