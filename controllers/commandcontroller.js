@@ -6,14 +6,7 @@ export const command = (bot) => async (msg) => {
     const message = msg.text;
     console.log(message);
 
-    if (message === "/start") {
-        await bot.sendMessage(chatid, "You can now get started! This is your personal ai assistance that can help you with anything. Develop By Narihito")
-    }
-
-    else if (message === "/feature") {
-        await bot.sendMessage(chatid, "This Assistance can chat,read file,analyse image,transcript video,record voice,create file,hear your voice,etc")
-    }
-    else if (message === "/imagetool") {
+   if (message === "/imagetool") {
         await usersession.findOneAndUpdate({
             userid: chatid
         }, {
@@ -36,31 +29,9 @@ export const command = (bot) => async (msg) => {
             upsert: true
         })
 
-        try {
-            const session = await usersession.findOne({ userid: msg.chat.id });
-            if (!session) {
-                await bot.sendMessage(chatid, "You have no session. Press /start to get started.")
-                return;
-            }
-        }
-        catch (err) {
-            await bot.sendMessage(chatid, "You have no session. Press /start to get started.")
-        }
-
         await bot.sendMessage(chatid, "You are now in normal chat mode.")
     }
     else if (message === "/sessionstatus") {
-        try {
-            const session = await usersession.findOne({ userid: msg.chat.id });
-            if (!session) {
-                await bot.sendMessage(chatid, "You have no session. Press /start to get started.")
-                return;
-            }
-        }
-        catch (err) {
-            await bot.sendMessage(chatid, "You have no session. Press /start to get started.")
-        }
-
         await bot.sendMessage(chatid, `Your current session is : ${session.session === "chat" ? "Chatmode" : "Imagetool Mode"}`);
     }
     else {

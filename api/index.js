@@ -18,9 +18,24 @@ export default async function handler(req, res) {
 
     if (req.body.message) {
         const msg = req.body.message;
+        const chatid = msg.chat.id;
 
-        if (msg.text?.startsWith("/")) {
-            await command(bot)(msg);
+        const message = msg.text;
+
+        if (message === "/start") {
+            await usersession.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $set: {
+                    session: "chat"
+                }
+            }, {
+                upsert: true
+            });
+            await bot.sendMessage(chatid, "You can now get started! This is your personal ai assistance that can help you with anything. Develop By Narihito")
+        }
+        else if (message === "/feature") {
+            await bot.sendMessage(chatid, "This Assistance can chat,read file,analyse image,transcript video,record voice,create file,hear your voice,etc")
         }
 
         try {
@@ -32,6 +47,10 @@ export default async function handler(req, res) {
         }
         catch (err) {
             await bot.sendMessage(chatid, "You have no session. Press /start to get started.")
+        }
+        //Command route
+        if (msg.text?.startsWith("/")) {
+            await command(bot)(msg);
         }
 
         if (session?.session === "chat" && !msg.text?.startsWith("/")) {
