@@ -204,6 +204,12 @@ export const message = (bot) => async (msg) => {
                     await bot.sendChatAction(chatid, "upload_voice");
 
                     let chunks = [];
+                    let resolveSession;
+
+                    const sessionFinished = new Promise((resolve) => {
+                        resolveSession = resolve;
+                    });
+
 
                     const session = await Gemini.live.music.connect({
                         model: "models/lyria-realtime-exp",
@@ -215,19 +221,13 @@ export const message = (bot) => async (msg) => {
                                     }
                                 }
                             },
-                            onerror: (error) => console.error("Lyria error:", error),
-                            onclose: async () => {
+                            onerror: (error) => {
+                                console.error("Lyria error:", error)
+                                resolveSession();
+                            },
+                            onclose: () => {
                                 console.log("Lyria RealTime stream closed.");
-
-                                if (chunks.length > 0) {
-                                    const finalAudio = Buffer.concat(chunks);
-
-                                    await bot.sendAudio(chatid, finalAudio, {
-                                        title: fileroute.songname,
-                                        caption: fileroute.message,
-                                        performer : fileroute.performer
-                                    })
-                                }
+                                resolveSession();
                             }
                         }
                     });
@@ -237,7 +237,18 @@ export const message = (bot) => async (msg) => {
                             { text: fileroute.songcontent }
                         ]
                     });
+                    setTimeout(() => session.close(), 30000);
 
+                    await sessionFinished;
+
+                    if (chunks.length > 0) {
+                        const finalAudio = Buffer.concat(chunks);
+                        await bot.sendAudio(chatid, finalAudio, {
+                            title: fileroute.songname,
+                            caption: fileroute.message,
+                            performer: fileroute.performer
+                        });
+                    }
                 }
                 else {
                     await bot.sendChatAction(chatid, "upload_document");
