@@ -27,7 +27,7 @@ export const Image = (bot) => async (msg) => {
                     {
                         inlineData: {
                             data: base64Image,
-                            mimeType : "image/jpeg"
+                            mimeType: "image/jpeg"
                         }
                     }
                 ],
@@ -56,6 +56,9 @@ export const Image = (bot) => async (msg) => {
 
             await bot.sendChatAction(chatid, "typing");
 
+            if (result.candidates[0].finishReason === "SAFETY") {
+                return bot.sendMessage(chatid, "This request was blocked by Google's core safety filters, bro.");
+            }
             const imageBytes = result.candidates[0].content.parts[0].inlineData.data;
             const buffer = Buffer.from(imageBytes, "base64");
 
