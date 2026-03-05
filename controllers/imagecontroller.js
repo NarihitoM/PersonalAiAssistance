@@ -19,7 +19,7 @@ export const Image = (bot) => async (msg) => {
             await bot.sendChatAction(chatid, "upload_photo");
 
             const result = await Gemini.models.generateContent({
-                model: "gemini-2.5-pro",
+                model: "gemini-3-pro-image-preview",
                 contents: [
                     {
                         text: captionmsg
