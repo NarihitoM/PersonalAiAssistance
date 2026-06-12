@@ -2,14 +2,19 @@ import { Gemini } from "../config/aiservice.js";
 
 const model = "gemini-3-pro-image-preview"
 
-export const Image = (bot) => async (msg) => {
+export const Image = (bot) => async (msg,businessConnectionId) => {
     const chatid = msg.chat.id;
     console.log(msg);
+
+    const options = {};
+    if (businessConnectionId) {
+        options.business_connection_id = businessConnectionId;
+    }
 
     try {
         if (msg.text) {
             const message = msg.text;
-            await bot.sendChatAction(chatid,"typing");
+            await bot.sendChatAction(chatid,"typing", options);
             const result = await Gemini.models.generateContent({
                 model: model,
                 contents : message,
@@ -36,16 +41,16 @@ export const Image = (bot) => async (msg) => {
                 }
             });
 
-            await bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing",options);
 
             if (result.candidates[0].finishReason === "SAFETY") {
-                return bot.sendMessage(chatid, "This request was blocked by Google's core safety filters, bro.");
+                return bot.sendMessage(chatid, "This request was blocked by Google's core safety filters, bro.", options);
             }
             const imageBytes = result.candidates[0].content.parts[0].inlineData.data;
 
-            const buffer = Buffer.from(imageBytes, "base64");
+            const buffer = Buffer.from(imageBytes, "base64",);
 
-            await bot.sendPhoto(chatid, buffer, {
+            await bot.sendPhoto(chatid, buffer, { ...options,
                 caption: "Here is the image you requested!"
             });
         }
@@ -60,7 +65,7 @@ export const Image = (bot) => async (msg) => {
             const base64Image = Buffer.from(imagebuffer).toString("base64");
 
 
-            await bot.sendChatAction(chatid, "upload_photo");
+            await bot.sendChatAction(chatid, "upload_photo", options);
 
             const result = await Gemini.models.generateContent({
                 model: model,
@@ -99,25 +104,25 @@ export const Image = (bot) => async (msg) => {
                 }
             });
 
-            await bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing", options);
 
             if (result.candidates[0].finishReason === "SAFETY") {
-                return bot.sendMessage(chatid, "This request was blocked by Google's core safety filters, bro.");
+                return bot.sendMessage(chatid, "This request was blocked by Google's core safety filters, bro.", options);
             }
             const imageBytes = result.candidates[0].content.parts[0].inlineData.data;
 
             const buffer = Buffer.from(imageBytes, "base64");
 
-            await bot.sendPhoto(chatid, buffer, {
+            await bot.sendPhoto(chatid, buffer, { ...options,
                 caption: "Here is the image you requested!"
             });
         }
         else {
-            await bot.sendMessage(chatid, "Sorry this function is not supported yet.");
+            await bot.sendMessage(chatid, "Sorry this function is not supported yet.", options);
         }
     }
     catch (err) {
         console.log(err);
-        await bot.sendMessage(chatid, "It seems something went wrong");
+        await bot.sendMessage(chatid, "It seems something went wrong", options);
     }
 }

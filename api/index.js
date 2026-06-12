@@ -50,7 +50,7 @@ export default async function handler(req, res) {
         try {
             session = await usersession.findOne({ userid: chatid });
             if (!session) {
-                await sendReply(chatid, "You have no session. Press /start to get started.");
+                await sendReply(chatid, "You have no session. Use /start to get started messaging.");
                 return res.status(200).send("OK");
             }
         } catch (err) {
@@ -59,16 +59,16 @@ export default async function handler(req, res) {
         }
 
         if (msg.text?.startsWith("/")) {
-            await command(bot)(msg);
+            await command(bot)(msg, businessConnectionId);
         }
         else if (session.session === "chat") {
-            await message(bot)(msg);
+            await message(bot)(msg, businessConnectionId);
         }
         else if (session.session === "imagetool") {
-            await Image(bot)(msg);
+            await Image(bot)(msg, businessConnectionId);
         }
         else if (session.session === "video") {
-            await Video(bot)(msg);
+            await Video(bot)(msg, businessConnectionId);
         }
     }
 

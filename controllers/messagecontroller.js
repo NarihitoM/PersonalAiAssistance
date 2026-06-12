@@ -45,15 +45,19 @@ function detectFormat(text) {
     return "plain";
 }
 
-async function sendBotMessage(bot, chatid, text) {
+async function sendBotMessage(bot, chatid, text, options = {}) {
+    await bot.sendChatAction(chatid, "typing", options);
     const format = detectFormat(text);
+    const sendOptions = { ...options };
 
     if (format === "plain") {
-        await bot.sendMessage(chatid, text);
+        await bot.sendMessage(chatid, text, sendOptions);
     } else if (format === "MarkdownV2") {
-        await bot.sendMessage(chatid, escapeMarkdownSafe(text), { parse_mode: "MarkdownV2" });
+        sendOptions.parse_mode = "MarkdownV2";
+        await bot.sendMessage(chatid, escapeMarkdownSafe(text), sendOptions);
     } else if (format === "HTML") {
-        await bot.sendMessage(chatid, text, { parse_mode: "HTML" });
+        sendOptions.parse_mode = "HTML";
+        await bot.sendMessage(chatid, text, sendOptions);
     }
 }
 
@@ -91,17 +95,23 @@ const getPdfTextFromUrl = async (fileUrl) => {
 
 
 //SUPER MESSAGE 
-export const message = (bot) => async (msg) => {
-
+export const message = (bot) => async (msg,businessConnectionId) => {
     const chatid = msg.chat.id;
     console.log(msg);
+
+    const options = {};
+    if (businessConnectionId) {
+        options.business_connection_id = businessConnectionId;
+    }
+
+
     //Message route
     try {
         if (msg.text) {
 
             const message = `text : ${msg.text}`;
 
-            await bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing", options);
 
             const RAGmodel = await groq.chat.completions.create({
                 model: modelRAG,
@@ -134,7 +144,7 @@ export const message = (bot) => async (msg) => {
             });
 
             const historymessage = await userquery.findOne({ userid: chatid });
-            await bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing", options);
 
             const response = await groq.chat.completions.create({
                 model: model,
@@ -156,7 +166,7 @@ export const message = (bot) => async (msg) => {
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
                 if (fileroute.type === "image") {
-                    bot.sendChatAction(chatid, "upload_photo");
+                    await bot.sendChatAction(chatid, "upload_photo", options);
 
 
                     const imageresponse = await Gemini.models.generateImages({
@@ -176,13 +186,13 @@ export const message = (bot) => async (msg) => {
                     const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                     const buffer = Buffer.from(imageBytes, "base64");
 
-                    await bot.sendPhoto(chatid, buffer, {
+                    await bot.sendPhoto(chatid, buffer, { ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
                 }
                 else if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_voice");
+                    await bot.sendChatAction(chatid, "upload_voice", options);
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -194,15 +204,15 @@ export const message = (bot) => async (msg) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    await bot.sendAudio(chatid, buffer, {
+                    await bot.sendAudio(chatid, buffer, { ...options,
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
                     })
                 }
-               
+
                 else {
-                    await bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_document", options);
 
                     await userquery.findOneAndUpdate({
                         userid: chatid
@@ -240,7 +250,7 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = writableStream.getContents();
 
-                        await bot.sendDocument(chatid, buffer, {
+                        await bot.sendDocument(chatid, buffer, { ...options,
                             title: fileroute.filename,
                             caption: fileroute.message
                         });
@@ -248,7 +258,7 @@ export const message = (bot) => async (msg) => {
                     else {
                         fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                        await bot.sendDocument(chatid, filename, {
+                        await bot.sendDocument(chatid, filename, { ...options,
                             caption: fileroute.message
                         });
                     }
@@ -268,7 +278,7 @@ export const message = (bot) => async (msg) => {
                     upsert: true
                 });
 
-                await sendBotMessage(bot, chatid, aimessage);
+                await sendBotMessage(bot, chatid, aimessage, options);
             }
         }
         //Photo route
@@ -277,7 +287,7 @@ export const message = (bot) => async (msg) => {
             const filelink = await bot.getFileLink(fileid);
             const captionmsg = msg.caption ? `Caption : ${msg.caption}` : "";
 
-            await bot.sendChatAction(chatid, "upload_photo")
+            await bot.sendChatAction(chatid, "upload_photo", options)
 
             const response1 = await groq.chat.completions.create({
                 model: imagemodel,
@@ -306,7 +316,7 @@ export const message = (bot) => async (msg) => {
 
             const aimessage1 = `image : ${response1.choices[0].message.content}`;
 
-            await bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing", options);
 
 
             await userquery.findOneAndUpdate({
@@ -348,7 +358,7 @@ export const message = (bot) => async (msg) => {
             if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage2);
                 if (fileroute.type === "image") {
-                    bot.sendChatAction(chatid, "upload_photo");
+                    await bot.sendChatAction(chatid, "upload_photo", options);
 
                     const imageresponse = await Gemini.models.generateImages({
                         model: imagecreatemodel,
@@ -366,13 +376,13 @@ export const message = (bot) => async (msg) => {
                     const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                     const buffer = Buffer.from(imageBytes, "base64");
 
-                    await bot.sendPhoto(chatid, buffer, {
+                    await bot.sendPhoto(chatid, buffer, { ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
                 }
                 else if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_voice");
+                    await bot.sendChatAction(chatid, "upload_voice", options);
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -383,14 +393,14 @@ export const message = (bot) => async (msg) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    await bot.sendAudio(chatid, buffer, {
+                    await bot.sendAudio(chatid, buffer, { ...options,
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
                     })
                 }
                 else {
-                    await bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_document", options);
 
                     await userquery.findOneAndUpdate({
                         userid: chatid
@@ -428,7 +438,7 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = writableStream.getContents();
 
-                        await bot.sendDocument(chatid, buffer, {
+                        await bot.sendDocument(chatid, buffer, { ...options,
                             title: fileroute.filename,
                             caption: fileroute.message
                         });
@@ -436,7 +446,7 @@ export const message = (bot) => async (msg) => {
                     else {
                         fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                        await bot.sendDocument(chatid, filename, {
+                        await bot.sendDocument(chatid, filename, { ...options,
                             caption: fileroute.message
                         });
                     }
@@ -456,14 +466,14 @@ export const message = (bot) => async (msg) => {
                     upsert: true
                 });
 
-                await sendBotMessage(bot, chatid, aimessage2);
+                await sendBotMessage(bot, chatid, aimessage2, options);
             }
         }
         else if (msg.sticker) {
             const fileid = msg.sticker.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            await bot.sendChatAction(chatid, "upload_photo");
+            await bot.sendChatAction(chatid, "upload_photo", options);
 
             const result = await groq.chat.completions.create({
                 model: imagemodel,
@@ -504,7 +514,7 @@ export const message = (bot) => async (msg) => {
 
             const historymessage = await userquery.findOne({ userid: chatid });
 
-            await bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing", options);
 
             const response = await groq.chat.completions.create({
                 model: model,
@@ -537,7 +547,7 @@ export const message = (bot) => async (msg) => {
                 upsert: true
             });
 
-            await sendBotMessage(bot, chatid, finalaireply);
+            await sendBotMessage(bot, chatid, finalaireply, options);
 
         }
         //Voiceroute
@@ -545,7 +555,7 @@ export const message = (bot) => async (msg) => {
             const fileid = msg.voice.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            await bot.sendChatAction(chatid, 'upload_document')
+            await bot.sendChatAction(chatid, 'upload_document', options)
 
             const transcription = await groq.audio.transcriptions.create({
                 model: transcriptmodel,
@@ -573,7 +583,7 @@ export const message = (bot) => async (msg) => {
             const Result = RAGmodel.choices[0].message.content;
             const RAGresult = `Tool Calling : ${Result}`;
 
-            await bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing", options);
 
             await userquery.findOneAndUpdate({
                 userid: chatid
@@ -611,7 +621,7 @@ export const message = (bot) => async (msg) => {
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
                 if (fileroute.type === "image") {
-                    bot.sendChatAction(chatid, "upload_photo");
+                    await bot.sendChatAction(chatid, "upload_photo", options);
 
                     const imageresponse = await Gemini.models.generateImages({
                         model: imagecreatemodel,
@@ -629,13 +639,13 @@ export const message = (bot) => async (msg) => {
                     const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                     const buffer = Buffer.from(imageBytes, "base64");
 
-                    await bot.sendPhoto(chatid, buffer, {
+                    await bot.sendPhoto(chatid, buffer, { ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
                 }
                 else if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_voice");
+                    await bot.sendChatAction(chatid, "upload_voice", options);
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -647,14 +657,14 @@ export const message = (bot) => async (msg) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    await bot.sendAudio(chatid, buffer, {
+                    await bot.sendAudio(chatid, buffer, { ...options,
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
                     })
                 }
                 else {
-                    await bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_document", options);
 
                     await userquery.findOneAndUpdate({
                         userid: chatid
@@ -692,7 +702,7 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = writableStream.getContents();
 
-                        await bot.sendDocument(chatid, buffer, {
+                        await bot.sendDocument(chatid, buffer, { ...options,
                             title: fileroute.filename,
                             caption: fileroute.message
                         });
@@ -700,7 +710,7 @@ export const message = (bot) => async (msg) => {
                     else {
                         fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                        await bot.sendDocument(chatid, filename, {
+                        await bot.sendDocument(chatid, filename, { ...options,
                             caption: fileroute.message
                         });
                     }
@@ -719,7 +729,7 @@ export const message = (bot) => async (msg) => {
                 }, {
                     upsert: true
                 });
-                await sendBotMessage(bot, chatid, aimessage);
+                await sendBotMessage(bot, chatid, aimessage, options);
             }
         }
         //Video Transcript
@@ -729,13 +739,13 @@ export const message = (bot) => async (msg) => {
             const fileid = msg.video.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            await bot.sendChatAction(chatid, "upload_video");
+                await bot.sendChatAction(chatid, "upload_video", options);
 
             const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}.mp4`);
             const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}.mp3`);
             const audiofilename = `Audio-${Date.now()}.mp3`
 
-            await bot.sendChatAction(chatid, "upload_video");
+            await bot.sendChatAction(chatid, "upload_video", options);
 
             //Read the buffer value from url
             await new Promise((resolve, reject) => {
@@ -747,7 +757,7 @@ export const message = (bot) => async (msg) => {
                 }).on("error", reject);
             });
 
-            await bot.sendChatAction(chatid, "upload_video");
+            await bot.sendChatAction(chatid, "upload_video", options);
 
             //Put the content into audio path
             await new Promise((resolve, reject) => {
@@ -764,7 +774,7 @@ export const message = (bot) => async (msg) => {
             //content to change buffer
             const audiobuffer = fs.createReadStream(tmpAudioPath);
 
-            await bot.sendChatAction(chatid, "upload_video");
+            await bot.sendChatAction(chatid, "upload_video", options);
 
             const { error } = await supabase.storage.from("audio").upload(audiofilename, audiobuffer, {
                 upsert: true
@@ -778,7 +788,7 @@ export const message = (bot) => async (msg) => {
 
 
 
-            await bot.sendChatAction(chatid, "upload_video");
+            await bot.sendChatAction(chatid, "upload_video", options);
 
             const transcript = await groq.audio.transcriptions.create({
                 model: transcriptmodel,
@@ -811,7 +821,7 @@ export const message = (bot) => async (msg) => {
             });
 
             const historymessage = await userquery.findOne({ userid: chatid });
-            await bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing", options);
 
             const response = await groq.chat.completions.create({
                 model: model,
@@ -834,7 +844,7 @@ export const message = (bot) => async (msg) => {
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
                 if (fileroute.type === "image") {
-                    bot.sendChatAction(chatid, "upload_photo");
+                    await bot.sendChatAction(chatid, "upload_photo", options);
 
                     const imageresponse = await Gemini.models.generateImages({
                         model: imagecreatemodel,
@@ -852,13 +862,13 @@ export const message = (bot) => async (msg) => {
                     const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                     const buffer = Buffer.from(imageBytes, "base64");
 
-                    await bot.sendPhoto(chatid, buffer, {
+                    await bot.sendPhoto(chatid, buffer, { ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
                 }
                 else if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_voice");
+                    await bot.sendChatAction(chatid, "upload_voice", options);
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -870,14 +880,14 @@ export const message = (bot) => async (msg) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    await bot.sendAudio(chatid, buffer, {
+                    await bot.sendAudio(chatid, buffer, { ...options,
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
                     })
                 }
                 else {
-                    await bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_document", options);
 
                     await userquery.findOneAndUpdate({
                         userid: chatid
@@ -915,7 +925,7 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = writableStream.getContents();
 
-                        await bot.sendDocument(chatid, buffer, {
+                        await bot.sendDocument(chatid, buffer, { ...options,
                             title: fileroute.filename,
                             caption: fileroute.message
                         });
@@ -923,7 +933,7 @@ export const message = (bot) => async (msg) => {
                     else {
                         fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                        await bot.sendDocument(chatid, filename, {
+                        await bot.sendDocument(chatid, filename, { ...options,
                             caption: fileroute.message
                         });
                     }
@@ -943,7 +953,7 @@ export const message = (bot) => async (msg) => {
                     upsert: true
                 });
 
-                await sendBotMessage(bot, chatid, aimessage);
+                await sendBotMessage(bot, chatid, aimessage, options);
             }
         }
         //File route
@@ -952,7 +962,7 @@ export const message = (bot) => async (msg) => {
             const filelink = await bot.getFileLink(fileid);
             const filecontent = await fetch(filelink);
             const filebuffer = await filecontent.arrayBuffer();
-            await bot.sendChatAction(chatid, "upload_document");
+            await bot.sendChatAction(chatid, "upload_document", options);
             const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please analyse this file";
 
 
@@ -995,7 +1005,7 @@ export const message = (bot) => async (msg) => {
 
                 const historymessage = await userquery.findOne({ userid: chatid })
 
-                await bot.sendChatAction(chatid, "typing");
+                await bot.sendChatAction(chatid, "typing", options);
                 const response = await groq.chat.completions.create({
                     model: model,
                     messages: [
@@ -1016,7 +1026,7 @@ export const message = (bot) => async (msg) => {
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
                     if (fileroute.type === "image") {
-                        bot.sendChatAction(chatid, "upload_photo");
+                        await bot.sendChatAction(chatid, "upload_photo", options);
 
                         const imageresponse = await Gemini.models.generateImages({
                             model: imagecreatemodel,
@@ -1034,13 +1044,13 @@ export const message = (bot) => async (msg) => {
                         const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                         const buffer = Buffer.from(imageBytes, "base64");
 
-                        await bot.sendPhoto(chatid, buffer, {
+                        await bot.sendPhoto(chatid, buffer, { ...options,
                             title: fileroute.imagename,
                             caption: fileroute.message
                         })
                     }
                     else if (fileroute.type === "audio") {
-                        await bot.sendChatAction(chatid, "upload_voice");
+                        await bot.sendChatAction(chatid, "upload_voice", options);
 
                         const response = await groq.audio.speech.create({
                             model: modelaudio,
@@ -1052,14 +1062,14 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = Buffer.from(await response.arrayBuffer());
 
-                        await bot.sendAudio(chatid, buffer, {
+                        await bot.sendAudio(chatid, buffer, { ...options,
                             caption: fileroute.message,
                             title: fileroute.audioname,
                             performer: fileroute.performer
                         })
                     }
                     else {
-                        await bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_document", options);
 
                         await userquery.findOneAndUpdate({
                             userid: chatid
@@ -1097,7 +1107,7 @@ export const message = (bot) => async (msg) => {
 
                             const buffer = writableStream.getContents();
 
-                            await bot.sendDocument(chatid, buffer, {
+                            await bot.sendDocument(chatid, buffer, { ...options,
                                 title: fileroute.filename,
                                 caption: fileroute.message
                             });
@@ -1105,7 +1115,7 @@ export const message = (bot) => async (msg) => {
                         else {
                             fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                            await bot.sendDocument(chatid, filename, {
+                            await bot.sendDocument(chatid, filename, { ...options,
                                 caption: fileroute.message
                             });
                         }
@@ -1125,7 +1135,7 @@ export const message = (bot) => async (msg) => {
                         upsert: true
                     });
 
-                    await sendBotMessage(bot, chatid, aimessage);
+                    await sendBotMessage(bot, chatid, aimessage, options);
                 }
             }
             //PDF file route
@@ -1150,7 +1160,7 @@ export const message = (bot) => async (msg) => {
 
                 const historymessage = await userquery.findOne({ userid: chatid })
 
-                await bot.sendChatAction(chatid, "typing");
+                await bot.sendChatAction(chatid, "typing", options);
                 const response = await groq.chat.completions.create({
                     model: model,
                     messages: [
@@ -1171,7 +1181,7 @@ export const message = (bot) => async (msg) => {
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
                     if (fileroute.type === "image") {
-                        bot.sendChatAction(chatid, "upload_photo");
+                        await bot.sendChatAction(chatid, "upload_photo", options);
 
                         const imageresponse = await Gemini.models.generateImages({
                             model: imagecreatemodel,
@@ -1189,13 +1199,13 @@ export const message = (bot) => async (msg) => {
                         const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                         const buffer = Buffer.from(imageBytes, "base64");
 
-                        await bot.sendPhoto(chatid, buffer, {
+                        await bot.sendPhoto(chatid, buffer, { ...options,
                             title: fileroute.imagename,
                             caption: fileroute.message
                         })
                     }
                     else if (fileroute.type === "audio") {
-                        await bot.sendChatAction(chatid, "upload_voice");
+                        await bot.sendChatAction(chatid, "upload_voice", options);
 
                         const response = await groq.audio.speech.create({
                             model: modelaudio,
@@ -1207,14 +1217,14 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = Buffer.from(await response.arrayBuffer());
 
-                        await bot.sendAudio(chatid, buffer, {
+                        await bot.sendAudio(chatid, buffer, { ...options,
                             caption: fileroute.message,
                             title: fileroute.audioname,
                             performer: fileroute.performer
                         })
                     }
                     else {
-                        await bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_document", options);
 
                         await userquery.findOneAndUpdate({
                             userid: chatid
@@ -1252,7 +1262,7 @@ export const message = (bot) => async (msg) => {
 
                             const buffer = writableStream.getContents();
 
-                            await bot.sendDocument(chatid, buffer, {
+                            await bot.sendDocument(chatid, buffer, { ...options,
                                 title: fileroute.filename,
                                 caption: fileroute.message
                             });
@@ -1260,7 +1270,7 @@ export const message = (bot) => async (msg) => {
                         else {
                             fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                            await bot.sendDocument(chatid, filename, {
+                            await bot.sendDocument(chatid, filename, { ...options,
                                 caption: fileroute.message
                             });
                         }
@@ -1280,7 +1290,7 @@ export const message = (bot) => async (msg) => {
                         upsert: true
                     });
 
-                    await sendBotMessage(bot, chatid, aimessage);
+                    await sendBotMessage(bot, chatid, aimessage, options);
                 }
             }
             //DOCX File route
@@ -1303,7 +1313,7 @@ export const message = (bot) => async (msg) => {
 
                 const historymessage = await userquery.findOne({ userid: chatid })
 
-                await bot.sendChatAction(chatid, "typing");
+                await bot.sendChatAction(chatid, "typing", options);
                 const response = await groq.chat.completions.create({
                     model: model,
                     messages: [
@@ -1324,7 +1334,7 @@ export const message = (bot) => async (msg) => {
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
                     if (fileroute.type === "image") {
-                        bot.sendChatAction(chatid, "upload_photo");
+                        await bot.sendChatAction(chatid, "upload_photo", options);
 
                         const imageresponse = await Gemini.models.generateImages({
                             model: imagecreatemodel,
@@ -1342,13 +1352,13 @@ export const message = (bot) => async (msg) => {
                         const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                         const buffer = Buffer.from(imageBytes, "base64");
 
-                        await bot.sendPhoto(chatid, buffer, {
+                        await bot.sendPhoto(chatid, buffer, { ...options,
                             title: fileroute.imagename,
                             caption: fileroute.message
                         })
                     }
                     else if (fileroute.type === "audio") {
-                        await bot.sendChatAction(chatid, "upload_voice");
+                        await bot.sendChatAction(chatid, "upload_voice", options);
 
                         const response = await groq.audio.speech.create({
                             model: modelaudio,
@@ -1360,14 +1370,14 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = Buffer.from(await response.arrayBuffer());
 
-                        await bot.sendAudio(chatid, buffer, {
+                        await bot.sendAudio(chatid, buffer, { ...options,
                             caption: fileroute.message,
                             title: fileroute.audioname,
                             performer: fileroute.performer
                         })
                     }
                     else {
-                        await bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_document", options);
 
                         await userquery.findOneAndUpdate({
                             userid: chatid
@@ -1405,7 +1415,7 @@ export const message = (bot) => async (msg) => {
 
                             const buffer = writableStream.getContents();
 
-                            await bot.sendDocument(chatid, buffer, {
+                            await bot.sendDocument(chatid, buffer, { ...options,
                                 title: fileroute.filename,
                                 caption: fileroute.message
                             });
@@ -1413,7 +1423,7 @@ export const message = (bot) => async (msg) => {
                         else {
                             fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                            await bot.sendDocument(chatid, filename, {
+                            await bot.sendDocument(chatid, filename, { ...options,
                                 caption: fileroute.message
                             });
                         }
@@ -1434,7 +1444,8 @@ export const message = (bot) => async (msg) => {
                         upsert: true
                     });
 
-                    await sendBotMessage(bot, chatid, aimessage);
+                    await sendBotMessage(bot, chatid, aimessage, options);
+                    
                 }
             }
             else if (msg.document.mime_type === "image/png" || msg.document.mime_type === "image/jpeg") {
@@ -1465,7 +1476,7 @@ export const message = (bot) => async (msg) => {
 
                 const aimessage1 = `image : ${response1.choices[0].message.content}`;
 
-                await bot.sendChatAction(chatid, "typing");
+                await bot.sendChatAction(chatid, "typing", options);
 
                 await userquery.findOneAndUpdate({
                     userid: chatid
@@ -1506,7 +1517,7 @@ export const message = (bot) => async (msg) => {
                 if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage2);
                     if (fileroute.type === "image") {
-                        bot.sendChatAction(chatid, "upload_photo");
+                        await bot.sendChatAction(chatid, "upload_photo", options);
 
                         const imageresponse = await Gemini.models.generateImages({
                             model: imagecreatemodel,
@@ -1524,13 +1535,13 @@ export const message = (bot) => async (msg) => {
                         const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                         const buffer = Buffer.from(imageBytes, "base64");
 
-                        await bot.sendPhoto(chatid, buffer, {
+                        await bot.sendPhoto(chatid, buffer, { ...options,
                             title: fileroute.imagename,
                             caption: fileroute.message
                         })
                     }
                     else if (fileroute.type === "audio") {
-                        await bot.sendChatAction(chatid, "upload_voice");
+                        await bot.sendChatAction(chatid, "upload_voice", options);
 
                         const response = await groq.audio.speech.create({
                             model: modelaudio,
@@ -1541,14 +1552,14 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = Buffer.from(await response.arrayBuffer());
 
-                        await bot.sendAudio(chatid, buffer, {
+                        await bot.sendAudio(chatid, buffer, { ...options,
                             caption: fileroute.message,
                             title: fileroute.audioname,
                             performer: fileroute.performer
                         })
                     }
                     else {
-                        await bot.sendChatAction(chatid, "upload_document");
+                        await bot.sendChatAction(chatid, "upload_document", options);
 
                         await userquery.findOneAndUpdate({
                             userid: chatid
@@ -1586,7 +1597,7 @@ export const message = (bot) => async (msg) => {
 
                             const buffer = writableStream.getContents();
 
-                            await bot.sendDocument(chatid, buffer, {
+                            await bot.sendDocument(chatid, buffer, { ...options,
                                 title: fileroute.filename,
                                 caption: fileroute.message
                             });
@@ -1594,7 +1605,7 @@ export const message = (bot) => async (msg) => {
                         else {
                             fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                            await bot.sendDocument(chatid, filename, {
+                            await bot.sendDocument(chatid, filename, { ...options,
                                 caption: fileroute.message
                             });
                         }
@@ -1614,7 +1625,7 @@ export const message = (bot) => async (msg) => {
                         upsert: true
                     });
 
-                    await sendBotMessage(bot, chatid, aimessage2);
+                    await sendBotMessage(bot, chatid, aimessage2, options);
                 }
             }
         }
@@ -1622,7 +1633,7 @@ export const message = (bot) => async (msg) => {
             const fileid = msg.audio.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            bot.sendChatAction(chatid, "upload_document");
+            await bot.sendChatAction(chatid, "upload_document", options);
 
             const result = await groq.audio.transcriptions.create({
                 model: transcriptmodel,
@@ -1662,7 +1673,7 @@ export const message = (bot) => async (msg) => {
             });
 
             const historymessage = await userquery.findOne({ userid: chatid });
-            await bot.sendChatAction(chatid, "typing");
+            await bot.sendChatAction(chatid, "typing", options);
 
             const response = await groq.chat.completions.create({
                 model: model,
@@ -1684,7 +1695,7 @@ export const message = (bot) => async (msg) => {
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
                 if (fileroute.type === "image") {
-                    bot.sendChatAction(chatid, "upload_photo");
+                    await bot.sendChatAction(chatid, "upload_photo", options);
 
                     const imageresponse = await Gemini.models.generateImages({
                         model: imagecreatemodel,
@@ -1702,13 +1713,13 @@ export const message = (bot) => async (msg) => {
                     const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                     const buffer = Buffer.from(imageBytes, "base64");
 
-                    await bot.sendPhoto(chatid, buffer, {
+                    await bot.sendPhoto(chatid, buffer, { ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
                 }
                 else if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_voice");
+                    await bot.sendChatAction(chatid, "upload_voice", options);
 
                     const response = await groq.audio.speech.create({
                         model: modelaudio,
@@ -1720,14 +1731,14 @@ export const message = (bot) => async (msg) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    await bot.sendAudio(chatid, buffer, {
+                    await bot.sendAudio(chatid, buffer, { ...options,
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
                     })
                 }
                 else {
-                    await bot.sendChatAction(chatid, "upload_document");
+                    await bot.sendChatAction(chatid, "upload_document", options);
 
                     await userquery.findOneAndUpdate({
                         userid: chatid
@@ -1765,7 +1776,7 @@ export const message = (bot) => async (msg) => {
 
                         const buffer = writableStream.getContents();
 
-                        await bot.sendDocument(chatid, buffer, {
+                        await bot.sendDocument(chatid, buffer, { ...options,
                             title: fileroute.filename,
                             caption: fileroute.message
                         });
@@ -1773,7 +1784,7 @@ export const message = (bot) => async (msg) => {
                     else {
                         fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                        await bot.sendDocument(chatid, filename, {
+                        await bot.sendDocument(chatid, filename, { ...options,
                             caption: fileroute.message
                         });
                     }
@@ -1793,11 +1804,11 @@ export const message = (bot) => async (msg) => {
                     upsert: true
                 });
 
-                await sendBotMessage(bot, chatid, aimessage);
+                await sendBotMessage(bot, chatid, aimessage, options);
             }
         }
     } catch (err) {
         console.log(err);
-        await sendBotMessage(bot, chatid, "Something went wrong. please try again.")
+        await sendBotMessage(bot, chatid, "Something went wrong. please try again.", options)
     }
 }
