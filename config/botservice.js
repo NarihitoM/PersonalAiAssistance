@@ -9,6 +9,8 @@ export const createbot = async (token) => {
     await mongoconnect();
 
     const bot = new TelegramBot(token, { polling: false });
+    
+    
 
     botInstance = bot;
     return botInstance;
