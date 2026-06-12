@@ -95,7 +95,7 @@ const getPdfTextFromUrl = async (fileUrl) => {
 
 
 //SUPER MESSAGE 
-export const message = (bot) => async (msg,businessConnectionId) => {
+export const message = (bot) => async (msg, businessConnectionId) => {
     const chatid = msg.chat.id;
     console.log(msg);
 
@@ -186,7 +186,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                     const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                     const buffer = Buffer.from(imageBytes, "base64");
 
-                    await bot.sendPhoto(chatid, buffer, { ...options,
+                    await bot.sendPhoto(chatid, buffer, {
+                        ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
@@ -204,7 +205,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    await bot.sendAudio(chatid, buffer, { ...options,
+                    await bot.sendAudio(chatid, buffer, {
+                        ...options,
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
@@ -250,7 +252,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                         const buffer = writableStream.getContents();
 
-                        await bot.sendDocument(chatid, buffer, { ...options,
+                        await bot.sendDocument(chatid, buffer, {
+                            ...options,
                             title: fileroute.filename,
                             caption: fileroute.message
                         });
@@ -258,7 +261,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                     else {
                         fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                        await bot.sendDocument(chatid, filename, { ...options,
+                        await bot.sendDocument(chatid, filename, {
+                            ...options,
                             caption: fileroute.message
                         });
                     }
@@ -376,7 +380,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                     const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                     const buffer = Buffer.from(imageBytes, "base64");
 
-                    await bot.sendPhoto(chatid, buffer, { ...options,
+                    await bot.sendPhoto(chatid, buffer, {
+                        ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
@@ -393,7 +398,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    await bot.sendAudio(chatid, buffer, { ...options,
+                    await bot.sendAudio(chatid, buffer, {
+                        ...options,
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
@@ -438,7 +444,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                         const buffer = writableStream.getContents();
 
-                        await bot.sendDocument(chatid, buffer, { ...options,
+                        await bot.sendDocument(chatid, buffer, {
+                            ...options,
                             title: fileroute.filename,
                             caption: fileroute.message
                         });
@@ -446,7 +453,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                     else {
                         fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                        await bot.sendDocument(chatid, filename, { ...options,
+                        await bot.sendDocument(chatid, filename, {
+                            ...options,
                             caption: fileroute.message
                         });
                     }
@@ -473,82 +481,132 @@ export const message = (bot) => async (msg,businessConnectionId) => {
             const fileid = msg.sticker.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            await bot.sendChatAction(chatid, "upload_photo", options);
+            if (msg.sticker.is_video || msg.sticker.is_animated) {
+                const stickerEmoji = msg.sticker.emoji || "🫧";
+                const aimessage = `The user sent an animated/video sticker showing the emoji: "${stickerEmoji}".`;
+                const gifanalyse = `Gif : ${aimessage}`;
 
-            const result = await groq.chat.completions.create({
-                model: imagemodel,
-                messages: [
-                    {
-                        role: "system",
-                        content: systempromptforimage
-                    },
-                    {
-                        role: "user",
-                        "content": [
-                            {
-                                type: "image_url",
-                                image_url: {
-                                    url: filelink
-                                }
-                            }
-                        ]
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "user",
+                            content: gifanalyse
+                        }
                     }
-                ]
-            })
+                }, {
+                    upsert: true
+                });
 
-            const aimessage = result.choices[0].message.content;
-            const gifanalyse = `Gif : ${aimessage}`;
+                const historymessage = await userquery.findOne({ userid: chatid });
 
-            await userquery.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $push: {
-                    messages: {
-                        role: "user",
-                        content: gifanalyse
-                    }
-                }
-            }, {
-                upsert: true
-            });
+                await bot.sendChatAction(chatid, "typing", options);
 
-            const historymessage = await userquery.findOne({ userid: chatid });
-
-            await bot.sendChatAction(chatid, "typing", options);
-
-            const response = await groq.chat.completions.create({
-                model: model,
-                messages: [
-                    {
-                        role: "system",
-                        content: systemprompt
-                    },
-                    ...historymessage.messages.slice(-6).map((element) => (
+                const response = await groq.chat.completions.create({
+                    model: model,
+                    messages: [
                         {
+                            role: "system",
+                            content: systemprompt
+                        },
+                        ...historymessage.messages.slice(-6).map((element) => ({
                             role: element.role,
                             content: element.content
+                        }))
+                    ]
+                });
+
+                const finalaireply = response.choices[0].message.content;
+
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "assistant",
+                            content: finalaireply
                         }
-                    ))
-                ]
-            })
-
-            const finalaireply = response.choices[0].message.content;
-
-            await userquery.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $push: {
-                    messages: {
-                        role: "assistant",
-                        content: finalaireply
                     }
-                }
-            }, {
-                upsert: true
-            });
+                }, {
+                    upsert: true
+                });
 
-            await sendBotMessage(bot, chatid, finalaireply, options);
+                await sendBotMessage(bot, chatid, finalaireply, options);
+            } else {
+                await bot.sendChatAction(chatid, "upload_photo", options);
+                const result = await groq.chat.completions.create({
+                    model: imagemodel,
+                    messages: [
+                        {
+                            role: "system",
+                            content: systempromptforimage
+                        },
+                        {
+                            role: "user",
+                            content: [
+                                {
+                                    type: "image_url",
+                                    image_url: {
+                                        url: filelink
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                });
 
+                const aimessage = result.choices[0].message.content;
+                const gifanalyse = `Gif : ${aimessage}`;
+
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "user",
+                            content: gifanalyse
+                        }
+                    }
+                }, {
+                    upsert: true
+                });
+
+                const historymessage = await userquery.findOne({ userid: chatid });
+
+                await bot.sendChatAction(chatid, "typing", options);
+
+                const response = await groq.chat.completions.create({
+                    model: model,
+                    messages: [
+                        {
+                            role: "system",
+                            content: systemprompt
+                        },
+                        ...historymessage.messages.slice(-6).map((element) => ({
+                            role: element.role,
+                            content: element.content
+                        }))
+                    ]
+                });
+
+                const finalaireply = response.choices[0].message.content;
+
+                await userquery.findOneAndUpdate({
+                    userid: chatid
+                }, {
+                    $push: {
+                        messages: {
+                            role: "assistant",
+                            content: finalaireply
+                        }
+                    }
+                }, {
+                    upsert: true
+                });
+
+                await sendBotMessage(bot, chatid, finalaireply, options);
+            }
         }
         //Voiceroute
         else if (msg.voice) {
@@ -639,7 +697,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                     const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                     const buffer = Buffer.from(imageBytes, "base64");
 
-                    await bot.sendPhoto(chatid, buffer, { ...options,
+                    await bot.sendPhoto(chatid, buffer, {
+                        ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
@@ -657,7 +716,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    await bot.sendAudio(chatid, buffer, { ...options,
+                    await bot.sendAudio(chatid, buffer, {
+                        ...options,
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
@@ -702,7 +762,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                         const buffer = writableStream.getContents();
 
-                        await bot.sendDocument(chatid, buffer, { ...options,
+                        await bot.sendDocument(chatid, buffer, {
+                            ...options,
                             title: fileroute.filename,
                             caption: fileroute.message
                         });
@@ -710,7 +771,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                     else {
                         fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                        await bot.sendDocument(chatid, filename, { ...options,
+                        await bot.sendDocument(chatid, filename, {
+                            ...options,
                             caption: fileroute.message
                         });
                     }
@@ -739,7 +801,7 @@ export const message = (bot) => async (msg,businessConnectionId) => {
             const fileid = msg.video.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-                await bot.sendChatAction(chatid, "upload_video", options);
+            await bot.sendChatAction(chatid, "upload_video", options);
 
             const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}.mp4`);
             const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}.mp3`);
@@ -862,7 +924,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                     const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                     const buffer = Buffer.from(imageBytes, "base64");
 
-                    await bot.sendPhoto(chatid, buffer, { ...options,
+                    await bot.sendPhoto(chatid, buffer, {
+                        ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
@@ -880,7 +943,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    await bot.sendAudio(chatid, buffer, { ...options,
+                    await bot.sendAudio(chatid, buffer, {
+                        ...options,
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
@@ -925,7 +989,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                         const buffer = writableStream.getContents();
 
-                        await bot.sendDocument(chatid, buffer, { ...options,
+                        await bot.sendDocument(chatid, buffer, {
+                            ...options,
                             title: fileroute.filename,
                             caption: fileroute.message
                         });
@@ -933,7 +998,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                     else {
                         fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                        await bot.sendDocument(chatid, filename, { ...options,
+                        await bot.sendDocument(chatid, filename, {
+                            ...options,
                             caption: fileroute.message
                         });
                     }
@@ -1044,7 +1110,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                         const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                         const buffer = Buffer.from(imageBytes, "base64");
 
-                        await bot.sendPhoto(chatid, buffer, { ...options,
+                        await bot.sendPhoto(chatid, buffer, {
+                            ...options,
                             title: fileroute.imagename,
                             caption: fileroute.message
                         })
@@ -1062,7 +1129,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                         const buffer = Buffer.from(await response.arrayBuffer());
 
-                        await bot.sendAudio(chatid, buffer, { ...options,
+                        await bot.sendAudio(chatid, buffer, {
+                            ...options,
                             caption: fileroute.message,
                             title: fileroute.audioname,
                             performer: fileroute.performer
@@ -1107,7 +1175,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                             const buffer = writableStream.getContents();
 
-                            await bot.sendDocument(chatid, buffer, { ...options,
+                            await bot.sendDocument(chatid, buffer, {
+                                ...options,
                                 title: fileroute.filename,
                                 caption: fileroute.message
                             });
@@ -1115,7 +1184,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                         else {
                             fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                            await bot.sendDocument(chatid, filename, { ...options,
+                            await bot.sendDocument(chatid, filename, {
+                                ...options,
                                 caption: fileroute.message
                             });
                         }
@@ -1199,7 +1269,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                         const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                         const buffer = Buffer.from(imageBytes, "base64");
 
-                        await bot.sendPhoto(chatid, buffer, { ...options,
+                        await bot.sendPhoto(chatid, buffer, {
+                            ...options,
                             title: fileroute.imagename,
                             caption: fileroute.message
                         })
@@ -1217,7 +1288,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                         const buffer = Buffer.from(await response.arrayBuffer());
 
-                        await bot.sendAudio(chatid, buffer, { ...options,
+                        await bot.sendAudio(chatid, buffer, {
+                            ...options,
                             caption: fileroute.message,
                             title: fileroute.audioname,
                             performer: fileroute.performer
@@ -1262,7 +1334,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                             const buffer = writableStream.getContents();
 
-                            await bot.sendDocument(chatid, buffer, { ...options,
+                            await bot.sendDocument(chatid, buffer, {
+                                ...options,
                                 title: fileroute.filename,
                                 caption: fileroute.message
                             });
@@ -1270,7 +1343,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                         else {
                             fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                            await bot.sendDocument(chatid, filename, { ...options,
+                            await bot.sendDocument(chatid, filename, {
+                                ...options,
                                 caption: fileroute.message
                             });
                         }
@@ -1352,7 +1426,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                         const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                         const buffer = Buffer.from(imageBytes, "base64");
 
-                        await bot.sendPhoto(chatid, buffer, { ...options,
+                        await bot.sendPhoto(chatid, buffer, {
+                            ...options,
                             title: fileroute.imagename,
                             caption: fileroute.message
                         })
@@ -1370,7 +1445,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                         const buffer = Buffer.from(await response.arrayBuffer());
 
-                        await bot.sendAudio(chatid, buffer, { ...options,
+                        await bot.sendAudio(chatid, buffer, {
+                            ...options,
                             caption: fileroute.message,
                             title: fileroute.audioname,
                             performer: fileroute.performer
@@ -1415,7 +1491,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                             const buffer = writableStream.getContents();
 
-                            await bot.sendDocument(chatid, buffer, { ...options,
+                            await bot.sendDocument(chatid, buffer, {
+                                ...options,
                                 title: fileroute.filename,
                                 caption: fileroute.message
                             });
@@ -1423,7 +1500,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                         else {
                             fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                            await bot.sendDocument(chatid, filename, { ...options,
+                            await bot.sendDocument(chatid, filename, {
+                                ...options,
                                 caption: fileroute.message
                             });
                         }
@@ -1445,7 +1523,7 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                     });
 
                     await sendBotMessage(bot, chatid, aimessage, options);
-                    
+
                 }
             }
             else if (msg.document.mime_type === "image/png" || msg.document.mime_type === "image/jpeg") {
@@ -1535,7 +1613,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                         const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                         const buffer = Buffer.from(imageBytes, "base64");
 
-                        await bot.sendPhoto(chatid, buffer, { ...options,
+                        await bot.sendPhoto(chatid, buffer, {
+                            ...options,
                             title: fileroute.imagename,
                             caption: fileroute.message
                         })
@@ -1552,7 +1631,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                         const buffer = Buffer.from(await response.arrayBuffer());
 
-                        await bot.sendAudio(chatid, buffer, { ...options,
+                        await bot.sendAudio(chatid, buffer, {
+                            ...options,
                             caption: fileroute.message,
                             title: fileroute.audioname,
                             performer: fileroute.performer
@@ -1597,7 +1677,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                             const buffer = writableStream.getContents();
 
-                            await bot.sendDocument(chatid, buffer, { ...options,
+                            await bot.sendDocument(chatid, buffer, {
+                                ...options,
                                 title: fileroute.filename,
                                 caption: fileroute.message
                             });
@@ -1605,7 +1686,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                         else {
                             fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                            await bot.sendDocument(chatid, filename, { ...options,
+                            await bot.sendDocument(chatid, filename, {
+                                ...options,
                                 caption: fileroute.message
                             });
                         }
@@ -1713,7 +1795,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                     const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
                     const buffer = Buffer.from(imageBytes, "base64");
 
-                    await bot.sendPhoto(chatid, buffer, { ...options,
+                    await bot.sendPhoto(chatid, buffer, {
+                        ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
@@ -1731,7 +1814,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                     const buffer = Buffer.from(await response.arrayBuffer());
 
-                    await bot.sendAudio(chatid, buffer, { ...options,
+                    await bot.sendAudio(chatid, buffer, {
+                        ...options,
                         caption: fileroute.message,
                         title: fileroute.audioname,
                         performer: fileroute.performer
@@ -1776,7 +1860,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
 
                         const buffer = writableStream.getContents();
 
-                        await bot.sendDocument(chatid, buffer, { ...options,
+                        await bot.sendDocument(chatid, buffer, {
+                            ...options,
                             title: fileroute.filename,
                             caption: fileroute.message
                         });
@@ -1784,7 +1869,8 @@ export const message = (bot) => async (msg,businessConnectionId) => {
                     else {
                         fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
 
-                        await bot.sendDocument(chatid, filename, { ...options,
+                        await bot.sendDocument(chatid, filename, {
+                            ...options,
                             caption: fileroute.message
                         });
                     }
