@@ -19,49 +19,63 @@ export default async function handler(req, res) {
     const bot = botInstance;
 
     if (req.body.message) {
-        const msg = req.body.message;
-        const chatid = msg.chat.id;
+        const msg = req.body.message || req.body.business_message;
 
-        if (msg.text === "/start") {
-            await usersession.findOneAndUpdate(
-                { userid: chatid },
-                { $set: { session: "chat" } },
-                { upsert: true, new: true }
-            );
-            await bot.sendMessage(chatid, "You can now get started! Develop By Narihito");
-            return res.status(200).send("OK");
-        }
+        if (msg) {
+            const chatid = msg.chat.id;
 
-        if (msg.text === "/feature") {
-            await bot.sendMessage(chatid, "This Assistance can chat, read files, analyse image, create image, analyse file, create file, create voice, listen to voice , etc..");
-            return res.status(200).send("OK");
-        }
+            const businessConnectionId = req.body.business_message?.business_connection_id;
 
-        let session;
-        try {
-            session = await usersession.findOne({ userid: chatid });
-            if (!session) {
-                await bot.sendMessage(chatid, "You have no session. Press /start to get started.");
+            const sendReply = async (targetId, text) => {
+                const options = {};
+                if (businessConnectionId) {
+                    options.business_connection_id = businessConnectionId;
+                }
+                return await bot.sendMessage(targetId, text, options);
+            };
+
+            if (msg.text === "/start") {
+                await usersession.findOneAndUpdate(
+                    { userid: chatid },
+                    { $set: { session: "chat" } },
+                    { upsert: true, new: true }
+                );
+                await bot.sendMessage(chatid, "You can now get started! Develop By Narihito");
                 return res.status(200).send("OK");
             }
-        } catch (err) {
-            console.error(err);
-            return res.status(200).send("OK");
+
+            if (msg.text === "/feature") {
+                await bot.sendMessage(chatid, "This Assistance can chat, read files, analyse image, create image, analyse file, create file, create voice, listen to voice , etc..");
+                return res.status(200).send("OK");
+            }
+
+
+            let session;
+            try {
+                session = await usersession.findOne({ userid: chatid });
+                if (!session) {
+                    await bot.sendMessage(chatid, "You have no session. Press /start to get started.");
+                    return res.status(200).send("OK");
+                }
+            } catch (err) {
+                console.error(err);
+                return res.status(200).send("OK");
+            }
+
+            if (msg.text?.startsWith("/")) {
+                await command(bot)(msg);
+            }
+            else if (session.session === "chat") {
+                await message(bot)(msg);
+            }
+            else if (session.session === "imagetool") {
+                await Image(bot)(msg);
+            }
+            else if (session.session === "video") {
+                await Video(bot)(msg);
+            }
         }
 
-        if (msg.text?.startsWith("/")) {
-            await command(bot)(msg);
-        }
-        else if (session.session === "chat") {
-            await message(bot)(msg);
-        }
-        else if (session.session === "imagetool") {
-            await Image(bot)(msg);
-        }
-        else if (session.session === "video") {
-            await Video(bot)(msg);
-        }
+        return res.status(200).send("OK");
     }
-
-    return res.status(200).send("OK");
 }
