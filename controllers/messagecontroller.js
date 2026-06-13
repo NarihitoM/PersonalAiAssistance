@@ -19,7 +19,7 @@ const model = "openai/gpt-oss-120b"
 const modelaudio = "canopylabs/orpheus-v1-english"
 const imagemodel = "meta-llama/llama-4-scout-17b-16e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
-const imagecreatemodel = "black-forest-labs/FLUX.1-schnell"
+const imagecreatemodel = "stabilityai/stable-diffusion-xl-base-1.0"
 const videocreatemodel = "Wan-AI/Wan2.2-TI2V-5B"
 
 ffmpeg.setFfmpegPath(ffmpegPath);
