@@ -20,6 +20,7 @@ const modelaudio = "canopylabs/orpheus-v1-english"
 const imagemodel = "meta-llama/llama-4-scout-17b-16e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
 const imagecreatemodel = "black-forest-labs/FLUX.1-schnell"
+const videocreatemodel = "damo-vilab/text-to-video-ms-1.7b"
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -168,6 +169,27 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
+                }
+                else if (fileroute.type === "video") {
+                    await bot.sendChatAction(chatid, "upload_video", options);
+
+                    if (fileroute.message) {
+                        await bot.sendMessage(chatid, fileroute.message, options);
+                    }
+
+                    const videoBlob = await hf.request({
+                        model: videocreatemodel,
+                        inputs: fileroute.prompt,
+                    });
+
+                    const arrayBuffer = await videoBlob.arrayBuffer();
+                    const videoBuffer = Buffer.from(arrayBuffer);
+
+                    await bot.sendVideo(chatid, videoBuffer, {
+                        ...options,
+                        title: fileroute.videoname,
+                        caption: fileroute.message
+                    });
                 }
                 else if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
@@ -358,6 +380,27 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
+                }
+                else if (fileroute.type === "video") {
+                    await bot.sendChatAction(chatid, "upload_video", options);
+
+                    if (fileroute.message) {
+                        await bot.sendMessage(chatid, fileroute.message, options);
+                    }
+
+                    const videoBlob = await hf.request({
+                        model: videocreatemodel,
+                        inputs: fileroute.prompt,
+                    });
+
+                    const arrayBuffer = await videoBlob.arrayBuffer();
+                    const videoBuffer = Buffer.from(arrayBuffer);
+
+                    await bot.sendVideo(chatid, videoBuffer, {
+                        ...options,
+                        title: fileroute.videoname,
+                        caption: fileroute.message
+                    });
                 }
                 else if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
@@ -657,6 +700,27 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         caption: fileroute.message
                     })
                 }
+                else if (fileroute.type === "video") {
+                    await bot.sendChatAction(chatid, "upload_video", options);
+
+                    if (fileroute.message) {
+                        await bot.sendMessage(chatid, fileroute.message, options);
+                    }
+
+                    const videoBlob = await hf.request({
+                        model: videocreatemodel,
+                        inputs: fileroute.prompt,
+                    });
+
+                    const arrayBuffer = await videoBlob.arrayBuffer();
+                    const videoBuffer = Buffer.from(arrayBuffer);
+
+                    await bot.sendVideo(chatid, videoBuffer, {
+                        ...options,
+                        title: fileroute.videoname,
+                        caption: fileroute.message
+                    });
+                }
                 else if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
 
@@ -880,6 +944,27 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         caption: fileroute.message
                     })
                 }
+                else if (fileroute.type === "video") {
+                    await bot.sendChatAction(chatid, "upload_video", options);
+
+                    if (fileroute.message) {
+                        await bot.sendMessage(chatid, fileroute.message, options);
+                    }
+
+                    const videoBlob = await hf.request({
+                        model: videocreatemodel,
+                        inputs: fileroute.prompt,
+                    });
+
+                    const arrayBuffer = await videoBlob.arrayBuffer();
+                    const videoBuffer = Buffer.from(arrayBuffer);
+
+                    await bot.sendVideo(chatid, videoBuffer, {
+                        ...options,
+                        title: fileroute.videoname,
+                        caption: fileroute.message
+                    });
+                }
                 else if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
 
@@ -1044,6 +1129,27 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                             caption: fileroute.message
                         })
                     }
+                    else if (fileroute.type === "video") {
+                        await bot.sendChatAction(chatid, "upload_video", options);
+
+                        if (fileroute.message) {
+                            await bot.sendMessage(chatid, fileroute.message, options);
+                        }
+
+                        const videoBlob = await hf.request({
+                            model: videocreatemodel,
+                            inputs: fileroute.prompt,
+                        });
+
+                        const arrayBuffer = await videoBlob.arrayBuffer();
+                        const videoBuffer = Buffer.from(arrayBuffer);
+
+                        await bot.sendVideo(chatid, videoBuffer, {
+                            ...options,
+                            title: fileroute.videoname,
+                            caption: fileroute.message
+                        });
+                    }
                     else if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_voice", options);
 
@@ -1199,6 +1305,27 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                             caption: fileroute.message
                         })
                     }
+                    else if (fileroute.type === "video") {
+                        await bot.sendChatAction(chatid, "upload_video", options);
+
+                        if (fileroute.message) {
+                            await bot.sendMessage(chatid, fileroute.message, options);
+                        }
+
+                        const videoBlob = await hf.request({
+                            model: videocreatemodel,
+                            inputs: fileroute.prompt,
+                        });
+
+                        const arrayBuffer = await videoBlob.arrayBuffer();
+                        const videoBuffer = Buffer.from(arrayBuffer);
+
+                        await bot.sendVideo(chatid, videoBuffer, {
+                            ...options,
+                            title: fileroute.videoname,
+                            caption: fileroute.message
+                        });
+                    }
                     else if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_voice", options);
 
@@ -1351,6 +1478,27 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                             title: fileroute.imagename,
                             caption: fileroute.message
                         })
+                    }
+                    else if (fileroute.type === "video") {
+                        await bot.sendChatAction(chatid, "upload_video", options);
+
+                        if (fileroute.message) {
+                            await bot.sendMessage(chatid, fileroute.message, options);
+                        }
+
+                        const videoBlob = await hf.request({
+                            model: videocreatemodel,
+                            inputs: fileroute.prompt,
+                        });
+
+                        const arrayBuffer = await videoBlob.arrayBuffer();
+                        const videoBuffer = Buffer.from(arrayBuffer);
+
+                        await bot.sendVideo(chatid, videoBuffer, {
+                            ...options,
+                            title: fileroute.videoname,
+                            caption: fileroute.message
+                        });
                     }
                     else if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_voice", options);
@@ -1535,6 +1683,27 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                             caption: fileroute.message
                         })
                     }
+                    else if (fileroute.type === "video") {
+                        await bot.sendChatAction(chatid, "upload_video", options);
+
+                        if (fileroute.message) {
+                            await bot.sendMessage(chatid, fileroute.message, options);
+                        }
+
+                        const videoBlob = await hf.request({
+                            model: videocreatemodel,
+                            inputs: fileroute.prompt,
+                        });
+
+                        const arrayBuffer = await videoBlob.arrayBuffer();
+                        const videoBuffer = Buffer.from(arrayBuffer);
+
+                        await bot.sendVideo(chatid, videoBuffer, {
+                            ...options,
+                            title: fileroute.videoname,
+                            caption: fileroute.message
+                        });
+                    }
                     else if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_voice", options);
 
@@ -1696,6 +1865,27 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         title: fileroute.imagename,
                         caption: fileroute.message
                     })
+                }
+                else if (fileroute.type === "video") {
+                    await bot.sendChatAction(chatid, "upload_video", options);
+
+                    if (fileroute.message) {
+                        await bot.sendMessage(chatid, fileroute.message, options);
+                    }
+
+                    const videoBlob = await hf.request({
+                        model: videocreatemodel,
+                        inputs: fileroute.prompt,
+                    });
+
+                    const arrayBuffer = await videoBlob.arrayBuffer();
+                    const videoBuffer = Buffer.from(arrayBuffer);
+
+                    await bot.sendVideo(chatid, videoBuffer, {
+                        ...options,
+                        title: fileroute.videoname,
+                        caption: fileroute.message
+                    });
                 }
                 else if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
