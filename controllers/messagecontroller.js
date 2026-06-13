@@ -159,7 +159,10 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
                     await bot.sendPhoto(chatid, imageBuffer, {
                         ...options,
-                        caption: fileroute.message
+                        caption: fileroute.message,
+                    }, {
+                        filename: "image.jpg",
+                        contentType: "image/jpeg"
                     });
                 }
 
@@ -180,6 +183,9 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     await bot.sendVideo(chatid, videoBuffer, {
                         ...options,
                         caption: fileroute.message
+                    }, {
+                        filename: "video.mp4",
+                        contentType: "video/mp4"
                     });
                 }
                 else if (fileroute.type === "audio") {
