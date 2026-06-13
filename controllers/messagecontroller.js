@@ -1,4 +1,4 @@
-import { groq, hf } from "../config/aiservice.js";
+import { groq } from "../config/aiservice.js";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import userquery from "../model/userquery.js";
