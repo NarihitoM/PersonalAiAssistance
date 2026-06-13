@@ -153,7 +153,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
                     const imageBlob = await hf.textToImage({
-                        model: "black-forest-labs/FLUX.1-schnell",
+                        model: imagecreatemodel,
                         inputs: fileroute.imageprompt,
                         parameters: {
                             width: 512,
@@ -364,7 +364,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
                     const imageBlob = await hf.textToImage({
-                        model: "black-forest-labs/FLUX.1-schnell",
+                        model: imagecreatemodel,
                         inputs: fileroute.imageprompt,
                         parameters: {
                             width: 512,
@@ -683,7 +683,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
                     const imageBlob = await hf.textToImage({
-                        model: "black-forest-labs/FLUX.1-schnell",
+                        model: imagecreatemodel,
                         inputs: fileroute.imageprompt,
                         parameters: {
                             width: 512,
@@ -927,7 +927,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
                     const imageBlob = await hf.textToImage({
-                        model: "black-forest-labs/FLUX.1-schnell",
+                        model: imagecreatemodel,
                         inputs: fileroute.imageprompt,
                         parameters: {
                             width: 512,
@@ -1112,7 +1112,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
                         const imageBlob = await hf.textToImage({
-                            model: "black-forest-labs/FLUX.1-schnell",
+                            model: imagecreatemodel,
                             inputs: fileroute.imageprompt,
                             parameters: {
                                 width: 512,
@@ -1288,7 +1288,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
                         const imageBlob = await hf.textToImage({
-                            model: "black-forest-labs/FLUX.1-schnell",
+                            model: imagecreatemodel,
                             inputs: fileroute.imageprompt,
                             parameters: {
                                 width: 512,
@@ -1462,7 +1462,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
                         const imageBlob = await hf.textToImage({
-                            model: "black-forest-labs/FLUX.1-schnell",
+                            model: imagecreatemodel,
                             inputs: fileroute.imageprompt,
                             parameters: {
                                 width: 512,
@@ -1666,7 +1666,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
                         const imageBlob = await hf.textToImage({
-                            model: "black-forest-labs/FLUX.1-schnell",
+                            model: imagecreatemodel,
                             inputs: fileroute.imageprompt,
                             parameters: {
                                 width: 512,
@@ -1849,7 +1849,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
                     const imageBlob = await hf.textToImage({
-                        model: "black-forest-labs/FLUX.1-schnell",
+                        model: imagecreatemodel,
                         inputs: fileroute.imageprompt,
                         parameters: {
                             width: 512,
