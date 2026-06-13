@@ -466,7 +466,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             const screenshotFilename = `SS-Anim-${Date.now()}.jpg`;
 
             const { error: ssError } = await supabase.storage
-                .from("audio")
+                .from("image-video")
                 .upload(screenshotFilename, screenshotBuffer, {
                     upsert: true,
                     contentType: 'image/jpeg'
@@ -477,7 +477,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             }
 
             const { data: ssData } = await supabase.storage
-                .from("audio")
+                .from("image-video")
                 .getPublicUrl(screenshotFilename);
 
             const finalScreenshotUrl = ssData.publicUrl;
