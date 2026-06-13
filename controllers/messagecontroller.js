@@ -1,6 +1,6 @@
 import { groq, Gemini } from "../config/aiservice.js";
 import mammoth from "mammoth";
-import { RAGmodelprompt, systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
+import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import userquery from "../model/userquery.js";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
@@ -113,30 +113,14 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
             await bot.sendChatAction(chatid, "typing", options);
 
-            const RAGmodel = await groq.chat.completions.create({
-                model: modelRAG,
-                messages: [
-                    {
-                        role: "system",
-                        content: RAGmodelprompt
-                    },
-                    {
-                        role: "user",
-                        content: message
-                    }
-                ]
-            })
-
-            const Result = RAGmodel.choices[0].message.content;
-            const RAGresult = `Tool Calling : ${Result}`;
-
+           
             await userquery.findOneAndUpdate({
                 userid: chatid
             }, {
                 $push: {
                     messages: {
                         role: "user",
-                        content: `${RAGresult},${message}`
+                        content: message
                     }
                 }
             }, {
@@ -624,22 +608,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
             const transcripttext = `Voice : ${transcription.text}`;
 
-            const RAGmodel = await groq.chat.completions.create({
-                model: modelRAG,
-                messages: [
-                    {
-                        role: "system",
-                        content: RAGmodelprompt
-                    },
-                    {
-                        role: "user",
-                        content: transcripttext
-                    }
-                ]
-            })
-
-            const Result = RAGmodel.choices[0].message.content;
-            const RAGresult = `Tool Calling : ${Result}`;
+           
 
             await bot.sendChatAction(chatid, "typing", options);
 
@@ -649,7 +618,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 $push: {
                     messages: {
                         role: "user",
-                        content: `${transcripttext}, ${RAGresult}`
+                        content: transcripttext
                     }
                 }
             }, {
@@ -1031,24 +1000,6 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             await bot.sendChatAction(chatid, "upload_document", options);
             const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please analyse this file";
 
-
-            const RAGmodel = await groq.chat.completions.create({
-                model: modelRAG,
-                messages: [
-                    {
-                        role: "system",
-                        content: RAGmodelprompt
-                    },
-                    {
-                        role: "user",
-                        content: captiontext
-                    }
-                ]
-            })
-
-            const Result = RAGmodel.choices[0].message.content;
-            const RAGresult = `Tool Calling : ${Result}`;
-
             //Txt file route
             if (msg.document.mime_type === "text/plain") {
 
@@ -1062,7 +1013,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     $push: {
                         messages: {
                             role: "user",
-                            content: `${textfiledata},${captiontext},${RAGresult}`
+                            content: `${textfiledata},${captiontext}`
                         }
                     }
                 }, {
@@ -1724,22 +1675,6 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
             const audiotext = `Audio : ${result.text}`;
 
-            const RAGmodel = await groq.chat.completions.create({
-                model: modelRAG,
-                messages: [
-                    {
-                        role: "system",
-                        content: RAGmodelprompt
-                    },
-                    {
-                        role: "user",
-                        content: audiotext
-                    }
-                ]
-            })
-
-            const Result = RAGmodel.choices[0].message.content;
-            const RAGresult = `Tool Calling Audio : ${Result}`;
 
             await userquery.findOneAndUpdate({
                 userid: chatid
@@ -1747,7 +1682,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 $push: {
                     messages: {
                         role: "user",
-                        content: `${RAGresult}`
+                        content: audiotext
                     }
                 }
             }, {
