@@ -1,9 +1,6 @@
 import { configDotenv } from "dotenv";
 import { createbot } from "../config/botservice.js";
 import { message } from "../controllers/messagecontroller.js";
-import { command } from "../controllers/commandcontroller.js";
-import { Video } from "../controllers/videocontroller.js";
-import { Image } from "../controllers/imagecontroller.js";
 import usersession from "../model/usersession.js";
 
 configDotenv();
