@@ -31,6 +31,12 @@ function escapeMarkdownSafe(text) {
             if (i % 2 === 0) {
                 return part.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
             } else {
+                const match = part.match(/^([a-zA-Z0-9+#-]+)?\n([\s\S]*)$/);
+                if (match) {
+                    const lang = match[1] || "";
+                    const code = match[2];
+                    return "```" + lang + "\n" + code + "```";
+                }
                 return "```" + part + "```";
             }
         })
@@ -38,8 +44,8 @@ function escapeMarkdownSafe(text) {
 }
 
 function detectFormat(text) {
-    if (/```[\s\S]*```/.test(text)) return "MarkdownV2";
-    if (/<\/?[a-z]+>/.test(text)) return "HTML";
+    if (/```[\s\S]*```/.test(text)) return "markdownv2";
+    if (/<\/?[a-z]+>/.test(text)) return "html";
     return "plain";
 }
 
@@ -50,11 +56,11 @@ async function sendBotMessage(bot, chatid, text, options = {}) {
 
     if (format === "plain") {
         await bot.sendMessage(chatid, text, sendOptions);
-    } else if (format === "MarkdownV2") {
-        sendOptions.parse_mode = "MarkdownV2";
+    } else if (format === "markdownv2") {
+        sendOptions.parse_mode = "markdownv2";
         await bot.sendMessage(chatid, escapeMarkdownSafe(text), sendOptions);
-    } else if (format === "HTML") {
-        sendOptions.parse_mode = "HTML";
+    } else if (format === "html") {
+        sendOptions.parse_mode = "html";
         await bot.sendMessage(chatid, text, sendOptions);
     }
 }
