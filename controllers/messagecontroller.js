@@ -147,36 +147,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             //Fileroute
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-                if (fileroute.type === "image") {
-                    await bot.sendChatAction(chatid, "upload_photo", options);
-
-                    const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
-                    const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
-
-                    // Pass the URL directly. Telegram handles the download and caching perfectly.
-                    await bot.sendPhoto(chatid, imageUrl, {
-                        ...options,
-                        caption: fileroute.message
-                    });
-                }
-
-                else if (fileroute.type === "video") {
-                    await bot.sendChatAction(chatid, "upload_video", options);
-
-                    const encodedPrompt = encodeURIComponent(fileroute.prompt);
-                    const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
-
-                    const response = await fetch(videoUrl);
-                    const data = await response.json();
-                    const finalVideoLink = data.url || data.video;
-
-                    // Pass the raw URL link straight to Telegram to bypass internal Vercel buffer limits!
-                    await bot.sendVideo(chatid, finalVideoLink, {
-                        ...options,
-                        caption: fileroute.message
-                    });
-                }
-                else if (fileroute.type === "audio") {
+               
+                if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
 
                     const response = await groq.audio.speech.create({
@@ -345,42 +317,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             //File route
             if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage2);
-                if (fileroute.type === "image") {
-                    await bot.sendChatAction(chatid, "upload_photo", options);
-
-                    const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
-                    const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
-
-                    const response = await fetch(imageUrl);
-                    const arrayBuffer = await response.arrayBuffer();
-                    const imageBuffer = Buffer.from(arrayBuffer);
-
-                    await bot.sendPhoto(chatid, imageBuffer, {
-                        ...options,
-                        caption: fileroute.message
-                    });
-                }
-
-                else if (fileroute.type === "video") {
-                    await bot.sendChatAction(chatid, "upload_video", options);
-
-                    const encodedPrompt = encodeURIComponent(fileroute.prompt);
-                    const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
-
-                    const response = await fetch(videoUrl);
-                    const data = await response.json();
-                    const finalVideoLink = data.url || data.video;
-
-                    const videoResponse = await fetch(finalVideoLink);
-                    const arrayBuffer = await videoResponse.arrayBuffer();
-                    const videoBuffer = Buffer.from(arrayBuffer);
-
-                    await bot.sendVideo(chatid, videoBuffer, {
-                        ...options,
-                        caption: fileroute.message
-                    });
-                }
-                else if (fileroute.type === "audio") {
+                
+                if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
 
                     const response = await groq.audio.speech.create({
@@ -657,42 +595,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             //File route
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-                if (fileroute.type === "image") {
-                    await bot.sendChatAction(chatid, "upload_photo", options);
-
-                    const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
-                    const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
-
-                    const response = await fetch(imageUrl);
-                    const arrayBuffer = await response.arrayBuffer();
-                    const imageBuffer = Buffer.from(arrayBuffer);
-
-                    await bot.sendPhoto(chatid, imageBuffer, {
-                        ...options,
-                        caption: fileroute.message
-                    });
-                }
-
-                else if (fileroute.type === "video") {
-                    await bot.sendChatAction(chatid, "upload_video", options);
-
-                    const encodedPrompt = encodeURIComponent(fileroute.prompt);
-                    const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
-
-                    const response = await fetch(videoUrl);
-                    const data = await response.json();
-                    const finalVideoLink = data.url || data.video;
-
-                    const videoResponse = await fetch(finalVideoLink);
-                    const arrayBuffer = await videoResponse.arrayBuffer();
-                    const videoBuffer = Buffer.from(arrayBuffer);
-
-                    await bot.sendVideo(chatid, videoBuffer, {
-                        ...options,
-                        caption: fileroute.message
-                    });
-                }
-                else if (fileroute.type === "audio") {
+              
+                 if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
 
                     const response = await groq.audio.speech.create({
@@ -894,42 +798,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             //Fileroute
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-                if (fileroute.type === "image") {
-                    await bot.sendChatAction(chatid, "upload_photo", options);
-
-                    const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
-                    const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
-
-                    const response = await fetch(imageUrl);
-                    const arrayBuffer = await response.arrayBuffer();
-                    const imageBuffer = Buffer.from(arrayBuffer);
-
-                    await bot.sendPhoto(chatid, imageBuffer, {
-                        ...options,
-                        caption: fileroute.message
-                    });
-                }
-
-                else if (fileroute.type === "video") {
-                    await bot.sendChatAction(chatid, "upload_video", options);
-
-                    const encodedPrompt = encodeURIComponent(fileroute.prompt);
-                    const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
-
-                    const response = await fetch(videoUrl);
-                    const data = await response.json();
-                    const finalVideoLink = data.url || data.video;
-
-                    const videoResponse = await fetch(finalVideoLink);
-                    const arrayBuffer = await videoResponse.arrayBuffer();
-                    const videoBuffer = Buffer.from(arrayBuffer);
-
-                    await bot.sendVideo(chatid, videoBuffer, {
-                        ...options,
-                        caption: fileroute.message
-                    });
-                }
-                else if (fileroute.type === "audio") {
+                
+                if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
 
                     const response = await groq.audio.speech.create({
@@ -1072,42 +942,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 const aimessage = response.choices[0].message.content;
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
-                    if (fileroute.type === "image") {
-                        await bot.sendChatAction(chatid, "upload_photo", options);
-
-                        const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
-                        const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
-
-                        const response = await fetch(imageUrl);
-                        const arrayBuffer = await response.arrayBuffer();
-                        const imageBuffer = Buffer.from(arrayBuffer);
-
-                        await bot.sendPhoto(chatid, imageBuffer, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-
-                    else if (fileroute.type === "video") {
-                        await bot.sendChatAction(chatid, "upload_video", options);
-
-                        const encodedPrompt = encodeURIComponent(fileroute.prompt);
-                        const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
-
-                        const response = await fetch(videoUrl);
-                        const data = await response.json();
-                        const finalVideoLink = data.url || data.video;
-
-                        const videoResponse = await fetch(finalVideoLink);
-                        const arrayBuffer = await videoResponse.arrayBuffer();
-                        const videoBuffer = Buffer.from(arrayBuffer);
-
-                        await bot.sendVideo(chatid, videoBuffer, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-                    else if (fileroute.type === "audio") {
+                   
+                    if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_voice", options);
 
                         const response = await groq.audio.speech.create({
@@ -1241,42 +1077,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 const aimessage = response.choices[0].message.content;
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
-                    if (fileroute.type === "image") {
-                        await bot.sendChatAction(chatid, "upload_photo", options);
-
-                        const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
-                        const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
-
-                        const response = await fetch(imageUrl);
-                        const arrayBuffer = await response.arrayBuffer();
-                        const imageBuffer = Buffer.from(arrayBuffer);
-
-                        await bot.sendPhoto(chatid, imageBuffer, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-
-                    else if (fileroute.type === "video") {
-                        await bot.sendChatAction(chatid, "upload_video", options);
-
-                        const encodedPrompt = encodeURIComponent(fileroute.prompt);
-                        const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
-
-                        const response = await fetch(videoUrl);
-                        const data = await response.json();
-                        const finalVideoLink = data.url || data.video;
-
-                        const videoResponse = await fetch(finalVideoLink);
-                        const arrayBuffer = await videoResponse.arrayBuffer();
-                        const videoBuffer = Buffer.from(arrayBuffer);
-
-                        await bot.sendVideo(chatid, videoBuffer, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-                    else if (fileroute.type === "audio") {
+                    if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_voice", options);
 
                         const response = await groq.audio.speech.create({
@@ -1408,42 +1209,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 const aimessage = response.choices[0].message.content;
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
-                    if (fileroute.type === "image") {
-                        await bot.sendChatAction(chatid, "upload_photo", options);
-
-                        const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
-                        const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
-
-                        const response = await fetch(imageUrl);
-                        const arrayBuffer = await response.arrayBuffer();
-                        const imageBuffer = Buffer.from(arrayBuffer);
-
-                        await bot.sendPhoto(chatid, imageBuffer, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-
-                    else if (fileroute.type === "video") {
-                        await bot.sendChatAction(chatid, "upload_video", options);
-
-                        const encodedPrompt = encodeURIComponent(fileroute.prompt);
-                        const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
-
-                        const response = await fetch(videoUrl);
-                        const data = await response.json();
-                        const finalVideoLink = data.url || data.video;
-
-                        const videoResponse = await fetch(finalVideoLink);
-                        const arrayBuffer = await videoResponse.arrayBuffer();
-                        const videoBuffer = Buffer.from(arrayBuffer);
-
-                        await bot.sendVideo(chatid, videoBuffer, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-                    else if (fileroute.type === "audio") {
+                    if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_voice", options);
 
                         const response = await groq.audio.speech.create({
@@ -1605,42 +1371,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 //File route
                 if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage2);
-                    if (fileroute.type === "image") {
-                        await bot.sendChatAction(chatid, "upload_photo", options);
-
-                        const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
-                        const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
-
-                        const response = await fetch(imageUrl);
-                        const arrayBuffer = await response.arrayBuffer();
-                        const imageBuffer = Buffer.from(arrayBuffer);
-
-                        await bot.sendPhoto(chatid, imageBuffer, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-
-                    else if (fileroute.type === "video") {
-                        await bot.sendChatAction(chatid, "upload_video", options);
-
-                        const encodedPrompt = encodeURIComponent(fileroute.prompt);
-                        const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
-
-                        const response = await fetch(videoUrl);
-                        const data = await response.json();
-                        const finalVideoLink = data.url || data.video;
-
-                        const videoResponse = await fetch(finalVideoLink);
-                        const arrayBuffer = await videoResponse.arrayBuffer();
-                        const videoBuffer = Buffer.from(arrayBuffer);
-
-                        await bot.sendVideo(chatid, videoBuffer, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-                    else if (fileroute.type === "audio") {
+                   if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_voice", options);
 
                         const response = await groq.audio.speech.create({
@@ -1781,42 +1512,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             //Fileroute
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-                if (fileroute.type === "image") {
-                    await bot.sendChatAction(chatid, "upload_photo", options);
-
-                    const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
-                    const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
-
-                    const response = await fetch(imageUrl);
-                    const arrayBuffer = await response.arrayBuffer();
-                    const imageBuffer = Buffer.from(arrayBuffer);
-
-                    await bot.sendPhoto(chatid, imageBuffer, {
-                        ...options,
-                        caption: fileroute.message
-                    });
-                }
-
-                else if (fileroute.type === "video") {
-                    await bot.sendChatAction(chatid, "upload_video", options);
-
-                    const encodedPrompt = encodeURIComponent(fileroute.prompt);
-                    const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
-
-                    const response = await fetch(videoUrl);
-                    const data = await response.json();
-                    const finalVideoLink = data.url || data.video;
-
-                    const videoResponse = await fetch(finalVideoLink);
-                    const arrayBuffer = await videoResponse.arrayBuffer();
-                    const videoBuffer = Buffer.from(arrayBuffer);
-
-                    await bot.sendVideo(chatid, videoBuffer, {
-                        ...options,
-                        caption: fileroute.message
-                    });
-                }
-                else if (fileroute.type === "audio") {
+                if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
 
                     const response = await groq.audio.speech.create({
