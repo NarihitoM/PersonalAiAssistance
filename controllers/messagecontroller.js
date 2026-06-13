@@ -19,8 +19,6 @@ const model = "openai/gpt-oss-120b"
 const modelaudio = "canopylabs/orpheus-v1-english"
 const imagemodel = "meta-llama/llama-4-scout-17b-16e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
-const imagecreatemodel = "stabilityai/stable-diffusion-3-medium-diffusers"
-const videocreatemodel = "Wan-AI/Wan2.2-TI2V-5B"
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -152,44 +150,35 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageBlob = await hf.textToImage({
-                        model: imagecreatemodel,
-                        inputs: fileroute.imageprompt,
-                        provider: "hf-inference",
-                        parameters: {
-                            width: 512,
-                            height: 512
-                        }
-                    });
+                    const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
+                    const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
 
-                    const arrayBuffer = await imageBlob.arrayBuffer();
+                    const response = await fetch(imageUrl);
+                    const arrayBuffer = await response.arrayBuffer();
                     const imageBuffer = Buffer.from(arrayBuffer);
 
                     await bot.sendPhoto(chatid, imageBuffer, {
                         ...options,
-                        title: fileroute.imagename,
                         caption: fileroute.message
-                    })
+                    });
                 }
+
                 else if (fileroute.type === "video") {
                     await bot.sendChatAction(chatid, "upload_video", options);
 
-                    if (fileroute.message) {
-                        await bot.sendMessage(chatid, fileroute.message, options);
-                    }
+                    const encodedPrompt = encodeURIComponent(fileroute.prompt);
+                    const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
 
-                    const videoBlob = await hf.textToVideo({
-                        provider: "hf-inference",
-                        model: videocreatemodel,
-                        inputs: fileroute.prompt,
-                    });
+                    const response = await fetch(videoUrl);
+                    const data = await response.json();
+                    const finalVideoLink = data.url || data.video;
 
-                    const arrayBuffer = await videoBlob.arrayBuffer();
+                    const videoResponse = await fetch(finalVideoLink);
+                    const arrayBuffer = await videoResponse.arrayBuffer();
                     const videoBuffer = Buffer.from(arrayBuffer);
 
                     await bot.sendVideo(chatid, videoBuffer, {
                         ...options,
-                        title: fileroute.videoname,
                         caption: fileroute.message
                     });
                 }
@@ -365,43 +354,35 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageBlob = await hf.textToImage({
-                        model: imagecreatemodel,
-                        inputs: fileroute.imageprompt,
-                        parameters: {
-                            width: 512,
-                            height: 512
-                        }
-                    });
+                    const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
+                    const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
 
-                    const arrayBuffer = await imageBlob.arrayBuffer();
+                    const response = await fetch(imageUrl);
+                    const arrayBuffer = await response.arrayBuffer();
                     const imageBuffer = Buffer.from(arrayBuffer);
 
                     await bot.sendPhoto(chatid, imageBuffer, {
                         ...options,
-                        title: fileroute.imagename,
                         caption: fileroute.message
-                    })
+                    });
                 }
+
                 else if (fileroute.type === "video") {
                     await bot.sendChatAction(chatid, "upload_video", options);
 
-                    if (fileroute.message) {
-                        await bot.sendMessage(chatid, fileroute.message, options);
-                    }
+                    const encodedPrompt = encodeURIComponent(fileroute.prompt);
+                    const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
 
-                    const videoBlob = await hf.textToVideo({
-                        provider: "fal-ai",
-                        model: videocreatemodel,
-                        inputs: fileroute.prompt,
-                    });
+                    const response = await fetch(videoUrl);
+                    const data = await response.json();
+                    const finalVideoLink = data.url || data.video;
 
-                    const arrayBuffer = await videoBlob.arrayBuffer();
+                    const videoResponse = await fetch(finalVideoLink);
+                    const arrayBuffer = await videoResponse.arrayBuffer();
                     const videoBuffer = Buffer.from(arrayBuffer);
 
                     await bot.sendVideo(chatid, videoBuffer, {
                         ...options,
-                        title: fileroute.videoname,
                         caption: fileroute.message
                     });
                 }
@@ -685,43 +666,35 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageBlob = await hf.textToImage({
-                        model: imagecreatemodel,
-                        inputs: fileroute.imageprompt,
-                        parameters: {
-                            width: 512,
-                            height: 512
-                        }
-                    });
+                    const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
+                    const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
 
-                    const arrayBuffer = await imageBlob.arrayBuffer();
+                    const response = await fetch(imageUrl);
+                    const arrayBuffer = await response.arrayBuffer();
                     const imageBuffer = Buffer.from(arrayBuffer);
 
                     await bot.sendPhoto(chatid, imageBuffer, {
                         ...options,
-                        title: fileroute.imagename,
                         caption: fileroute.message
-                    })
+                    });
                 }
+
                 else if (fileroute.type === "video") {
                     await bot.sendChatAction(chatid, "upload_video", options);
 
-                    if (fileroute.message) {
-                        await bot.sendMessage(chatid, fileroute.message, options);
-                    }
+                    const encodedPrompt = encodeURIComponent(fileroute.prompt);
+                    const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
 
-                    const videoBlob = await hf.textToVideo({
-                        provider: "fal-ai",
-                        model: videocreatemodel,
-                        inputs: fileroute.prompt,
-                    });
+                    const response = await fetch(videoUrl);
+                    const data = await response.json();
+                    const finalVideoLink = data.url || data.video;
 
-                    const arrayBuffer = await videoBlob.arrayBuffer();
+                    const videoResponse = await fetch(finalVideoLink);
+                    const arrayBuffer = await videoResponse.arrayBuffer();
                     const videoBuffer = Buffer.from(arrayBuffer);
 
                     await bot.sendVideo(chatid, videoBuffer, {
                         ...options,
-                        title: fileroute.videoname,
                         caption: fileroute.message
                     });
                 }
@@ -930,43 +903,35 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageBlob = await hf.textToImage({
-                        model: imagecreatemodel,
-                        inputs: fileroute.imageprompt,
-                        parameters: {
-                            width: 512,
-                            height: 512
-                        }
-                    });
+                    const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
+                    const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
 
-                    const arrayBuffer = await imageBlob.arrayBuffer();
+                    const response = await fetch(imageUrl);
+                    const arrayBuffer = await response.arrayBuffer();
                     const imageBuffer = Buffer.from(arrayBuffer);
 
                     await bot.sendPhoto(chatid, imageBuffer, {
                         ...options,
-                        title: fileroute.imagename,
                         caption: fileroute.message
-                    })
+                    });
                 }
+
                 else if (fileroute.type === "video") {
                     await bot.sendChatAction(chatid, "upload_video", options);
 
-                    if (fileroute.message) {
-                        await bot.sendMessage(chatid, fileroute.message, options);
-                    }
+                    const encodedPrompt = encodeURIComponent(fileroute.prompt);
+                    const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
 
-                    const videoBlob = await hf.textToVideo({
-                        provider: "fal-ai",
-                        model: videocreatemodel,
-                        inputs: fileroute.prompt,
-                    });
+                    const response = await fetch(videoUrl);
+                    const data = await response.json();
+                    const finalVideoLink = data.url || data.video;
 
-                    const arrayBuffer = await videoBlob.arrayBuffer();
+                    const videoResponse = await fetch(finalVideoLink);
+                    const arrayBuffer = await videoResponse.arrayBuffer();
                     const videoBuffer = Buffer.from(arrayBuffer);
 
                     await bot.sendVideo(chatid, videoBuffer, {
                         ...options,
-                        title: fileroute.videoname,
                         caption: fileroute.message
                     });
                 }
@@ -1116,44 +1081,35 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
-                        const imageBlob = await hf.textToImage({
-                            model: imagecreatemodel,
-                            inputs: fileroute.imageprompt,
-                            provider : "hf-inference",
-                            parameters: {
-                                width: 512,
-                                height: 512
-                            }
-                        });
+                        const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
+                        const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
 
-                        const arrayBuffer = await imageBlob.arrayBuffer();
+                        const response = await fetch(imageUrl);
+                        const arrayBuffer = await response.arrayBuffer();
                         const imageBuffer = Buffer.from(arrayBuffer);
 
                         await bot.sendPhoto(chatid, imageBuffer, {
                             ...options,
-                            title: fileroute.imagename,
                             caption: fileroute.message
-                        })
+                        });
                     }
+
                     else if (fileroute.type === "video") {
                         await bot.sendChatAction(chatid, "upload_video", options);
 
-                        if (fileroute.message) {
-                            await bot.sendMessage(chatid, fileroute.message, options);
-                        }
+                        const encodedPrompt = encodeURIComponent(fileroute.prompt);
+                        const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
 
-                        const videoBlob = await hf.textToVideo({
-                            provider: "hf-inference",
-                            model: videocreatemodel,
-                            inputs: fileroute.prompt,
-                        });
+                        const response = await fetch(videoUrl);
+                        const data = await response.json();
+                        const finalVideoLink = data.url || data.video;
 
-                        const arrayBuffer = await videoBlob.arrayBuffer();
+                        const videoResponse = await fetch(finalVideoLink);
+                        const arrayBuffer = await videoResponse.arrayBuffer();
                         const videoBuffer = Buffer.from(arrayBuffer);
 
                         await bot.sendVideo(chatid, videoBuffer, {
                             ...options,
-                            title: fileroute.videoname,
                             caption: fileroute.message
                         });
                     }
@@ -1294,43 +1250,35 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
-                        const imageBlob = await hf.textToImage({
-                            model: imagecreatemodel,
-                            inputs: fileroute.imageprompt,
-                            parameters: {
-                                width: 512,
-                                height: 512
-                            }
-                        });
+                        const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
+                        const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
 
-                        const arrayBuffer = await imageBlob.arrayBuffer();
+                        const response = await fetch(imageUrl);
+                        const arrayBuffer = await response.arrayBuffer();
                         const imageBuffer = Buffer.from(arrayBuffer);
 
                         await bot.sendPhoto(chatid, imageBuffer, {
                             ...options,
-                            title: fileroute.imagename,
                             caption: fileroute.message
-                        })
+                        });
                     }
+
                     else if (fileroute.type === "video") {
                         await bot.sendChatAction(chatid, "upload_video", options);
 
-                        if (fileroute.message) {
-                            await bot.sendMessage(chatid, fileroute.message, options);
-                        }
+                        const encodedPrompt = encodeURIComponent(fileroute.prompt);
+                        const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
 
-                        const videoBlob = await hf.textToVideo({
-                            provider: "fal-ai",
-                            model: videocreatemodel,
-                            inputs: fileroute.prompt,
-                        });
+                        const response = await fetch(videoUrl);
+                        const data = await response.json();
+                        const finalVideoLink = data.url || data.video;
 
-                        const arrayBuffer = await videoBlob.arrayBuffer();
+                        const videoResponse = await fetch(finalVideoLink);
+                        const arrayBuffer = await videoResponse.arrayBuffer();
                         const videoBuffer = Buffer.from(arrayBuffer);
 
                         await bot.sendVideo(chatid, videoBuffer, {
                             ...options,
-                            title: fileroute.videoname,
                             caption: fileroute.message
                         });
                     }
@@ -1469,43 +1417,35 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
-                        const imageBlob = await hf.textToImage({
-                            model: imagecreatemodel,
-                            inputs: fileroute.imageprompt,
-                            parameters: {
-                                width: 512,
-                                height: 512
-                            }
-                        });
+                        const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
+                        const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
 
-                        const arrayBuffer = await imageBlob.arrayBuffer();
+                        const response = await fetch(imageUrl);
+                        const arrayBuffer = await response.arrayBuffer();
                         const imageBuffer = Buffer.from(arrayBuffer);
 
                         await bot.sendPhoto(chatid, imageBuffer, {
                             ...options,
-                            title: fileroute.imagename,
                             caption: fileroute.message
-                        })
+                        });
                     }
+
                     else if (fileroute.type === "video") {
                         await bot.sendChatAction(chatid, "upload_video", options);
 
-                        if (fileroute.message) {
-                            await bot.sendMessage(chatid, fileroute.message, options);
-                        }
+                        const encodedPrompt = encodeURIComponent(fileroute.prompt);
+                        const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
 
-                        const videoBlob = await hf.textToVideo({
-                            provider: "fal-ai",
-                            model: videocreatemodel,
-                            inputs: fileroute.prompt,
-                        });
+                        const response = await fetch(videoUrl);
+                        const data = await response.json();
+                        const finalVideoLink = data.url || data.video;
 
-                        const arrayBuffer = await videoBlob.arrayBuffer();
+                        const videoResponse = await fetch(finalVideoLink);
+                        const arrayBuffer = await videoResponse.arrayBuffer();
                         const videoBuffer = Buffer.from(arrayBuffer);
 
                         await bot.sendVideo(chatid, videoBuffer, {
                             ...options,
-                            title: fileroute.videoname,
                             caption: fileroute.message
                         });
                     }
@@ -1674,43 +1614,35 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
-                        const imageBlob = await hf.textToImage({
-                            model: imagecreatemodel,
-                            inputs: fileroute.imageprompt,
-                            parameters: {
-                                width: 512,
-                                height: 512
-                            }
-                        });
+                        const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
+                        const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
 
-                        const arrayBuffer = await imageBlob.arrayBuffer();
+                        const response = await fetch(imageUrl);
+                        const arrayBuffer = await response.arrayBuffer();
                         const imageBuffer = Buffer.from(arrayBuffer);
 
                         await bot.sendPhoto(chatid, imageBuffer, {
                             ...options,
-                            title: fileroute.imagename,
                             caption: fileroute.message
-                        })
+                        });
                     }
+
                     else if (fileroute.type === "video") {
                         await bot.sendChatAction(chatid, "upload_video", options);
 
-                        if (fileroute.message) {
-                            await bot.sendMessage(chatid, fileroute.message, options);
-                        }
+                        const encodedPrompt = encodeURIComponent(fileroute.prompt);
+                        const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
 
-                        const videoBlob = await hf.textToVideo({
-                            provider: "fal-ai",
-                            model: videocreatemodel,
-                            inputs: fileroute.prompt,
-                        });
+                        const response = await fetch(videoUrl);
+                        const data = await response.json();
+                        const finalVideoLink = data.url || data.video;
 
-                        const arrayBuffer = await videoBlob.arrayBuffer();
+                        const videoResponse = await fetch(finalVideoLink);
+                        const arrayBuffer = await videoResponse.arrayBuffer();
                         const videoBuffer = Buffer.from(arrayBuffer);
 
                         await bot.sendVideo(chatid, videoBuffer, {
                             ...options,
-                            title: fileroute.videoname,
                             caption: fileroute.message
                         });
                     }
@@ -1858,43 +1790,35 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageBlob = await hf.textToImage({
-                        model: imagecreatemodel,
-                        inputs: fileroute.imageprompt,
-                        parameters: {
-                            width: 512,
-                            height: 512
-                        }
-                    });
+                    const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
+                    const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
 
-                    const arrayBuffer = await imageBlob.arrayBuffer();
+                    const response = await fetch(imageUrl);
+                    const arrayBuffer = await response.arrayBuffer();
                     const imageBuffer = Buffer.from(arrayBuffer);
 
                     await bot.sendPhoto(chatid, imageBuffer, {
                         ...options,
-                        title: fileroute.imagename,
                         caption: fileroute.message
-                    })
+                    });
                 }
+
                 else if (fileroute.type === "video") {
                     await bot.sendChatAction(chatid, "upload_video", options);
 
-                    if (fileroute.message) {
-                        await bot.sendMessage(chatid, fileroute.message, options);
-                    }
+                    const encodedPrompt = encodeURIComponent(fileroute.prompt);
+                    const videoUrl = `https://text-to-video.pollinations.ai/${encodedPrompt}`;
 
-                    const videoBlob = await hf.textToVideo({
-                        provider: "fal-ai",
-                        model: videocreatemodel,
-                        inputs: fileroute.prompt,
-                    });
+                    const response = await fetch(videoUrl);
+                    const data = await response.json();
+                    const finalVideoLink = data.url || data.video;
 
-                    const arrayBuffer = await videoBlob.arrayBuffer();
+                    const videoResponse = await fetch(finalVideoLink);
+                    const arrayBuffer = await videoResponse.arrayBuffer();
                     const videoBuffer = Buffer.from(arrayBuffer);
 
                     await bot.sendVideo(chatid, videoBuffer, {
                         ...options,
-                        title: fileroute.videoname,
                         caption: fileroute.message
                     });
                 }
