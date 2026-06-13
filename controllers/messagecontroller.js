@@ -432,7 +432,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             const fileid = msg.animation.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            await bot.sendChatAction(chatid, "upload_photo", options);
+            await bot.sendChatAction(chatid, "upload_video", options);
 
             const tmpAnimationPath = path.join(os.tmpdir(), `${Date.now()}-anim.mp4`);
             const tmpScreenshotDir = os.tmpdir();
@@ -448,7 +448,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 }).on("error", reject);
             });
 
-            await bot.sendChatAction(chatid, "upload_photo", options);
+            await bot.sendChatAction(chatid, "typing", options);
 
             await new Promise((resolve, reject) => {
                 ffmpeg(tmpAnimationPath)
@@ -727,7 +727,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             const fileid = msg.voice.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            await bot.sendChatAction(chatid, 'upload_document', options)
+            await bot.sendChatAction(chatid, "upload_video", options)
 
             const transcription = await groq.audio.transcriptions.create({
                 model: transcriptmodel,
