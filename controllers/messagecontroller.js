@@ -153,16 +153,10 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     const encodedPrompt = encodeURIComponent(fileroute.imageprompt);
                     const imageUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=512&height=512&model=flux&seed=${Math.floor(Math.random() * 100000)}`;
 
-                    const response = await fetch(imageUrl);
-                    const arrayBuffer = await response.arrayBuffer();
-                    const imageBuffer = Buffer.from(arrayBuffer);
-
-                    await bot.sendPhoto(chatid, imageBuffer, {
+                    // Pass the URL directly. Telegram handles the download and caching perfectly.
+                    await bot.sendPhoto(chatid, imageUrl, {
                         ...options,
-                        caption: fileroute.message,
-                    }, {
-                        filename: "image.jpg",
-                        contentType: "image/jpeg"
+                        caption: fileroute.message
                     });
                 }
 
@@ -176,16 +170,10 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     const data = await response.json();
                     const finalVideoLink = data.url || data.video;
 
-                    const videoResponse = await fetch(finalVideoLink);
-                    const arrayBuffer = await videoResponse.arrayBuffer();
-                    const videoBuffer = Buffer.from(arrayBuffer);
-
-                    await bot.sendVideo(chatid, videoBuffer, {
+                    // Pass the raw URL link straight to Telegram to bypass internal Vercel buffer limits!
+                    await bot.sendVideo(chatid, finalVideoLink, {
                         ...options,
                         caption: fileroute.message
-                    }, {
-                        filename: "video.mp4",
-                        contentType: "video/mp4"
                     });
                 }
                 else if (fileroute.type === "audio") {
