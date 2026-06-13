@@ -27,7 +27,7 @@ export default async function handler(req, res) {
             return await bot.sendMessage(targetId, text, options);
         };
 
-        if(msg.chat.id === process.env.CHATID && msg.business_connection_id){
+        if(msg.from.id === process.env.CHATID && msg.business_connection_id){
             return res.status(200).send("Ok")
         }
 
