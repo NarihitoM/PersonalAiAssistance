@@ -15,7 +15,12 @@ export default async function handler(req, res) {
     const bot = botInstance;
 
     const msg = req.body.message || req.body.business_message;
+
     if (msg) {
+        if (msg.from.id === Number(process.env.CHATID) && msg.business_connection_id) {
+            return res.status(200).send("Ok")
+        }
+
         const chatid = msg.chat.id;
         const businessConnectionId = req.body.business_message?.business_connection_id;
 
@@ -27,9 +32,6 @@ export default async function handler(req, res) {
             return await bot.sendMessage(targetId, text, options);
         };
 
-        if(msg.from.id === process.env.CHATID && msg.business_connection_id){
-            return res.status(200).send("Ok")
-        }
 
         let session;
         try {
