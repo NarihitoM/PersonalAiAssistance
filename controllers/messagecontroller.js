@@ -462,9 +462,25 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     .on("error", reject);
             });
 
-            const imageBuffer = fs.readFileSync(tmpScreenshotPath);
-            const base64Image = imageBuffer.toString("base64");
-            const dataUrl = `data:image/jpeg;base64,${base64Image}`;
+            const screenshotBuffer = fs.createReadStream(tmpScreenshotPath);
+            const screenshotFilename = `SS-Anim-${Date.now()}.jpg`;
+
+            const { error: ssError } = await supabase.storage
+                .from("audio")
+                .upload(screenshotFilename, screenshotBuffer, {
+                    upsert: true,
+                    contentType: 'image/jpeg'
+                });
+
+            if (ssError) {
+                console.log(ssError);
+            }
+
+            const { data: ssData } = await supabase.storage
+                .from("audio")
+                .getPublicUrl(screenshotFilename);
+
+            const finalScreenshotUrl = ssData.publicUrl;
 
             const result = await groq.chat.completions.create({
                 model: imagemodel,
@@ -479,13 +495,21 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                             {
                                 type: "image_url",
                                 image_url: {
-                                    url: dataUrl
+                                    url: finalScreenshotUrl
                                 }
                             }
                         ]
                     }
                 ]
             });
+
+            const { error: removeError } = await supabase.storage
+                .from("audio")
+                .remove([screenshotFilename]); 
+
+            if (removeError) {
+                console.log(removeError);
+            }
 
             const aimessage = result.choices[0].message.content;
             const gifanalyse = `Gif : ${aimessage}`;
