@@ -31,10 +31,6 @@ export default async function handler(req, res) {
             return await bot.sendMessage(targetId, text, options);
         };
 
-        if (msg.text === "/feature") {
-            await sendReply(chatid, "This Assistance can chat, read files, analyse image, create image, analyse file, create file, create voice, listen to voice , etc..");
-            return res.status(200).send("OK");
-        }
 
         let session;
         try {
@@ -51,17 +47,8 @@ export default async function handler(req, res) {
             return res.status(200).send("OK");
         }
 
-        if (msg.text?.startsWith("/")) {
-            await command(bot)(msg, businessConnectionId);
-        }
-        else if (session.session === "chat") {
+        if (session.session === "chat") {
             await message(bot)(msg, businessConnectionId);
-        }
-        else if (session.session === "imagetool") {
-            await Image(bot)(msg, businessConnectionId);
-        }
-        else if (session.session === "video") {
-            await Video(bot)(msg, businessConnectionId);
         }
     }
 
