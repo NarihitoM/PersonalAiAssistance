@@ -431,7 +431,32 @@ export const message = (bot) => async (msg, businessConnectionId) => {
         else if (msg.animation) {
             const fileid = msg.animation.file_id;
             const filelink = await bot.getFileLink(fileid);
-            const gifanalyse = `Gif : The user sent a looped GIF/animation asset.`;
+
+            await bot.sendChatAction(chatid, "upload_photo", options);
+
+            const result = await groq.chat.completions.create({
+                model: imagemodel,
+                messages: [
+                    {
+                        role: "system",
+                        content: systempromptforimage
+                    },
+                    {
+                        role: "user",
+                        content: [
+                            {
+                                type: "image_url",
+                                image_url: {
+                                    url: filelink
+                                }
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            const aimessage = result.choices[0].message.content;
+            const gifanalyse = `Gif : ${aimessage}`;
 
             await userquery.findOneAndUpdate({
                 userid: chatid
