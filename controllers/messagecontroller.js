@@ -1,4 +1,4 @@
-import { groq, Gemini } from "../config/aiservice.js";
+import { groq, hf } from "../config/aiservice.js";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import userquery from "../model/userquery.js";
@@ -19,7 +19,7 @@ const model = "openai/gpt-oss-120b"
 const modelaudio = "canopylabs/orpheus-v1-english"
 const imagemodel = "meta-llama/llama-4-scout-17b-16e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
-const imagecreatemodel = "gemini-2.5-flash-image"
+const imagecreatemodel = "black-forest-labs/FLUX.1-schnell"
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -112,7 +112,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
             await bot.sendChatAction(chatid, "typing", options);
 
-           
+
             await userquery.findOneAndUpdate({
                 userid: chatid
             }, {
@@ -151,25 +151,19 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
+                    const imageBlob = await hf.textToImage({
+                        model: "black-forest-labs/FLUX.1-schnell",
+                        inputs: fileroute.imageprompt,
+                        parameters: {
+                            width: 512,
+                            height: 512
+                        }
+                    });
 
-                    const imageresponse = await Gemini.models.generateContent({
-                        model: imagecreatemodel,
-                        contents: fileroute.imageprompt,
-                        config: {
-                            numberOfImages: 1,
-                            aspectRatio: "1:1",
-                            includeRaiReason: true,
-                            safetySettings: [
-                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }
-                            ]
-                        },
-                    })
+                    const arrayBuffer = await imageBlob.arrayBuffer();
+                    const imageBuffer = Buffer.from(arrayBuffer);
 
-                    const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
-                    const buffer = Buffer.from(imageBytes, "base64");
-
-                    await bot.sendPhoto(chatid, buffer, {
+                    await bot.sendPhoto(chatid, imageBuffer, {
                         ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
@@ -347,23 +341,19 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageresponse = await Gemini.models.generateContent({
-                        model: imagecreatemodel,
-                        contents: fileroute.imageprompt,
-                        config: {
-                            numberOfImages: 1,
-                            aspectRatio: "1:1",
-                            safetySettings: [
-                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }
-                            ]
-                        },
-                    })
+                    const imageBlob = await hf.textToImage({
+                        model: "black-forest-labs/FLUX.1-schnell",
+                        inputs: fileroute.imageprompt,
+                        parameters: {
+                            width: 512,
+                            height: 512
+                        }
+                    });
 
-                    const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
-                    const buffer = Buffer.from(imageBytes, "base64");
+                    const arrayBuffer = await imageBlob.arrayBuffer();
+                    const imageBuffer = Buffer.from(arrayBuffer);
 
-                    await bot.sendPhoto(chatid, buffer, {
+                    await bot.sendPhoto(chatid, imageBuffer, {
                         ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
@@ -607,7 +597,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
             const transcripttext = `Voice : ${transcription.text}`;
 
-           
+
 
             await bot.sendChatAction(chatid, "typing", options);
 
@@ -649,23 +639,19 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageresponse = await Gemini.models.generateContent({
-                        model: imagecreatemodel,
-                        contents: fileroute.imageprompt,
-                        config: {
-                            numberOfImages: 1,
-                            aspectRatio: "1:1",
-                            safetySettings: [
-                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }
-                            ]
-                        },
-                    })
+                    const imageBlob = await hf.textToImage({
+                        model: "black-forest-labs/FLUX.1-schnell",
+                        inputs: fileroute.imageprompt,
+                        parameters: {
+                            width: 512,
+                            height: 512
+                        }
+                    });
 
-                    const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
-                    const buffer = Buffer.from(imageBytes, "base64");
+                    const arrayBuffer = await imageBlob.arrayBuffer();
+                    const imageBuffer = Buffer.from(arrayBuffer);
 
-                    await bot.sendPhoto(chatid, buffer, {
+                    await bot.sendPhoto(chatid, imageBuffer, {
                         ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
@@ -876,23 +862,19 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageresponse = await Gemini.models.generateContent({
-                        model: imagecreatemodel,
-                        contents: fileroute.imageprompt,
-                        config: {
-                            numberOfImages: 1,
-                            aspectRatio: "1:1",
-                            safetySettings: [
-                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }
-                            ]
-                        },
-                    })
+                    const imageBlob = await hf.textToImage({
+                        model: "black-forest-labs/FLUX.1-schnell",
+                        inputs: fileroute.imageprompt,
+                        parameters: {
+                            width: 512,
+                            height: 512
+                        }
+                    });
 
-                    const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
-                    const buffer = Buffer.from(imageBytes, "base64");
+                    const arrayBuffer = await imageBlob.arrayBuffer();
+                    const imageBuffer = Buffer.from(arrayBuffer);
 
-                    await bot.sendPhoto(chatid, buffer, {
+                    await bot.sendPhoto(chatid, imageBuffer, {
                         ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message
@@ -1044,23 +1026,19 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
-                        const imageresponse = await Gemini.models.generateContent({
-                            model: imagecreatemodel,
-                            contents: fileroute.imageprompt,
-                            config: {
-                                numberOfImages: 1,
-                                aspectRatio: "1:1",
-                                safetySettings: [
-                                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }
-                                ]
-                            },
-                        })
+                        const imageBlob = await hf.textToImage({
+                            model: "black-forest-labs/FLUX.1-schnell",
+                            inputs: fileroute.imageprompt,
+                            parameters: {
+                                width: 512,
+                                height: 512
+                            }
+                        });
 
-                        const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
-                        const buffer = Buffer.from(imageBytes, "base64");
+                        const arrayBuffer = await imageBlob.arrayBuffer();
+                        const imageBuffer = Buffer.from(arrayBuffer);
 
-                        await bot.sendPhoto(chatid, buffer, {
+                        await bot.sendPhoto(chatid, imageBuffer, {
                             ...options,
                             title: fileroute.imagename,
                             caption: fileroute.message
@@ -1203,23 +1181,19 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
-                        const imageresponse = await Gemini.models.generateContent({
-                            model: imagecreatemodel,
-                            contents: fileroute.imageprompt,
-                            config: {
-                                numberOfImages: 1,
-                                aspectRatio: "1:1",
-                                safetySettings: [
-                                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }
-                                ]
-                            },
-                        })
+                        const imageBlob = await hf.textToImage({
+                            model: "black-forest-labs/FLUX.1-schnell",
+                            inputs: fileroute.imageprompt,
+                            parameters: {
+                                width: 512,
+                                height: 512
+                            }
+                        });
 
-                        const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
-                        const buffer = Buffer.from(imageBytes, "base64");
+                        const arrayBuffer = await imageBlob.arrayBuffer();
+                        const imageBuffer = Buffer.from(arrayBuffer);
 
-                        await bot.sendPhoto(chatid, buffer, {
+                        await bot.sendPhoto(chatid, imageBuffer, {
                             ...options,
                             title: fileroute.imagename,
                             caption: fileroute.message
@@ -1360,23 +1334,19 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
-                        const imageresponse = await Gemini.models.generateContent({
-                            model: imagecreatemodel,
-                            contents: fileroute.imageprompt,
-                            config: {
-                                numberOfImages: 1,
-                                aspectRatio: "1:1",
-                                safetySettings: [
-                                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }
-                                ]
-                            },
-                        })
+                        const imageBlob = await hf.textToImage({
+                            model: "black-forest-labs/FLUX.1-schnell",
+                            inputs: fileroute.imageprompt,
+                            parameters: {
+                                width: 512,
+                                height: 512
+                            }
+                        });
 
-                        const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
-                        const buffer = Buffer.from(imageBytes, "base64");
+                        const arrayBuffer = await imageBlob.arrayBuffer();
+                        const imageBuffer = Buffer.from(arrayBuffer);
 
-                        await bot.sendPhoto(chatid, buffer, {
+                        await bot.sendPhoto(chatid, imageBuffer, {
                             ...options,
                             title: fileroute.imagename,
                             caption: fileroute.message
@@ -1547,23 +1517,19 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
-                        const imageresponse = await Gemini.models.generateContent({
-                            model: imagecreatemodel,
-                            contents: fileroute.imageprompt,
-                            config: {
-                                numberOfImages: 1,
-                                aspectRatio: "1:1",
-                                safetySettings: [
-                                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }
-                                ]
-                            },
-                        })
+                        const imageBlob = await hf.textToImage({
+                            model: "black-forest-labs/FLUX.1-schnell",
+                            inputs: fileroute.imageprompt,
+                            parameters: {
+                                width: 512,
+                                height: 512
+                            }
+                        });
 
-                        const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
-                        const buffer = Buffer.from(imageBytes, "base64");
+                        const arrayBuffer = await imageBlob.arrayBuffer();
+                        const imageBuffer = Buffer.from(arrayBuffer);
 
-                        await bot.sendPhoto(chatid, buffer, {
+                        await bot.sendPhoto(chatid, imageBuffer, {
                             ...options,
                             title: fileroute.imagename,
                             caption: fileroute.message
@@ -1713,23 +1679,19 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageresponse = await Gemini.models.generateContent({
-                        model: imagecreatemodel,
-                        contents: fileroute.imageprompt,
-                        config: {
-                            numberOfImages: 1,
-                            aspectRatio: "1:1",
-                            safetySettings: [
-                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" }
-                            ]
-                        },
-                    })
+                    const imageBlob = await hf.textToImage({
+                        model: "black-forest-labs/FLUX.1-schnell",
+                        inputs: fileroute.imageprompt,
+                        parameters: {
+                            width: 512,
+                            height: 512
+                        }
+                    });
 
-                    const imageBytes = imageresponse?.generatedImages?.[0]?.image?.imageBytes;
-                    const buffer = Buffer.from(imageBytes, "base64");
+                    const arrayBuffer = await imageBlob.arrayBuffer();
+                    const imageBuffer = Buffer.from(arrayBuffer);
 
-                    await bot.sendPhoto(chatid, buffer, {
+                    await bot.sendPhoto(chatid, imageBuffer, {
                         ...options,
                         title: fileroute.imagename,
                         caption: fileroute.message

@@ -1,11 +1,10 @@
 import Groq from "groq-sdk";
 import { configDotenv } from "dotenv";
-import { GoogleGenAI } from "@google/genai";
+import { HfInference } from "@huggingface/inference";
 
 configDotenv();
 
 export const groq = new Groq({ apiKey: process.env.AI });
 
-export const Gemini = new GoogleGenAI({apiKey : process.env.GEMINI, apiVersion : "v1alpha"});
-
+export const hf = new HfInference(process.env.HF);
 
