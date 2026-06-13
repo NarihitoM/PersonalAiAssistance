@@ -434,6 +434,38 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
             await bot.sendChatAction(chatid, "upload_photo", options);
 
+            const tmpAnimationPath = path.join(os.tmpdir(), `${Date.now()}-anim.mp4`);
+            const tmpScreenshotDir = os.tmpdir();
+            const screenshotName = `ss-anim-${Date.now()}.jpg`;
+            const tmpScreenshotPath = path.join(tmpScreenshotDir, screenshotName);
+
+            await new Promise((resolve, reject) => {
+                const file = fs.createWriteStream(tmpAnimationPath);
+                https.get(filelink, (res) => {
+                    res.pipe(file);
+                    file.on("finish", resolve);
+                    file.on("error", reject);
+                }).on("error", reject);
+            });
+
+            await bot.sendChatAction(chatid, "upload_photo", options);
+
+            await new Promise((resolve, reject) => {
+                ffmpeg(tmpAnimationPath)
+                    .screenshots({
+                        count: 1,
+                        timemarks: ["0"],
+                        filename: screenshotName,
+                        folder: tmpScreenshotDir
+                    })
+                    .on("end", resolve)
+                    .on("error", reject);
+            });
+
+            const imageBuffer = fs.readFileSync(tmpScreenshotPath);
+            const base64Image = imageBuffer.toString("base64");
+            const dataUrl = `data:image/jpeg;base64,${base64Image}`;
+
             const result = await groq.chat.completions.create({
                 model: imagemodel,
                 messages: [
@@ -447,7 +479,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                             {
                                 type: "image_url",
                                 image_url: {
-                                    url: filelink
+                                    url: dataUrl
                                 }
                             }
                         ]
