@@ -20,7 +20,7 @@ const modelaudio = "canopylabs/orpheus-v1-english"
 const imagemodel = "meta-llama/llama-4-scout-17b-16e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
 const imagecreatemodel = "black-forest-labs/FLUX.1-schnell"
-const videocreatemodel = "damo-vilab/text-to-video-ms-1.7b"
+const videocreatemodel = "SulphurAI/Sulphur-2-base"
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
