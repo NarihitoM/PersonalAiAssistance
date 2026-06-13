@@ -32,7 +32,7 @@ function escapeMarkdownSafe(text) {
                 let escaped = part.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
 
                 escaped = escaped
-                    .replace(/\\\*\\\*(.*?)\\\*\\\*/g, "*$1*") 
+                    .replace(/\\\*\\\*(.*?)\\\*\\\*/g, "*$1*")
                     .replace(/\\\*(.*?)\\\*/g, "_$1_")
                     .replace(/\\`(.*?)\\`/g, "`$1`")
                     .replace(/^(\\s*)(?:\\\-|\\\*)(.*?)$/gm, "$1•$2")
@@ -166,7 +166,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             //Fileroute
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-               
+
                 if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
 
@@ -336,7 +336,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             //File route
             if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage2);
-                
+
                 if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
 
@@ -427,6 +427,112 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
                 await sendBotMessage(bot, chatid, aimessage2, options);
             }
+        }
+        else if (msg.animation) {
+            const fileid = msg.animation.file_id;
+            const filelink = await bot.getFileLink(fileid);
+            const gifanalyse = `Gif : The user sent a looped GIF/animation asset.`;
+
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "user",
+                        content: gifanalyse
+                    }
+                }
+            }, {
+                upsert: true
+            });
+
+            const historymessage = await userquery.findOne({ userid: chatid });
+
+            await bot.sendChatAction(chatid, "typing", options);
+
+            const response = await groq.chat.completions.create({
+                model: model,
+                messages: [
+                    {
+                        role: "system",
+                        content: systemprompt
+                    },
+                    ...historymessage.messages.slice(-6).map((element) => ({
+                        role: element.role,
+                        content: element.content
+                    }))
+                ]
+            });
+
+            const finalaireply = response.choices[0].message.content;
+
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "assistant",
+                        content: finalaireply
+                    }
+                }
+            }, {
+                upsert: true
+            });
+
+            await sendBotMessage(bot, chatid, finalaireply, options);
+        }
+        else if (msg.document && msg.document.mime_type && msg.document.mime_type.startsWith("video/")) {
+            const fileid = msg.document.file_id;
+            const filelink = await bot.getFileLink(fileid);
+            const gifanalyse = `Gif : The user sent a video file clip.`;
+
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "user",
+                        content: gifanalyse
+                    }
+                }
+            }, {
+                upsert: true
+            });
+
+            const historymessage = await userquery.findOne({ userid: chatid });
+
+            await bot.sendChatAction(chatid, "typing", options);
+
+            const response = await groq.chat.completions.create({
+                model: model,
+                messages: [
+                    {
+                        role: "system",
+                        content: systemprompt
+                    },
+                    ...historymessage.messages.slice(-6).map((element) => ({
+                        role: element.role,
+                        content: element.content
+                    }))
+                ]
+            });
+
+            const finalaireply = response.choices[0].message.content;
+
+            await userquery.findOneAndUpdate({
+                userid: chatid
+            }, {
+                $push: {
+                    messages: {
+                        role: "assistant",
+                        content: finalaireply
+                    }
+                }
+            }, {
+                upsert: true
+            });
+
+            await sendBotMessage(bot, chatid, finalaireply, options);
         }
         else if (msg.sticker) {
             const fileid = msg.sticker.file_id;
@@ -614,8 +720,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             //File route
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-              
-                 if (fileroute.type === "audio") {
+
+                if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
 
                     const response = await groq.audio.speech.create({
@@ -817,7 +923,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
             //Fileroute
             if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                 const fileroute = JSON.parse(aimessage);
-                
+
                 if (fileroute.type === "audio") {
                     await bot.sendChatAction(chatid, "upload_voice", options);
 
@@ -961,7 +1067,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 const aimessage = response.choices[0].message.content;
                 if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage);
-                   
+
                     if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_voice", options);
 
@@ -1390,7 +1496,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 //File route
                 if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
                     const fileroute = JSON.parse(aimessage2);
-                   if (fileroute.type === "audio") {
+                    if (fileroute.type === "audio") {
                         await bot.sendChatAction(chatid, "upload_voice", options);
 
                         const response = await groq.audio.speech.create({
