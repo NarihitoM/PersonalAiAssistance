@@ -31,12 +31,15 @@ function escapeMarkdownSafe(text) {
             if (i % 2 === 0) {
                 let escaped = part.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
 
-                escaped = escaped
-                    .replace(/\\\*\\\*(.*?)\\\*\\\*/g, "*$1*")
-                    .replace(/\\\*(.*?)\\\*/g, "_$1_")
-                    .replace(/\\`(.*?)\\`/g, "`$1`")
-                    .replace(/^(\\s*)(?:\\\-|\\\*)(.*?)$/gm, "$1•$2")
-                    .replace(/^(\\s*)(\\d+)\\\.(.*?)$/gm, "$1$2.$3");
+                escaped = escaped.replace(/\\\*\\\*(.*?)\\\*\\\*/g, "*$1*");
+
+                escaped = escaped.replace(/\\\*(.*?)\\\*/g, "_$1_");
+
+                escaped = escaped.replace(/\\`(.*?)\\`/g, "`$1`");
+
+                escaped = escaped.replace(/^(\\s*)(?:\\\\-|\\\\*)(.*?)$/gm, "$1•$2");
+
+                escaped = escaped.replace(/^(\\s*)(\\d+)\\\.(.*?)$/gm, "$1$2.$3");
 
                 return escaped;
             } else {
@@ -53,7 +56,7 @@ function escapeMarkdownSafe(text) {
 }
 
 function detectFormat(text) {
-    if (/```[\s\S]*```/.test(text) || /\*\*[\s\S]*\*\*/.test(text) || /_[\s\S]*_/.test(text) || /`[^`\n]+`/.test(text)) {
+    if (/```[\s\S]*```/.test(text) || /\*\*[\s\S]*\*\*/.test(text) || /_[\s\S]*_/.test(text) || /`[^`\n]+`/.test(text) || /^\s*[\*•-]\s+/m.test(text)) {
         return "markdownv2";
     }
     if (/<\/?[a-z]+>/.test(text)) {
@@ -70,10 +73,10 @@ async function sendBotMessage(bot, chatid, text, options = {}) {
     if (format === "plain") {
         await bot.sendMessage(chatid, text, sendOptions);
     } else if (format === "markdownv2") {
-        sendOptions.parse_mode = "markdownv2";
+        sendOptions.parse_mode = "MarkdownV2";
         await bot.sendMessage(chatid, escapeMarkdownSafe(text), sendOptions);
     } else if (format === "html") {
-        sendOptions.parse_mode = "html";
+        sendOptions.parse_mode = "HTML";
         await bot.sendMessage(chatid, text, sendOptions);
     }
 }
