@@ -31,16 +31,6 @@ export default async function handler(req, res) {
             return await bot.sendMessage(targetId, text, options);
         };
 
-        if (msg.text === "/start") {
-            await usersession.findOneAndUpdate(
-                { userid: chatid },
-                { $set: { session: "chat" } },
-                { upsert: true, new: true }
-            );
-            await sendReply(chatid, "You can now get started! Develop By Narihito");
-            return res.status(200).send("OK");
-        }
-
         if (msg.text === "/feature") {
             await sendReply(chatid, "This Assistance can chat, read files, analyse image, create image, analyse file, create file, create voice, listen to voice , etc..");
             return res.status(200).send("OK");
@@ -50,8 +40,11 @@ export default async function handler(req, res) {
         try {
             session = await usersession.findOne({ userid: chatid });
             if (!session) {
-                await sendReply(chatid, "You have no session. Use /start to get started messaging.");
-                return res.status(200).send("OK");
+                session = await usersession.findOneAndUpdate(
+                    { userid: chatid },
+                    { $set: { session: "chat" } },
+                    { upsert: true, new: true }
+                );
             }
         } catch (err) {
             console.error(err);
