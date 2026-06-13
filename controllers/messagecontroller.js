@@ -29,7 +29,16 @@ function escapeMarkdownSafe(text) {
     return parts
         .map((part, i) => {
             if (i % 2 === 0) {
-                return part.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
+                let escaped = part.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
+
+                escaped = escaped
+                    .replace(/\\\*\\\*(.*?)\\\*\\\*/g, "*$1*") 
+                    .replace(/\\\*(.*?)\\\*/g, "_$1_")
+                    .replace(/\\`(.*?)\\`/g, "`$1`")
+                    .replace(/^(\\s*)(?:\\\-|\\\*)(.*?)$/gm, "$1•$2")
+                    .replace(/^(\\s*)(\\d+)\\\.(.*?)$/gm, "$1$2.$3");
+
+                return escaped;
             } else {
                 const match = part.match(/^([a-zA-Z0-9+#-]+)?\n([\s\S]*)$/);
                 if (match) {
@@ -44,8 +53,12 @@ function escapeMarkdownSafe(text) {
 }
 
 function detectFormat(text) {
-    if (/```[\s\S]*```/.test(text)) return "markdownv2";
-    if (/<\/?[a-z]+>/.test(text)) return "html";
+    if (/```[\s\S]*```/.test(text) || /\*\*[\s\S]*\*\*/.test(text) || /_[\s\S]*_/.test(text) || /`[^`\n]+`/.test(text)) {
+        return "markdownv2";
+    }
+    if (/<\/?[a-z]+>/.test(text)) {
+        return "html";
+    }
     return "plain";
 }
 
