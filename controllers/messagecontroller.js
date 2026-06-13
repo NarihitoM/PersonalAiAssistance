@@ -20,7 +20,7 @@ const modelRAG = "groq/compound"
 const modelaudio = "canopylabs/orpheus-v1-english"
 const imagemodel = "meta-llama/llama-4-scout-17b-16e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
-const imagecreatemodel = "imagen-4.0-generate-001"
+const imagecreatemodel = "gemini-2.5-flash-image"
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 

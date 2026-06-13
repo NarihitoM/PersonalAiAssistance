@@ -1,6 +1,6 @@
 import { Gemini } from "../config/aiservice.js";
 
-const model = "gemini-3-pro-image-preview"
+const model = "gemini-2.5-flash-image"
 
 export const Image = (bot) => async (msg,businessConnectionId) => {
     const chatid = msg.chat.id;
