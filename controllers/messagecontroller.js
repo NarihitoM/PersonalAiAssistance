@@ -155,6 +155,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     const imageBlob = await hf.textToImage({
                         model: imagecreatemodel,
                         inputs: fileroute.imageprompt,
+                        provider: "hf-inference",
                         parameters: {
                             width: 512,
                             height: 512
@@ -178,7 +179,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     }
 
                     const videoBlob = await hf.textToVideo({
-                        provider: "fal-ai",
+                        provider: "hf-inference",
                         model: videocreatemodel,
                         inputs: fileroute.prompt,
                     });
@@ -1118,6 +1119,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         const imageBlob = await hf.textToImage({
                             model: imagecreatemodel,
                             inputs: fileroute.imageprompt,
+                            provider : "hf-inference",
                             parameters: {
                                 width: 512,
                                 height: 512
@@ -1141,7 +1143,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         }
 
                         const videoBlob = await hf.textToVideo({
-                            provider: "fal-ai",
+                            provider: "hf-inference",
                             model: videocreatemodel,
                             inputs: fileroute.prompt,
                         });
