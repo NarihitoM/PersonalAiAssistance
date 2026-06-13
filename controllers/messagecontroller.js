@@ -20,7 +20,7 @@ const modelaudio = "canopylabs/orpheus-v1-english"
 const imagemodel = "meta-llama/llama-4-scout-17b-16e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
 const imagecreatemodel = "black-forest-labs/FLUX.1-schnell"
-const videocreatemodel = "SulphurAI/Sulphur-2-base"
+const videocreatemodel = "Wan-AI/Wan2.2-TI2V-5B"
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -177,7 +177,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         await bot.sendMessage(chatid, fileroute.message, options);
                     }
 
-                    const videoBlob = await hf.request({
+                    const videoBlob = await hf.textToVideo({
+                        provider: "fal-ai",
                         model: videocreatemodel,
                         inputs: fileroute.prompt,
                     });
@@ -388,7 +389,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         await bot.sendMessage(chatid, fileroute.message, options);
                     }
 
-                    const videoBlob = await hf.request({
+                    const videoBlob = await hf.textToVideo({
+                        provider: "fal-ai",
                         model: videocreatemodel,
                         inputs: fileroute.prompt,
                     });
@@ -707,7 +709,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         await bot.sendMessage(chatid, fileroute.message, options);
                     }
 
-                    const videoBlob = await hf.request({
+                    const videoBlob = await hf.textToVideo({
+                        provider: "fal-ai",
                         model: videocreatemodel,
                         inputs: fileroute.prompt,
                     });
@@ -951,7 +954,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         await bot.sendMessage(chatid, fileroute.message, options);
                     }
 
-                    const videoBlob = await hf.request({
+                    const videoBlob = await hf.textToVideo({
+                        provider: "fal-ai",
                         model: videocreatemodel,
                         inputs: fileroute.prompt,
                     });
@@ -1136,7 +1140,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                             await bot.sendMessage(chatid, fileroute.message, options);
                         }
 
-                        const videoBlob = await hf.request({
+                        const videoBlob = await hf.textToVideo({
+                            provider: "fal-ai",
                             model: videocreatemodel,
                             inputs: fileroute.prompt,
                         });
@@ -1312,7 +1317,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                             await bot.sendMessage(chatid, fileroute.message, options);
                         }
 
-                        const videoBlob = await hf.request({
+                        const videoBlob = await hf.textToVideo({
+                            provider: "fal-ai",
                             model: videocreatemodel,
                             inputs: fileroute.prompt,
                         });
@@ -1486,7 +1492,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                             await bot.sendMessage(chatid, fileroute.message, options);
                         }
 
-                        const videoBlob = await hf.request({
+                        const videoBlob = await hf.textToVideo({
+                            provider: "fal-ai",
                             model: videocreatemodel,
                             inputs: fileroute.prompt,
                         });
@@ -1690,7 +1697,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                             await bot.sendMessage(chatid, fileroute.message, options);
                         }
 
-                        const videoBlob = await hf.request({
+                        const videoBlob = await hf.textToVideo({
+                            provider: "fal-ai",
                             model: videocreatemodel,
                             inputs: fileroute.prompt,
                         });
@@ -1873,7 +1881,8 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                         await bot.sendMessage(chatid, fileroute.message, options);
                     }
 
-                    const videoBlob = await hf.request({
+                    const videoBlob = await hf.textToVideo({
+                        provider: "fal-ai",
                         model: videocreatemodel,
                         inputs: fileroute.prompt,
                     });
