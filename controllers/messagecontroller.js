@@ -169,7 +169,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
 
-                    const imageresponse = await Gemini.models.generateImages({
+                    const imageresponse = await Gemini.models.generateContent({
                         model: imagecreatemodel,
                         prompt: fileroute.imageprompt,
                         config: {
@@ -364,7 +364,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageresponse = await Gemini.models.generateImages({
+                    const imageresponse = await Gemini.models.generateContent({
                         model: imagecreatemodel,
                         prompt: fileroute.imageprompt,
                         config: {
@@ -681,7 +681,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageresponse = await Gemini.models.generateImages({
+                    const imageresponse = await Gemini.models.generateContent({
                         model: imagecreatemodel,
                         prompt: fileroute.imageprompt,
                         config: {
@@ -908,7 +908,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageresponse = await Gemini.models.generateImages({
+                    const imageresponse = await Gemini.models.generateContent({
                         model: imagecreatemodel,
                         prompt: fileroute.imageprompt,
                         config: {
@@ -1094,7 +1094,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
-                        const imageresponse = await Gemini.models.generateImages({
+                        const imageresponse = await Gemini.models.generateContent({
                             model: imagecreatemodel,
                             prompt: fileroute.imageprompt,
                             config: {
@@ -1253,7 +1253,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
-                        const imageresponse = await Gemini.models.generateImages({
+                        const imageresponse = await Gemini.models.generateContent({
                             model: imagecreatemodel,
                             prompt: fileroute.imageprompt,
                             config: {
@@ -1410,7 +1410,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
-                        const imageresponse = await Gemini.models.generateImages({
+                        const imageresponse = await Gemini.models.generateContent({
                             model: imagecreatemodel,
                             prompt: fileroute.imageprompt,
                             config: {
@@ -1597,7 +1597,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                     if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
 
-                        const imageresponse = await Gemini.models.generateImages({
+                        const imageresponse = await Gemini.models.generateContent({
                             model: imagecreatemodel,
                             prompt: fileroute.imageprompt,
                             config: {
@@ -1779,7 +1779,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
 
-                    const imageresponse = await Gemini.models.generateImages({
+                    const imageresponse = await Gemini.models.generateContent({
                         model: imagecreatemodel,
                         prompt: fileroute.imageprompt,
                         config: {
