@@ -16,7 +16,6 @@ import streamBuffers from "stream-buffers";
 
 //Model
 const model = "openai/gpt-oss-120b"
-const modelRAG = "groq/compound"
 const modelaudio = "canopylabs/orpheus-v1-english"
 const imagemodel = "meta-llama/llama-4-scout-17b-16e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
@@ -155,7 +154,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
                     const imageresponse = await Gemini.models.generateContent({
                         model: imagecreatemodel,
-                        prompt: fileroute.imageprompt,
+                        contents: fileroute.imageprompt,
                         config: {
                             numberOfImages: 1,
                             aspectRatio: "1:1",
@@ -350,7 +349,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
                     const imageresponse = await Gemini.models.generateContent({
                         model: imagecreatemodel,
-                        prompt: fileroute.imageprompt,
+                        contents: fileroute.imageprompt,
                         config: {
                             numberOfImages: 1,
                             aspectRatio: "1:1",
@@ -652,7 +651,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
                     const imageresponse = await Gemini.models.generateContent({
                         model: imagecreatemodel,
-                        prompt: fileroute.imageprompt,
+                        contents: fileroute.imageprompt,
                         config: {
                             numberOfImages: 1,
                             aspectRatio: "1:1",
@@ -879,7 +878,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
                     const imageresponse = await Gemini.models.generateContent({
                         model: imagecreatemodel,
-                        prompt: fileroute.imageprompt,
+                        contents: fileroute.imageprompt,
                         config: {
                             numberOfImages: 1,
                             aspectRatio: "1:1",
@@ -1047,7 +1046,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
                         const imageresponse = await Gemini.models.generateContent({
                             model: imagecreatemodel,
-                            prompt: fileroute.imageprompt,
+                            contents: fileroute.imageprompt,
                             config: {
                                 numberOfImages: 1,
                                 aspectRatio: "1:1",
@@ -1206,7 +1205,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
                         const imageresponse = await Gemini.models.generateContent({
                             model: imagecreatemodel,
-                            prompt: fileroute.imageprompt,
+                            contents: fileroute.imageprompt,
                             config: {
                                 numberOfImages: 1,
                                 aspectRatio: "1:1",
@@ -1363,7 +1362,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
                         const imageresponse = await Gemini.models.generateContent({
                             model: imagecreatemodel,
-                            prompt: fileroute.imageprompt,
+                            contents: fileroute.imageprompt,
                             config: {
                                 numberOfImages: 1,
                                 aspectRatio: "1:1",
@@ -1550,7 +1549,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
                         const imageresponse = await Gemini.models.generateContent({
                             model: imagecreatemodel,
-                            prompt: fileroute.imageprompt,
+                            contents: fileroute.imageprompt,
                             config: {
                                 numberOfImages: 1,
                                 aspectRatio: "1:1",
@@ -1716,7 +1715,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
                     const imageresponse = await Gemini.models.generateContent({
                         model: imagecreatemodel,
-                        prompt: fileroute.imageprompt,
+                        contents: fileroute.imageprompt,
                         config: {
                             numberOfImages: 1,
                             aspectRatio: "1:1",
