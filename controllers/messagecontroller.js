@@ -1,4 +1,4 @@
-import { groq } from "../config/aiservice.js";
+import { groq, analyzeImage } from "../config/aiservice.js";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import userquery from "../model/userquery.js";
@@ -17,7 +17,6 @@ import streamBuffers from "stream-buffers";
 //Model
 const model = "openai/gpt-oss-120b"
 const modelaudio = "canopylabs/orpheus-v1-english"
-const imagemodel = "meta-llama/llama-4-scout-17b-16e-instruct"
 const transcriptmodel = "whisper-large-v3-turbo"
 
 ffmpeg.setFfmpegPath(ffmpegPath);
@@ -271,32 +270,9 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
             await bot.sendChatAction(chatid, "upload_photo", options)
 
-            const response1 = await groq.chat.completions.create({
-                model: imagemodel,
-                messages: [
-                    {
-                        role: "system",
-                        content: systempromptforimage
-                    },
-                    {
-                        role: "user",
-                        "content": [
-                            {
-                                type: "text",
-                                text: captionmsg
-                            },
-                            {
-                                type: "image_url",
-                                image_url: {
-                                    url: filelink
-                                }
-                            }
-                        ]
-                    }
-                ]
-            });
+            const imagetext1 = await analyzeImage(systempromptforimage, filelink, captionmsg);
 
-            const aimessage1 = `image : ${response1.choices[0].message.content}`;
+            const aimessage1 = `image : ${imagetext1}`;
 
             await bot.sendChatAction(chatid, "typing", options);
 
@@ -485,36 +461,17 @@ export const message = (bot) => async (msg, businessConnectionId) => {
 
             const finalScreenshotUrl = ssData.publicUrl;
 
-            const result = await groq.chat.completions.create({
-                model: imagemodel,
-                messages: [
-                    {
-                        role: "system",
-                        content: systempromptforimage
-                    },
-                    {
-                        role: "user",
-                        content: [
-                            {
-                                type: "image_url",
-                                image_url: {
-                                    url: finalScreenshotUrl
-                                }
-                            }
-                        ]
-                    }
-                ]
-            });
+            const imagetext = await analyzeImage(systempromptforimage, finalScreenshotUrl);
 
             const { error: removeError } = await supabase.storage
                 .from("audio")
-                .remove([screenshotFilename]); 
+                .remove([screenshotFilename]);
 
             if (removeError) {
                 console.log(removeError);
             }
 
-            const aimessage = result.choices[0].message.content;
+            const aimessage = imagetext;
             const gifanalyse = `Gif : ${aimessage}`;
 
             await userquery.findOneAndUpdate({
@@ -676,28 +633,9 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 await sendBotMessage(bot, chatid, finalaireply, options);
             } else {
                 await bot.sendChatAction(chatid, "upload_photo", options);
-                const result = await groq.chat.completions.create({
-                    model: imagemodel,
-                    messages: [
-                        {
-                            role: "system",
-                            content: systempromptforimage
-                        },
-                        {
-                            role: "user",
-                            content: [
-                                {
-                                    type: "image_url",
-                                    image_url: {
-                                        url: filelink
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                });
+                const imagetext = await analyzeImage(systempromptforimage, filelink);
 
-                const aimessage = result.choices[0].message.content;
+                const aimessage = imagetext;
                 const gifanalyse = `Gif : ${aimessage}`;
 
                 await userquery.findOneAndUpdate({
@@ -1513,32 +1451,9 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 }
             }
             else if (msg.document.mime_type === "image/png" || msg.document.mime_type === "image/jpeg") {
-                const response1 = await groq.chat.completions.create({
-                    model: imagemodel,
-                    messages: [
-                        {
-                            role: "system",
-                            content: systempromptforimage
-                        },
-                        {
-                            role: "user",
-                            "content": [
-                                {
-                                    type: "text",
-                                    text: captiontext
-                                },
-                                {
-                                    type: "image_url",
-                                    image_url: {
-                                        url: filelink
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                });
+                const imagetext1 = await analyzeImage(systempromptforimage, filelink, captiontext);
 
-                const aimessage1 = `image : ${response1.choices[0].message.content}`;
+                const aimessage1 = `image : ${imagetext1}`;
 
                 await bot.sendChatAction(chatid, "typing", options);
 
