@@ -1451,7 +1451,7 @@ export const message = (bot) => async (msg, businessConnectionId) => {
                 }
             }
             else if (msg.document.mime_type === "image/png" || msg.document.mime_type === "image/jpeg") {
-                const imagetext1 = await analyzeImage(systempromptforimage, filelink, captiontext);
+                const imagetext1 = await analyzeImage(systempromptforimage, filelink, captiontext, msg.document.mime_type);
 
                 const aimessage1 = `image : ${imagetext1}`;
 
