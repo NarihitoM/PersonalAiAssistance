@@ -1758,6 +1758,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             await message(bot)(msg, businessConnectionId, attempt + 1);
         } else {
             console.log(`AI output failed after ${MAX_AI_RETRIES} attempts, giving up silently`);
+            await sendBotMessage(bot, chatid, "Something went wrong. please try again.", options);
         }
     }
 }
