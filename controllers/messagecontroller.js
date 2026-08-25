@@ -1,4 +1,5 @@
 import { groq, analyzeImage } from "../config/aiservice.js";
+import telegramifyMarkdown from "telegramify-markdown";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import userquery from "../model/userquery.js";
@@ -22,73 +23,12 @@ const transcriptmodel = "whisper-large-v3-turbo"
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 //Styling
-function escapeMarkdownSafe(text) {
-    const parts = text.split(/```/);
-
-    return parts
-        .map((part, i) => {
-            if (i % 2 === 0) {
-                const links = [];
-                let withLinks = part.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, url) => {
-                    links.push({ label, url });
-                    return `${links.length - 1}`;
-                });
-
-                let escaped = withLinks.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
-
-                escaped = escaped.replace(/\\\*\\\*(.*?)\\\*\\\*/g, "*$1*");
-
-                escaped = escaped.replace(/\\\*(.*?)\\\*/g, "_$1_");
-
-                escaped = escaped.replace(/\\`(.*?)\\`/g, "`$1`");
-
-                escaped = escaped.replace(/^(\s*)(?:\\-|\\\*)(.*?)$/gm, "$1•$2");
-
-                escaped = escaped.replace(/^(\s*)(\d+)\\\.(.*?)$/gm, "$1$2\\.$3");
-
-                escaped = escaped.replace(/(\d+)/g, (_, idx) => {
-                    const { label, url } = links[Number(idx)];
-                    const safeLabel = label.replace(/[_*[\]()~`>#+\-=|{}.!]/g, "\\$&");
-                    return `[${safeLabel}](${url})`;
-                });
-
-                return escaped;
-            } else {
-                const match = part.match(/^([a-zA-Z0-9+#-]+)?\n([\s\S]*)$/);
-                if (match) {
-                    const lang = match[1] || "";
-                    const code = match[2];
-                    return "```" + lang + "\n" + code + "```";
-                }
-                return "```" + part + "```";
-            }
-        })
-        .join("");
-}
-
-function detectFormat(text) {
-    if (/```[\s\S]*```/.test(text) || /\*\*[\s\S]*\*\*/.test(text) || /_[\s\S]*_/.test(text) || /`[^`\n]+`/.test(text) || /^\s*[\*•-]\s+/m.test(text)) {
-        return "markdownv2";
-    }
-    if (/<\/?[a-z]+>/.test(text)) {
-        return "html";
-    }
-    return "plain";
-}
-
 async function sendBotMessage(bot, chatid, text, options = {}) {
     await bot.sendChatAction(chatid, "typing", options);
-    const format = detectFormat(text);
     const sendOptions = { ...options };
 
     try {
-        if (format === "plain") {
-            await bot.sendMessage(chatid, text, sendOptions);
-        } else if (format === "markdownv2") {
-            await bot.sendMessage(chatid, escapeMarkdownSafe(text), { ...sendOptions, parse_mode: "MarkdownV2" });
-        } else if (format === "html") {
-            await bot.sendMessage(chatid, text, { ...sendOptions, parse_mode: "HTML" });
-        }
+        await bot.sendMessage(chatid, telegramifyMarkdown(text, "remove"), { ...sendOptions, parse_mode: "MarkdownV2" });
     } catch (err) {
         console.log("sendBotMessage parse failed, falling back to plain text:", err.message);
         await bot.sendMessage(chatid, text, sendOptions);
