@@ -180,14 +180,19 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         return;
                     }
 
-                    const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
+                    try {
+                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
-                    await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
+                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
-                    await bot.sendPhoto(chatid, image, {
-                        ...options,
-                        caption: fileroute.message
-                    });
+                        await bot.sendPhoto(chatid, image, {
+                            ...options,
+                            caption: fileroute.message
+                        });
+                    } catch (err) {
+                        console.log("Image generation failed:", err.message);
+                        await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
+                    }
                 }
 
                 else {
@@ -343,14 +348,19 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         return;
                     }
 
-                    const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
+                    try {
+                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
-                    await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
+                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
-                    await bot.sendPhoto(chatid, image, {
-                        ...options,
-                        caption: fileroute.message
-                    });
+                        await bot.sendPhoto(chatid, image, {
+                            ...options,
+                            caption: fileroute.message
+                        });
+                    } catch (err) {
+                        console.log("Image generation failed:", err.message);
+                        await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
+                    }
                 }
                 else {
                     await bot.sendChatAction(chatid, "upload_document", options);
@@ -788,14 +798,19 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         return;
                     }
 
-                    const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
+                    try {
+                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
-                    await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
+                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
-                    await bot.sendPhoto(chatid, image, {
-                        ...options,
-                        caption: fileroute.message
-                    });
+                        await bot.sendPhoto(chatid, image, {
+                            ...options,
+                            caption: fileroute.message
+                        });
+                    } catch (err) {
+                        console.log("Image generation failed:", err.message);
+                        await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
+                    }
                 }
                 else {
                     await bot.sendChatAction(chatid, "upload_document", options);
@@ -1008,14 +1023,19 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         return;
                     }
 
-                    const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
+                    try {
+                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
-                    await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
+                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
-                    await bot.sendPhoto(chatid, image, {
-                        ...options,
-                        caption: fileroute.message
-                    });
+                        await bot.sendPhoto(chatid, image, {
+                            ...options,
+                            caption: fileroute.message
+                        });
+                    } catch (err) {
+                        console.log("Image generation failed:", err.message);
+                        await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
+                    }
                 }
                 else {
                     await bot.sendChatAction(chatid, "upload_document", options);
@@ -1169,14 +1189,19 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             return;
                         }
 
-                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
+                        try {
+                            const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
-                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
+                            await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
-                        await bot.sendPhoto(chatid, image, {
-                            ...options,
-                            caption: fileroute.message
-                        });
+                            await bot.sendPhoto(chatid, image, {
+                                ...options,
+                                caption: fileroute.message
+                            });
+                        } catch (err) {
+                            console.log("Image generation failed:", err.message);
+                            await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
+                        }
                     }
                     else {
                         await bot.sendChatAction(chatid, "upload_document", options);
@@ -1320,14 +1345,19 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             return;
                         }
 
-                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
+                        try {
+                            const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
-                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
+                            await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
-                        await bot.sendPhoto(chatid, image, {
-                            ...options,
-                            caption: fileroute.message
-                        });
+                            await bot.sendPhoto(chatid, image, {
+                                ...options,
+                                caption: fileroute.message
+                            });
+                        } catch (err) {
+                            console.log("Image generation failed:", err.message);
+                            await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
+                        }
                     }
                     else {
                         await bot.sendChatAction(chatid, "upload_document", options);
@@ -1469,14 +1499,19 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             return;
                         }
 
-                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
+                        try {
+                            const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
-                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
+                            await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
-                        await bot.sendPhoto(chatid, image, {
-                            ...options,
-                            caption: fileroute.message
-                        });
+                            await bot.sendPhoto(chatid, image, {
+                                ...options,
+                                caption: fileroute.message
+                            });
+                        } catch (err) {
+                            console.log("Image generation failed:", err.message);
+                            await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
+                        }
                     }
                     else {
                         await bot.sendChatAction(chatid, "upload_document", options);
@@ -1624,14 +1659,19 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             return;
                         }
 
-                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
+                        try {
+                            const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
-                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
+                            await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
-                        await bot.sendPhoto(chatid, image, {
-                            ...options,
-                            caption: fileroute.message
-                        });
+                            await bot.sendPhoto(chatid, image, {
+                                ...options,
+                                caption: fileroute.message
+                            });
+                        } catch (err) {
+                            console.log("Image generation failed:", err.message);
+                            await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
+                        }
                     }
                     else {
                         await bot.sendChatAction(chatid, "upload_document", options);
@@ -1783,14 +1823,19 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         return;
                     }
 
-                    const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
+                    try {
+                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
-                    await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
+                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
-                    await bot.sendPhoto(chatid, image, {
-                        ...options,
-                        caption: fileroute.message
-                    });
+                        await bot.sendPhoto(chatid, image, {
+                            ...options,
+                            caption: fileroute.message
+                        });
+                    } catch (err) {
+                        console.log("Image generation failed:", err.message);
+                        await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
+                    }
                 }
                 else {
                     await bot.sendChatAction(chatid, "upload_document", options);
