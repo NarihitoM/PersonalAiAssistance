@@ -1,5 +1,4 @@
-import { groq, analyzeImage, generateImage, webSearch, webScrape, webCrawl, webMap } from "../config/aiservice.js";
-import telegramifyMarkdown from "telegramify-markdown";
+import { groq, analyzeImage, generateImage, webSearch, webScrape, webCrawl, webMap, model, modelaudio, transcriptmodel } from "../config/aiservice.js";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import { tools } from "../tools/tools.js";
@@ -15,52 +14,9 @@ import axios from "axios";
 import PDFParser from "pdf2json";
 import PDFDocument from "pdfkit";
 import streamBuffers from "stream-buffers";
-
-//Model
-const model = "openai/gpt-oss-120b"
-const modelaudio = "canopylabs/orpheus-v1-english"
-const transcriptmodel = "whisper-large-v3-turbo"
+import { withPhotoAction, checkImageCooldown, sendBotMessage } from "../utils/utils.js";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
-
-//Image generation cooldown
-const IMAGE_COOLDOWN_MS = 60 * 60 * 1000;
-
-async function withPhotoAction(bot, chatid, options, task) {
-    await bot.sendChatAction(chatid, "upload_photo", options);
-    const interval = setInterval(() => bot.sendChatAction(chatid, "upload_photo", options), 4000);
-
-    try {
-        return await task();
-    } finally {
-        clearInterval(interval);
-    }
-}
-
-async function checkImageCooldown(chatid) {
-    const user = await userquery.findOne({ userid: chatid });
-    const last = user?.lastImageGeneratedAt;
-
-    if (last && Date.now() - last.getTime() < IMAGE_COOLDOWN_MS) {
-        const remainingMin = Math.ceil((IMAGE_COOLDOWN_MS - (Date.now() - last.getTime())) / 60000);
-        return { allowed: false, remainingMin };
-    }
-
-    return { allowed: true };
-}
-
-//Styling
-async function sendBotMessage(bot, chatid, text, options = {}) {
-    await bot.sendChatAction(chatid, "typing", options);
-    const sendOptions = { ...options };
-
-    try {
-        await bot.sendMessage(chatid, telegramifyMarkdown(text, "remove"), { ...sendOptions, parse_mode: "MarkdownV2" });
-    } catch (err) {
-        console.log("sendBotMessage parse failed, falling back to plain text:", err.message);
-        await bot.sendMessage(chatid, text, sendOptions);
-    }
-}
 
 async function handleAIResponse(bot, chatid, options, response, messages) {
     const responseMessage = response.choices[0].message;

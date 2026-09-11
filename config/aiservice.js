@@ -7,6 +7,10 @@ configDotenv();
 
 export const groq = new Groq({ apiKey: process.env.AI });
 
+export const model = "openai/gpt-oss-120b";
+export const modelaudio = "canopylabs/orpheus-v1-english";
+export const transcriptmodel = "whisper-large-v3-turbo";
+
 const firecrawl = new Firecrawl({ apiKey: process.env.FIRECRAWL });
 
 export async function webSearch(query) {
