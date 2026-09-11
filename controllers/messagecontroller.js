@@ -1,4 +1,4 @@
-import { groq, analyzeImage, generateImage, webSearch } from "../config/aiservice.js";
+import { groq, analyzeImage, generateImage, webSearch, webScrape, webCrawl, webMap } from "../config/aiservice.js";
 import telegramifyMarkdown from "telegramify-markdown";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
@@ -117,7 +117,7 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
         }
 
         try {
-            const image = await withPhotoAction(bot, chatid, options, () => generateImage(args.prompt));
+            const image = await withPhotoAction(bot, chatid, options, () => generateImage(args.prompt, { timeoutMs: 60000 }));
 
             await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
@@ -126,8 +126,9 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
                 caption: args.message
             });
         } catch (err) {
+            const isTimeout = err.name === "AbortError" || /aborted|timeout/i.test(err.message || "");
             console.log("Image generation failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
+            await bot.sendMessage(chatid, isTimeout ? "Image generation timed out. Please try again with a simpler prompt." : "Sorry, image generation failed. Please try again.", options);
         }
         return;
     }
@@ -141,6 +142,84 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
         } catch (err) {
             console.log("Web search failed:", err.message);
             await bot.sendMessage(chatid, "Sorry, web search failed. Please try again.", options);
+            return;
+        }
+
+        const followUp = await groq.chat.completions.create({
+            model,
+            tools,
+            tool_choice: "auto",
+            messages: [
+                ...messages,
+                responseMessage,
+                { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }
+            ]
+        });
+
+        return handleAIResponse(bot, chatid, options, followUp, messages);
+    }
+
+    if (toolCall.function.name === "web_scrape") {
+        await bot.sendChatAction(chatid, "typing", options);
+
+        let results;
+        try {
+            results = await webScrape(args.url, { onlyMainContent: args.onlyMainContent, formats: args.formats });
+        } catch (err) {
+            console.log("Web scrape failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, web scrape failed. Please try again. " + err.message, options);
+            return;
+        }
+
+        const followUp = await groq.chat.completions.create({
+            model,
+            tools,
+            tool_choice: "auto",
+            messages: [
+                ...messages,
+                responseMessage,
+                { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }
+            ]
+        });
+
+        return handleAIResponse(bot, chatid, options, followUp, messages);
+    }
+
+    if (toolCall.function.name === "web_crawl") {
+        await bot.sendChatAction(chatid, "typing", options);
+
+        let results;
+        try {
+            results = await webCrawl(args.url, { limit: args.limit, maxDiscoveryDepth: args.maxDiscoveryDepth });
+        } catch (err) {
+            console.log("Web crawl failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, web crawl failed. Please try again. " + err.message, options);
+            return;
+        }
+
+        const followUp = await groq.chat.completions.create({
+            model,
+            tools,
+            tool_choice: "auto",
+            messages: [
+                ...messages,
+                responseMessage,
+                { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }
+            ]
+        });
+
+        return handleAIResponse(bot, chatid, options, followUp, messages);
+    }
+
+    if (toolCall.function.name === "web_map") {
+        await bot.sendChatAction(chatid, "typing", options);
+
+        let results;
+        try {
+            results = await webMap(args.url, { limit: args.limit });
+        } catch (err) {
+            console.log("Web map failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, web map failed. Please try again. " + err.message, options);
             return;
         }
 

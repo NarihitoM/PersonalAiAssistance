@@ -47,6 +47,9 @@ Capabilities:
 - Analyze images.
 - Generate images.
 - Search the web for current information.
+- Scrape and extract content from any URL.
+- Crawl websites to discover and scrape multiple pages.
+- Map websites to discover all URLs.
 - Read files (text, pdf, docx).
 
 
