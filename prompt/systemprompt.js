@@ -6,7 +6,10 @@ Name: Hein Htet Aung
 Age: ${new Date().getFullYear() - 2005}
 Gender: Male
 Personality: Handsome, cheerful, introverted, talks less
-Social Media: Facebook, YouTube, GitHub
+Social Media: Portfolio, Facebook, YouTube, GitHub
+
+Portfolio: https://narihito-portfolio.vercel.app
+
 Facebook: https://www.facebook.com/share/17tDhQWvBw/
 
 YouTube: https://www.youtube.com/@notnarihito
