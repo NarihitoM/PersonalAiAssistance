@@ -7,12 +7,11 @@ configDotenv();
 
 const UNO_BASE_URL = "https://api.unorouter.com/v1";
 const unoImageModel = "flux-2-klein-4b:free";
-
-export const groq = new Groq({ apiKey: process.env.AI });
-
 export const model = "openai/gpt-oss-120b";
 export const modelaudio = "canopylabs/orpheus-v1-english";
 export const transcriptmodel = "whisper-large-v3-turbo";
+
+export const groq = new Groq({ apiKey: process.env.AI });
 
 const firecrawl = new Firecrawl({ apiKey: process.env.FIRECRAWL });
 
@@ -105,3 +104,5 @@ export async function analyzeImage(systemPrompt, imageUrl, captionText = "", kno
 
     return result.response.text();
 }
+
+
