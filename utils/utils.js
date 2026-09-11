@@ -46,13 +46,14 @@ export async function checkImageCooldown(chatid) {
 }
 
 export async function sendBotMessage(bot, chatid, text, options = {}) {
+    const safeText = text && String(text).trim() ? String(text) : "Sorry, I couldn't generate a response. Please try again.";
     await bot.sendChatAction(chatid, "typing", options);
     const sendOptions = { ...options };
     try {
-        await bot.sendMessage(chatid, telegramifyMarkdown(text, "remove"), { ...sendOptions, parse_mode: "MarkdownV2" });
+        await bot.sendMessage(chatid, telegramifyMarkdown(safeText, "remove"), { ...sendOptions, parse_mode: "MarkdownV2" });
     } catch (err) {
         console.log("sendBotMessage parse failed, falling back to plain text:", err.message);
-        await bot.sendMessage(chatid, text, sendOptions);
+        await bot.sendMessage(chatid, safeText, sendOptions);
     }
 }
 

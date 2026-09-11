@@ -16,12 +16,28 @@ import { withPhotoAction, withTypingAction, withChatAction, checkImageCooldown, 
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-async function handleAIResponse(bot, chatid, options, response, messages) {
+const MAX_TOOL_DEPTH = 5;
+
+async function handleAIResponse(bot, chatid, options, response, messages, depth = 0) {
+    if (depth > MAX_TOOL_DEPTH) {
+        console.log(`handleAIResponse max depth ${MAX_TOOL_DEPTH} reached, stopping`);
+        await sendBotMessage(bot, chatid, "Sorry, I got stuck in a loop. Please try again with a simpler request.", options);
+        return;
+    }
     const responseMessage = response.choices[0].message;
     const toolCall = responseMessage.tool_calls?.[0];
 
     if (!toolCall) {
-        const aimessage = responseMessage.content;
+        let aimessage = responseMessage.content;
+        if (!aimessage || !String(aimessage).trim()) {
+            console.log("handleAIResponse: empty content, raw response:", JSON.stringify(responseMessage).slice(0, 2000));
+            aimessage = responseMessage.content || "";
+            if (!String(aimessage).trim() && responseMessage.tool_calls) {
+                aimessage = "I found some results but couldn't format them. Please try again or ask more specifically.";
+            } else if (!String(aimessage).trim()) {
+                aimessage = "Sorry, I couldn't generate a response. Please try again.";
+            }
+        }
 
         await userquery.findOneAndUpdate({
             userid: chatid
@@ -106,7 +122,7 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
             ]
         }));
 
-        return handleAIResponse(bot, chatid, options, followUp, messages);
+        return handleAIResponse(bot, chatid, options, followUp, messages, depth + 1);
     }
 
     if (toolCall.function.name === "web_scrape") {
@@ -130,7 +146,7 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
             ]
         }));
 
-        return handleAIResponse(bot, chatid, options, followUp, messages);
+        return handleAIResponse(bot, chatid, options, followUp, messages, depth + 1);
     }
 
     if (toolCall.function.name === "web_crawl") {
@@ -154,7 +170,7 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
             ]
         }));
 
-        return handleAIResponse(bot, chatid, options, followUp, messages);
+        return handleAIResponse(bot, chatid, options, followUp, messages, depth + 1);
     }
 
     if (toolCall.function.name === "web_map") {
@@ -178,7 +194,7 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
             ]
         }));
 
-        return handleAIResponse(bot, chatid, options, followUp, messages);
+        return handleAIResponse(bot, chatid, options, followUp, messages, depth + 1);
     }
 
     if (toolCall.function.name === "create_poll") {
@@ -263,7 +279,7 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
             tool_choice: "auto",
             messages: [...messages, responseMessage, { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }]
         }));
-        return handleAIResponse(bot, chatid, options, followUp, messages);
+        return handleAIResponse(bot, chatid, options, followUp, messages, depth + 1);
     }
 
     if (toolCall.function.name === "youtube_transcript") {
@@ -281,7 +297,7 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
             tool_choice: "auto",
             messages: [...messages, responseMessage, { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }]
         }));
-        return handleAIResponse(bot, chatid, options, followUp, messages);
+        return handleAIResponse(bot, chatid, options, followUp, messages, depth + 1);
     }
 
     // create_file
@@ -361,7 +377,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             await bot.sendChatAction(chatid, "typing", options);
 
 
-            await userquery.findOneAndUpdate({
+            if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
             }, {
                 $push: {
@@ -413,7 +429,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             await bot.sendChatAction(chatid, "typing", options);
 
 
-            await userquery.findOneAndUpdate({
+            if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
             }, {
                 $push: {
@@ -517,7 +533,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const aimessage = imagetext;
             const gifanalyse = `Gif : ${aimessage}`;
 
-            await userquery.findOneAndUpdate({
+            if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
             }, {
                 $push: {
@@ -559,7 +575,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const filelink = await bot.getFileLink(fileid);
             const gifanalyse = `Gif : The user sent a video file clip.`;
 
-            await userquery.findOneAndUpdate({
+            if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
             }, {
                 $push: {
@@ -605,7 +621,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const aimessage = `The user sent an animated/video sticker showing the emoji: "${stickerEmoji}".`;
                 const gifanalyse = `Gif : ${aimessage}`;
 
-                await userquery.findOneAndUpdate({
+                if (attempt === 1) await userquery.findOneAndUpdate({
                     userid: chatid
                 }, {
                     $push: {
@@ -648,7 +664,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const aimessage = imagetext;
                 const gifanalyse = `Gif : ${aimessage}`;
 
-                await userquery.findOneAndUpdate({
+                if (attempt === 1) await userquery.findOneAndUpdate({
                     userid: chatid
                 }, {
                     $push: {
@@ -706,7 +722,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             await bot.sendChatAction(chatid, "typing", options);
 
-            await userquery.findOneAndUpdate({
+            if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
             }, {
                 $push: {
@@ -818,7 +834,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const datalist = `VideoTranscript : ${JSON.stringify(transcript.segments)}`;
             const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please transcript this";
 
-            await userquery.findOneAndUpdate({
+            if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
             }, {
                 $push: {
@@ -872,7 +888,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 const textfiledata = `File(txt) : ${data}`;
 
-                await userquery.findOneAndUpdate({
+                if (attempt === 1) await userquery.findOneAndUpdate({
                     userid: chatid
                 }, {
                     $push: {
@@ -917,7 +933,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 const pdffiledata = `PDF : ${pdfText}`;
 
-                await userquery.findOneAndUpdate({
+                if (attempt === 1) await userquery.findOneAndUpdate({
                     userid: chatid
                 }, {
                     $push: {
@@ -960,7 +976,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const buffer = await Buffer.from(filebuffer);
                 const result = await mammoth.extractRawText({ buffer: buffer });
                 const docxfiledata = `DOCX : ${result.value}`;
-                await userquery.findOneAndUpdate({
+                if (attempt === 1) await userquery.findOneAndUpdate({
                     userid: chatid
                 }, {
                     $push: {
@@ -1005,7 +1021,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 await bot.sendChatAction(chatid, "typing", options);
 
-                await userquery.findOneAndUpdate({
+                if (attempt === 1) await userquery.findOneAndUpdate({
                     userid: chatid
                 }, {
                     $push: {
@@ -1057,7 +1073,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const audiotext = `Audio : ${result.text}`;
 
 
-            await userquery.findOneAndUpdate({
+            if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
             }, {
                 $push: {

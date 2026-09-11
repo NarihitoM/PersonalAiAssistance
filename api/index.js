@@ -49,7 +49,13 @@ export default async function handler(req, res) {
         }
 
         if (session.session === "chat") {
-            await message(bot)(msg, businessConnectionId);
+            res.status(200).send("OK");
+            try {
+                await message(bot)(msg, businessConnectionId);
+            } catch (err) {
+                console.error("message handler error:", err);
+            }
+            return;
         }
     }
 
