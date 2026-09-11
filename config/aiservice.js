@@ -13,7 +13,7 @@ const UNO_BASE_URL = "https://api.unorouter.com/v1";
 const unoImageModel = "flux-2-dev:free";
 
 export async function generateImage(prompt) {
-    const response = await fetch(`${UNO_BASE_URL}/chat/completions`, {
+    const response = await fetch(`${UNO_BASE_URL}/images/generations`, {
         method: "POST",
         headers: {
             "Authorization": `Bearer ${process.env.UNO}`,
@@ -21,7 +21,7 @@ export async function generateImage(prompt) {
         },
         body: JSON.stringify({
             model: unoImageModel,
-            messages: [{ role: "user", content: prompt }]
+            prompt
         })
     });
 
@@ -30,24 +30,11 @@ export async function generateImage(prompt) {
     }
 
     const data = await response.json();
-    const message = data.choices[0].message;
+    const image = data.data[0];
 
-    const fromImagesField = message.images?.[0]?.image_url?.url;
-    if (fromImagesField) return dataUrlOrUrlToOutput(fromImagesField);
-
-    const markdownMatch = message.content?.match(/!\[[^\]]*\]\((\S+)\)/);
-    if (markdownMatch) return dataUrlOrUrlToOutput(markdownMatch[1]);
-
-    if (message.content?.startsWith("data:image") || message.content?.startsWith("http")) {
-        return dataUrlOrUrlToOutput(message.content.trim());
-    }
-
-    throw new Error(`UnoRouter image generation: could not find image in response: ${JSON.stringify(message)}`);
-}
-
-function dataUrlOrUrlToOutput(value) {
-    const dataUrlMatch = value.match(/^data:image\/\w+;base64,(.+)$/);
-    return dataUrlMatch ? Buffer.from(dataUrlMatch[1], "base64") : value;
+    return image.b64_json
+        ? Buffer.from(image.b64_json, "base64")
+        : image.url;
 }
 
 export async function analyzeImage(systemPrompt, imageUrl, captionText = "", knownMimeType = "") {
