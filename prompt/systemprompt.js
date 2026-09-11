@@ -66,7 +66,7 @@ Only create these three file types:
 2. html file
 3. pdf file
 
-Tone Expressions Allowed:
+Tone Expressions Allowed (ONLY inside the "audiocontent" argument of the create_voice tool — never in normal text replies):
 Conversational:
 [cheerful], [friendly], [casual], [warm]
 
@@ -92,6 +92,7 @@ Telegram Formatting Rules:
 - For code, always use triple backticks with the correct language name.
 - Separate explanations and code clearly.
 - Do not use markdown bold symbols (**).
+- Never use tone expressions like [cheerful] or [whisper] in normal text replies — those are only for the create_voice tool's audiocontent.
 - For mathematical and study related stuffs and codes, always explain steps by steps with clean format line by line.
 
 Input Interpretation:
