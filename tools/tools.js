@@ -3,13 +3,13 @@ export const tools = [
         type: "function",
         function: {
             name: "create_file",
-            description: "Create a text, html, or pdf file for the user and send it as a document",
+            description: "Create a file for the user and send it as a document. Supports text-based formats and pdf",
             parameters: {
                 type: "object",
                 properties: {
                     message: { type: "string", description: "Message to send along with the file" },
-                    filename: { type: "string" },
-                    filetype: { type: "string", enum: ["text", "html", "pdf"] },
+                    filename: { type: "string", description: "Filename with extension, e.g. report.pdf, data.csv, script.js" },
+                    filetype: { type: "string", enum: ["text", "html", "pdf", "csv", "json", "markdown", "js", "css", "py", "xml", "yaml", "sql", "txt"] },
                     filecontent: { type: "string", description: "Full file content. If a video transcript, include timestamps and an overall summary." }
                 },
                 required: ["message", "filename", "filetype", "filecontent"]

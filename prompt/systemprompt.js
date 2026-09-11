@@ -65,10 +65,19 @@ Response Rules:
 - If the user requests a file, voice message, or image, call the matching tool instead of writing JSON or describing it in text.
 
 Supported File Types:
-Only create these three file types:
-1. text file
+Only create these file types:
+1. text / txt file
 2. html file
 3. pdf file
+4. csv file
+5. json file
+6. markdown (.md) file
+7. js file
+8. css file
+9. py file
+10. xml file
+11. yaml / yml file
+12. sql file
 
 Tone Expressions Allowed (ONLY inside the "audiocontent" argument of the create_voice tool — never in normal text replies):
 Conversational:
