@@ -2,6 +2,7 @@ import { configDotenv } from "dotenv";
 import { createbot } from "../config/botservice.js";
 import { message } from "../controllers/messagecontroller.js";
 import usersession from "../model/usersession.js";
+import processedMessage from "../model/processedMessage.js";
 
 configDotenv();
 
@@ -23,6 +24,16 @@ export default async function handler(req, res) {
 
         const chatid = msg.chat.id;
         const businessConnectionId = req.body.business_message?.business_connection_id;
+        const dedupKey = `${chatid}:${msg.message_id}`;
+        try {
+            await processedMessage.create({ key: dedupKey, chatId: String(chatid), messageId: msg.message_id });
+        } catch (err) {
+            if (err.code === 11000) {
+                console.log(`Duplicate message ${dedupKey} skipped`);
+                return res.status(200).send("OK");
+            }
+            console.error("dedup check failed:", err.message);
+        }
 
         const sendReply = async (targetId, text) => {
             const options = {};
@@ -49,7 +60,13 @@ export default async function handler(req, res) {
         }
 
         if (session.session === "chat") {
-            await message(bot)(msg, businessConnectionId);
+            try {
+                await message(bot)(msg, businessConnectionId);
+            } catch (err) {
+                console.error("message handler failed:", err);
+                try { await processedMessage.deleteOne({ key: dedupKey }); } catch {}
+                throw err;
+            }
         }
     }
 
