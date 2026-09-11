@@ -5,6 +5,9 @@ import { configDotenv } from "dotenv";
 
 configDotenv();
 
+const UNO_BASE_URL = "https://api.unorouter.com/v1";
+const unoImageModel = "flux-2-klein-4b:free";
+
 export const groq = new Groq({ apiKey: process.env.AI });
 
 export const model = "openai/gpt-oss-120b";
@@ -51,9 +54,6 @@ export async function webMap(url, { limit = 20 } = {}) {
     const result = await firecrawl.map(url, { limit });
     return (result.links || []).map(l => ({ url: l.url, title: l.title, description: l.description }));
 }
-
-const UNO_BASE_URL = "https://api.unorouter.com/v1";
-const unoImageModel = "flux-2-klein-4b:free";
 
 export async function generateImage(prompt, { timeoutMs = 60000 } = {}) {
     const controller = new AbortController();
@@ -105,5 +105,3 @@ export async function analyzeImage(systemPrompt, imageUrl, captionText = "", kno
 
     return result.response.text();
 }
-
-
