@@ -149,6 +149,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 else if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
+                    await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                     const image = await generateImage(fileroute.prompt);
 
@@ -306,6 +307,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 else if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
+                    await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                     const image = await generateImage(fileroute.prompt);
 
@@ -745,6 +747,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 else if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
+                    await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                     const image = await generateImage(fileroute.prompt);
 
@@ -959,6 +962,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 else if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
+                    await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                     const image = await generateImage(fileroute.prompt);
 
@@ -1114,6 +1118,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                     else if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
+                        await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                         const image = await generateImage(fileroute.prompt);
 
@@ -1259,6 +1264,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                     else if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
+                        await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                         const image = await generateImage(fileroute.prompt);
 
@@ -1402,6 +1408,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                     else if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
+                        await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                         const image = await generateImage(fileroute.prompt);
 
@@ -1551,6 +1558,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                     else if (fileroute.type === "image") {
                         await bot.sendChatAction(chatid, "upload_photo", options);
+                        await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                         const image = await generateImage(fileroute.prompt);
 
@@ -1704,6 +1712,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 else if (fileroute.type === "image") {
                     await bot.sendChatAction(chatid, "upload_photo", options);
+                    await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                     const image = await generateImage(fileroute.prompt);
 
