@@ -203,6 +203,10 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
                 is_anonymous: args.is_anonymous ?? true,
                 allows_multiple_answers: args.allows_multiple_answers ?? false
             });
+
+            await userquery.findOneAndUpdate({ userid: chatid }, {
+                $push: { messages: { role: "assistant", content: `Poll created: ${args.question} | Options: ${opts.join(", ")}${args.message ? ` | Message: ${args.message}` : ""}` } }
+            }, { upsert: true });
         } catch (err) {
             console.log("Create poll failed:", err.message);
             await bot.sendMessage(chatid, "Sorry, failed to create poll: " + err.message, options);
@@ -243,6 +247,10 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
             } else {
                 await bot.sendLocation(chatid, args.latitude, args.longitude, options);
             }
+
+            await userquery.findOneAndUpdate({ userid: chatid }, {
+                $push: { messages: { role: "assistant", content: `Location sent: ${args.latitude},${args.longitude}${args.title ? ` | ${args.title}` : ""}${args.address ? ` | ${args.address}` : ""}${args.message ? ` | ${args.message}` : ""}` } }
+            }, { upsert: true });
         } catch (err) {
             console.log("Send location failed:", err.message);
             await bot.sendMessage(chatid, "Sorry, failed to send location: " + err.message, options);
