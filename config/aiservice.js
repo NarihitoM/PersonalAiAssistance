@@ -10,7 +10,7 @@ const gemini = new GoogleGenerativeAI(process.env.GEMINI);
 const visionmodel = gemini.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
 const UNO_BASE_URL = "https://api.unorouter.com/v1";
-const unoImageModel = "grok-imagine-image-lite:free";
+const unoImageModel = "flux-2-dev:free";
 
 export async function generateImage(prompt) {
     const response = await fetch(`${UNO_BASE_URL}/chat/completions`, {
