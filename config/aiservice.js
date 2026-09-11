@@ -1,4 +1,5 @@
 import Groq from "groq-sdk";
+import OpenAI from "openai";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Firecrawl } from "firecrawl";
 import { configDotenv } from "dotenv";
@@ -7,11 +8,12 @@ configDotenv();
 
 const UNO_BASE_URL = "https://api.unorouter.com/v1";
 const unoImageModel = "flux-2-klein-4b:free";
-export const model = "openai/gpt-oss-120b";
+export const model = "minimax/minimax-m3:free";
 export const modelaudio = "canopylabs/orpheus-v1-english";
 export const transcriptmodel = "whisper-large-v3-turbo";
 
 export const groq = new Groq({ apiKey: process.env.AI });
+export const xkiro = new OpenAI({ baseURL: "https://api.xkiro.com/v1", apiKey: process.env.XKIRO });
 
 const firecrawl = new Firecrawl({ apiKey: process.env.FIRECRAWL });
 

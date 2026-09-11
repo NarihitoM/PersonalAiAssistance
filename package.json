@@ -12,6 +12,7 @@
     "mammoth": "^1.11.0",
     "mongoose": "^9.2.1",
     "node-telegram-bot-api": "^0.67.0",
+    "openai": "^7.15.0",
     "pdf2json": "^4.0.2",
     "pdfkit": "^0.17.2",
     "serpapi": "^2.2.1",

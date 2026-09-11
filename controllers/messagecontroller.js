@@ -1,4 +1,4 @@
-import { groq, analyzeImage, generateImage, webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscript, model, modelaudio, transcriptmodel } from "../config/aiservice.js";
+import { groq, xkiro, analyzeImage, generateImage, webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscript, model, modelaudio, transcriptmodel } from "../config/aiservice.js";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import { tools } from "../tools/tools.js";
@@ -111,7 +111,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             return;
         }
 
-        const followUp = await withTypingAction(bot, chatid, options, () => groq.chat.completions.create({
+        const followUp = await withTypingAction(bot, chatid, options, () => xkiro.chat.completions.create({
             model,
             tools,
             tool_choice: "auto",
@@ -135,7 +135,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             return;
         }
 
-        const followUp = await withTypingAction(bot, chatid, options, () => groq.chat.completions.create({
+        const followUp = await withTypingAction(bot, chatid, options, () => xkiro.chat.completions.create({
             model,
             tools,
             tool_choice: "auto",
@@ -159,7 +159,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             return;
         }
 
-        const followUp = await withTypingAction(bot, chatid, options, () => groq.chat.completions.create({
+        const followUp = await withTypingAction(bot, chatid, options, () => xkiro.chat.completions.create({
             model,
             tools,
             tool_choice: "auto",
@@ -183,7 +183,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             return;
         }
 
-        const followUp = await withTypingAction(bot, chatid, options, () => groq.chat.completions.create({
+        const followUp = await withTypingAction(bot, chatid, options, () => xkiro.chat.completions.create({
             model,
             tools,
             tool_choice: "auto",
@@ -273,7 +273,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             await bot.sendMessage(chatid, "Sorry, YouTube search failed: " + err.message, options);
             return;
         }
-        const followUp = await withTypingAction(bot, chatid, options, () => groq.chat.completions.create({
+        const followUp = await withTypingAction(bot, chatid, options, () => xkiro.chat.completions.create({
             model,
             tools,
             tool_choice: "auto",
@@ -291,7 +291,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             await bot.sendMessage(chatid, "Sorry, YouTube transcript failed: " + err.message, options);
             return;
         }
-        const followUp = await withTypingAction(bot, chatid, options, () => groq.chat.completions.create({
+        const followUp = await withTypingAction(bot, chatid, options, () => xkiro.chat.completions.create({
             model,
             tools,
             tool_choice: "auto",
@@ -406,7 +406,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response = await groq.chat.completions.create({
+            const response = await xkiro.chat.completions.create({
                 model: model,
                 tools,
                 tool_choice: "auto",
@@ -457,7 +457,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response2 = await groq.chat.completions.create({
+            const response2 = await xkiro.chat.completions.create({
                 model: model,
                 tools,
                 tool_choice: "auto",
@@ -561,7 +561,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     }))
                 ];
 
-            const response = await groq.chat.completions.create({
+            const response = await xkiro.chat.completions.create({
                 model: model,
                 tools,
                 tool_choice: "auto",
@@ -603,7 +603,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     }))
                 ];
 
-            const response = await groq.chat.completions.create({
+            const response = await xkiro.chat.completions.create({
                 model: model,
                 tools,
                 tool_choice: "auto",
@@ -649,7 +649,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         }))
                     ];
 
-                const response = await groq.chat.completions.create({
+                const response = await xkiro.chat.completions.create({
                     model: model,
                     tools,
                     tool_choice: "auto",
@@ -692,7 +692,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         }))
                     ];
 
-                const response = await groq.chat.completions.create({
+                const response = await xkiro.chat.completions.create({
                     model: model,
                     tools,
                     tool_choice: "auto",
@@ -750,7 +750,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response = await groq.chat.completions.create({
+            const response = await xkiro.chat.completions.create({
                 model: model,
                 tools,
                 tool_choice: "auto",
@@ -863,7 +863,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response = await groq.chat.completions.create({
+            const response = await xkiro.chat.completions.create({
                 model: model,
                 tools,
                 tool_choice: "auto",
@@ -917,7 +917,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         ))
                     ];
 
-                const response = await groq.chat.completions.create({
+                const response = await xkiro.chat.completions.create({
                     model: model,
                     tools,
                     tool_choice: "auto",
@@ -962,7 +962,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         ))
                     ];
 
-                const response = await groq.chat.completions.create({
+                const response = await xkiro.chat.completions.create({
                     model: model,
                     tools,
                     tool_choice: "auto",
@@ -1005,7 +1005,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         ))
                     ];
 
-                const response = await groq.chat.completions.create({
+                const response = await xkiro.chat.completions.create({
                     model: model,
                     tools,
                     tool_choice: "auto",
@@ -1049,7 +1049,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         ))
                     ];
 
-                const response2 = await groq.chat.completions.create({
+                const response2 = await xkiro.chat.completions.create({
                     model: model,
                     tools,
                     tool_choice: "auto",
@@ -1102,7 +1102,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response = await groq.chat.completions.create({
+            const response = await xkiro.chat.completions.create({
                 model: model,
                 tools,
                 tool_choice: "auto",
