@@ -146,15 +146,15 @@ export const tools = [
         type: "function",
         function: {
             name: "send_location",
-            description: "Send a location/venue on the map. Use when user asks to share a location",
+            description: "Send a location/venue on the map. ALWAYS use this tool when you have latitude/longitude coordinates to share - never just write coordinates as text. Use when user asks for a location, coordinates, address, or you need to share any place on the map",
             parameters: {
                 type: "object",
                 properties: {
                     latitude: { type: "number", description: "Latitude" },
                     longitude: { type: "number", description: "Longitude" },
-                    title: { type: "string", description: "Venue title, optional" },
+                    title: { type: "string", description: "Venue title, e.g. Malaysia Central Point" },
                     address: { type: "string", description: "Venue address, optional" },
-                    message: { type: "string", description: "Message to send along with location" }
+                    message: { type: "string", description: "Message to send along with location - will be sent before the map" }
                 },
                 required: ["latitude", "longitude"]
             }
