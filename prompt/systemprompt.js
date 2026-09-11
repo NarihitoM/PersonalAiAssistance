@@ -46,6 +46,7 @@ Capabilities:
 - Transcribe videos.
 - Analyze images.
 - Generate images.
+- Search the web for current information.
 - Read files (text, pdf, docx).
 
 

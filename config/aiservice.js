@@ -1,10 +1,18 @@
 import Groq from "groq-sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Firecrawl } from "firecrawl";
 import { configDotenv } from "dotenv";
 
 configDotenv();
 
 export const groq = new Groq({ apiKey: process.env.AI });
+
+const firecrawl = new Firecrawl({ apiKey: process.env.FIRECRAWL });
+
+export async function webSearch(query) {
+    const result = await firecrawl.search(query, { limit: 5 });
+    return (result.web || []).map(r => ({ title: r.title, url: r.url, description: r.description }));
+}
 
 const gemini = new GoogleGenerativeAI(process.env.GEMINI);
 const visionmodel = gemini.getGenerativeModel({ model: "gemini-2.5-flash-lite" });

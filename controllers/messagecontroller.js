@@ -1,4 +1,4 @@
-import { groq, analyzeImage, generateImage } from "../config/aiservice.js";
+import { groq, analyzeImage, generateImage, webSearch } from "../config/aiservice.js";
 import telegramifyMarkdown from "telegramify-markdown";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
@@ -62,7 +62,7 @@ async function sendBotMessage(bot, chatid, text, options = {}) {
     }
 }
 
-async function handleAIResponse(bot, chatid, options, response) {
+async function handleAIResponse(bot, chatid, options, response, messages) {
     const responseMessage = response.choices[0].message;
     const toolCall = responseMessage.tool_calls?.[0];
 
@@ -130,6 +130,32 @@ async function handleAIResponse(bot, chatid, options, response) {
             await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
         }
         return;
+    }
+
+    if (toolCall.function.name === "web_search") {
+        await bot.sendChatAction(chatid, "typing", options);
+
+        let results;
+        try {
+            results = await webSearch(args.query);
+        } catch (err) {
+            console.log("Web search failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, web search failed. Please try again.", options);
+            return;
+        }
+
+        const followUp = await groq.chat.completions.create({
+            model,
+            tools,
+            tool_choice: "auto",
+            messages: [
+                ...messages,
+                responseMessage,
+                { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }
+            ]
+        });
+
+        return handleAIResponse(bot, chatid, options, followUp, messages);
     }
 
     // create_file
@@ -257,11 +283,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const historymessage = await userquery.findOne({ userid: chatid });
             await bot.sendChatAction(chatid, "typing", options);
 
-            const response = await groq.chat.completions.create({
-                model: model,
-                tools,
-                tool_choice: "auto",
-                messages: [
+                const messages = [
                     {
                         role: "system",
                         content: systemprompt
@@ -272,9 +294,15 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             content: element.content
                         }
                     ))
-                ]
+                ];
+
+            const response = await groq.chat.completions.create({
+                model: model,
+                tools,
+                tool_choice: "auto",
+                messages
             });
-            await handleAIResponse(bot, chatid, options, response);
+            await handleAIResponse(bot, chatid, options, response, messages);
         }
         //Photo route
         else if (msg.photo) {
@@ -306,11 +334,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const historymessage = await userquery.findOne({ userid: chatid });
 
-            const response2 = await groq.chat.completions.create({
-                model: model,
-                tools,
-                tool_choice: "auto",
-                messages: [
+                const messages = [
                     {
                         role: "system",
                         content: systemprompt
@@ -321,10 +345,16 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             content: element.content
                         }
                     ))
-                ]
+                ];
+
+            const response2 = await groq.chat.completions.create({
+                model: model,
+                tools,
+                tool_choice: "auto",
+                messages
             });
 
-            await handleAIResponse(bot, chatid, options, response2);
+            await handleAIResponse(bot, chatid, options, response2, messages);
         }
         else if (msg.animation) {
             const fileid = msg.animation.file_id;
@@ -410,11 +440,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             await bot.sendChatAction(chatid, "typing", options);
 
-            const response = await groq.chat.completions.create({
-                model: model,
-                tools,
-                tool_choice: "auto",
-                messages: [
+                const messages = [
                     {
                         role: "system",
                         content: systemprompt
@@ -423,10 +449,16 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         role: element.role,
                         content: element.content
                     }))
-                ]
+                ];
+
+            const response = await groq.chat.completions.create({
+                model: model,
+                tools,
+                tool_choice: "auto",
+                messages
             });
 
-            await handleAIResponse(bot, chatid, options, response);
+            await handleAIResponse(bot, chatid, options, response, messages);
         }
         else if (msg.document && msg.document.mime_type && msg.document.mime_type.startsWith("video/")) {
             const fileid = msg.document.file_id;
@@ -450,11 +482,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             await bot.sendChatAction(chatid, "typing", options);
 
-            const response = await groq.chat.completions.create({
-                model: model,
-                tools,
-                tool_choice: "auto",
-                messages: [
+                const messages = [
                     {
                         role: "system",
                         content: systemprompt
@@ -463,10 +491,16 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         role: element.role,
                         content: element.content
                     }))
-                ]
+                ];
+
+            const response = await groq.chat.completions.create({
+                model: model,
+                tools,
+                tool_choice: "auto",
+                messages
             });
 
-            await handleAIResponse(bot, chatid, options, response);
+            await handleAIResponse(bot, chatid, options, response, messages);
         }
         else if (msg.sticker) {
             const fileid = msg.sticker.file_id;
@@ -494,11 +528,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 await bot.sendChatAction(chatid, "typing", options);
 
-                const response = await groq.chat.completions.create({
-                    model: model,
-                    tools,
-                    tool_choice: "auto",
-                    messages: [
+                    const messages = [
                         {
                             role: "system",
                             content: systemprompt
@@ -507,10 +537,16 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             role: element.role,
                             content: element.content
                         }))
-                    ]
+                    ];
+
+                const response = await groq.chat.completions.create({
+                    model: model,
+                    tools,
+                    tool_choice: "auto",
+                    messages
                 });
 
-                await handleAIResponse(bot, chatid, options, response);
+                await handleAIResponse(bot, chatid, options, response, messages);
             } else {
                 await bot.sendChatAction(chatid, "upload_photo", options);
                 const imagetext = await analyzeImage(systempromptforimage, filelink);
@@ -535,11 +571,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 await bot.sendChatAction(chatid, "typing", options);
 
-                const response = await groq.chat.completions.create({
-                    model: model,
-                    tools,
-                    tool_choice: "auto",
-                    messages: [
+                    const messages = [
                         {
                             role: "system",
                             content: systemprompt
@@ -548,10 +580,16 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             role: element.role,
                             content: element.content
                         }))
-                    ]
+                    ];
+
+                const response = await groq.chat.completions.create({
+                    model: model,
+                    tools,
+                    tool_choice: "auto",
+                    messages
                 });
 
-                await handleAIResponse(bot, chatid, options, response);
+                await handleAIResponse(bot, chatid, options, response, messages);
             }
         }
         //Voiceroute
@@ -589,11 +627,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const historymessage = await userquery.findOne({ userid: chatid });
 
-            const response = await groq.chat.completions.create({
-                model: model,
-                tools,
-                tool_choice: "auto",
-                messages: [
+                const messages = [
                     {
                         role: "system",
                         content: systemprompt
@@ -604,10 +638,16 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             content: element.content
                         }
                     ))
-                ]
+                ];
+
+            const response = await groq.chat.completions.create({
+                model: model,
+                tools,
+                tool_choice: "auto",
+                messages
             });
 
-            await handleAIResponse(bot, chatid, options, response);
+            await handleAIResponse(bot, chatid, options, response, messages);
         }
         //Video Transcript
         else if (msg.video) {
@@ -700,11 +740,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const historymessage = await userquery.findOne({ userid: chatid });
             await bot.sendChatAction(chatid, "typing", options);
 
-            const response = await groq.chat.completions.create({
-                model: model,
-                tools,
-                tool_choice: "auto",
-                messages: [
+                const messages = [
                     {
                         role: "system",
                         content: systemprompt
@@ -715,10 +751,16 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             content: element.content
                         }
                     ))
-                ]
+                ];
+
+            const response = await groq.chat.completions.create({
+                model: model,
+                tools,
+                tool_choice: "auto",
+                messages
             });
 
-            await handleAIResponse(bot, chatid, options, response);
+            await handleAIResponse(bot, chatid, options, response, messages);
         }
         //File route
         else if (msg.document) {
@@ -752,11 +794,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const historymessage = await userquery.findOne({ userid: chatid })
 
                 await bot.sendChatAction(chatid, "typing", options);
-                const response = await groq.chat.completions.create({
-                    model: model,
-                    tools,
-                    tool_choice: "auto",
-                    messages: [
+                    const messages = [
                         {
                             role: "system",
                             content: systemprompt
@@ -767,10 +805,16 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                                 content: element.content
                             }
                         ))
-                    ]
+                    ];
+
+                const response = await groq.chat.completions.create({
+                    model: model,
+                    tools,
+                    tool_choice: "auto",
+                    messages
                 });
 
-                await handleAIResponse(bot, chatid, options, response);
+                await handleAIResponse(bot, chatid, options, response, messages);
             }
             //PDF file route
             else if (msg.document.mime_type === "application/pdf") {
@@ -795,11 +839,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const historymessage = await userquery.findOne({ userid: chatid })
 
                 await bot.sendChatAction(chatid, "typing", options);
-                const response = await groq.chat.completions.create({
-                    model: model,
-                    tools,
-                    tool_choice: "auto",
-                    messages: [
+                    const messages = [
                         {
                             role: "system",
                             content: systemprompt
@@ -810,10 +850,16 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                                 content: element.content
                             }
                         ))
-                    ]
+                    ];
+
+                const response = await groq.chat.completions.create({
+                    model: model,
+                    tools,
+                    tool_choice: "auto",
+                    messages
                 });
 
-                await handleAIResponse(bot, chatid, options, response);
+                await handleAIResponse(bot, chatid, options, response, messages);
             }
             //DOCX File route
             else if (msg.document.mime_type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
@@ -836,11 +882,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const historymessage = await userquery.findOne({ userid: chatid })
 
                 await bot.sendChatAction(chatid, "typing", options);
-                const response = await groq.chat.completions.create({
-                    model: model,
-                    tools,
-                    tool_choice: "auto",
-                    messages: [
+                    const messages = [
                         {
                             role: "system",
                             content: systemprompt
@@ -851,10 +893,16 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                                 content: element.content
                             }
                         ))
-                    ]
+                    ];
+
+                const response = await groq.chat.completions.create({
+                    model: model,
+                    tools,
+                    tool_choice: "auto",
+                    messages
                 });
 
-                await handleAIResponse(bot, chatid, options, response);
+                await handleAIResponse(bot, chatid, options, response, messages);
             }
             else if (msg.document.mime_type === "image/png" || msg.document.mime_type === "image/jpeg") {
                 const imagetext1 = await analyzeImage(systempromptforimage, filelink, captiontext, msg.document.mime_type);
@@ -878,11 +926,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 const historymessage = await userquery.findOne({ userid: chatid });
 
-                const response2 = await groq.chat.completions.create({
-                    model: model,
-                    tools,
-                    tool_choice: "auto",
-                    messages: [
+                    const messages = [
                         {
                             role: "system",
                             content: systemprompt
@@ -893,10 +937,16 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                                 content: element.content
                             }
                         ))
-                    ]
+                    ];
+
+                const response2 = await groq.chat.completions.create({
+                    model: model,
+                    tools,
+                    tool_choice: "auto",
+                    messages
                 });
 
-                await handleAIResponse(bot, chatid, options, response2);
+                await handleAIResponse(bot, chatid, options, response2, messages);
             }
         }
         else if (msg.audio) {
@@ -929,11 +979,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const historymessage = await userquery.findOne({ userid: chatid });
             await bot.sendChatAction(chatid, "typing", options);
 
-            const response = await groq.chat.completions.create({
-                model: model,
-                tools,
-                tool_choice: "auto",
-                messages: [
+                const messages = [
                     {
                         role: "system",
                         content: systemprompt
@@ -944,9 +990,15 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             content: element.content
                         }
                     ))
-                ]
+                ];
+
+            const response = await groq.chat.completions.create({
+                model: model,
+                tools,
+                tool_choice: "auto",
+                messages
             });
-            await handleAIResponse(bot, chatid, options, response);
+            await handleAIResponse(bot, chatid, options, response, messages);
         }
     } catch (err) {
         console.log(err);

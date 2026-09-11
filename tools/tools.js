@@ -46,5 +46,19 @@ export const tools = [
                 required: ["message", "prompt"]
             }
         }
+    },
+    {
+        type: "function",
+        function: {
+            name: "web_search",
+            description: "Search the web for current or up-to-date information",
+            parameters: {
+                type: "object",
+                properties: {
+                    query: { type: "string", description: "The search query" }
+                },
+                required: ["query"]
+            }
+        }
     }
 ];
