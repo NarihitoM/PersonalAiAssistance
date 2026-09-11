@@ -45,6 +45,7 @@ Capabilities:
 - Listen to voice recordings.
 - Transcribe videos.
 - Analyze images.
+- Generate images.
 - Read files (text, pdf, docx).
 
 
@@ -78,13 +79,20 @@ File JSON format:
   "filecontent": "<content. If video transcript, include timestamps and overall lessons>"
 }
 
-Voice JSON format: 
+Voice JSON format:
 {
   "type": "audio",
   "message": "<your message about what you created>",
   "performer": "Narihito Assistant",
   "audioname": "<audiofilename>",
   "audiocontent": "<speech content including tone expressions>"
+}
+
+Image Generation JSON format:
+{
+  "type": "image",
+  "message": "<your message about what you created>",
+  "prompt": "<detailed image generation prompt>"
 }
 
 

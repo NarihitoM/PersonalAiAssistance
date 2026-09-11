@@ -1,4 +1,4 @@
-import { groq, analyzeImage } from "../config/aiservice.js";
+import { groq, analyzeImage, generateImage } from "../config/aiservice.js";
 import telegramifyMarkdown from "telegramify-markdown";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
@@ -147,6 +147,17 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     })
                 }
 
+                else if (fileroute.type === "image") {
+                    await bot.sendChatAction(chatid, "upload_photo", options);
+
+                    const image = await generateImage(fileroute.prompt);
+
+                    await bot.sendPhoto(chatid, image, {
+                        ...options,
+                        caption: fileroute.message
+                    });
+                }
+
                 else {
                     await bot.sendChatAction(chatid, "upload_document", options);
 
@@ -291,6 +302,17 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         title: fileroute.audioname,
                         performer: fileroute.performer
                     })
+                }
+
+                else if (fileroute.type === "image") {
+                    await bot.sendChatAction(chatid, "upload_photo", options);
+
+                    const image = await generateImage(fileroute.prompt);
+
+                    await bot.sendPhoto(chatid, image, {
+                        ...options,
+                        caption: fileroute.message
+                    });
                 }
                 else {
                     await bot.sendChatAction(chatid, "upload_document", options);
@@ -720,6 +742,17 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         performer: fileroute.performer
                     })
                 }
+
+                else if (fileroute.type === "image") {
+                    await bot.sendChatAction(chatid, "upload_photo", options);
+
+                    const image = await generateImage(fileroute.prompt);
+
+                    await bot.sendPhoto(chatid, image, {
+                        ...options,
+                        caption: fileroute.message
+                    });
+                }
                 else {
                     await bot.sendChatAction(chatid, "upload_document", options);
 
@@ -923,6 +956,17 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         performer: fileroute.performer
                     })
                 }
+
+                else if (fileroute.type === "image") {
+                    await bot.sendChatAction(chatid, "upload_photo", options);
+
+                    const image = await generateImage(fileroute.prompt);
+
+                    await bot.sendPhoto(chatid, image, {
+                        ...options,
+                        caption: fileroute.message
+                    });
+                }
                 else {
                     await bot.sendChatAction(chatid, "upload_document", options);
 
@@ -1067,6 +1111,17 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             performer: fileroute.performer
                         })
                     }
+
+                    else if (fileroute.type === "image") {
+                        await bot.sendChatAction(chatid, "upload_photo", options);
+
+                        const image = await generateImage(fileroute.prompt);
+
+                        await bot.sendPhoto(chatid, image, {
+                            ...options,
+                            caption: fileroute.message
+                        });
+                    }
                     else {
                         await bot.sendChatAction(chatid, "upload_document", options);
 
@@ -1201,6 +1256,17 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             performer: fileroute.performer
                         })
                     }
+
+                    else if (fileroute.type === "image") {
+                        await bot.sendChatAction(chatid, "upload_photo", options);
+
+                        const image = await generateImage(fileroute.prompt);
+
+                        await bot.sendPhoto(chatid, image, {
+                            ...options,
+                            caption: fileroute.message
+                        });
+                    }
                     else {
                         await bot.sendChatAction(chatid, "upload_document", options);
 
@@ -1332,6 +1398,17 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             title: fileroute.audioname,
                             performer: fileroute.performer
                         })
+                    }
+
+                    else if (fileroute.type === "image") {
+                        await bot.sendChatAction(chatid, "upload_photo", options);
+
+                        const image = await generateImage(fileroute.prompt);
+
+                        await bot.sendPhoto(chatid, image, {
+                            ...options,
+                            caption: fileroute.message
+                        });
                     }
                     else {
                         await bot.sendChatAction(chatid, "upload_document", options);
@@ -1470,6 +1547,17 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             title: fileroute.audioname,
                             performer: fileroute.performer
                         })
+                    }
+
+                    else if (fileroute.type === "image") {
+                        await bot.sendChatAction(chatid, "upload_photo", options);
+
+                        const image = await generateImage(fileroute.prompt);
+
+                        await bot.sendPhoto(chatid, image, {
+                            ...options,
+                            caption: fileroute.message
+                        });
                     }
                     else {
                         await bot.sendChatAction(chatid, "upload_document", options);
@@ -1612,6 +1700,17 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         title: fileroute.audioname,
                         performer: fileroute.performer
                     })
+                }
+
+                else if (fileroute.type === "image") {
+                    await bot.sendChatAction(chatid, "upload_photo", options);
+
+                    const image = await generateImage(fileroute.prompt);
+
+                    await bot.sendPhoto(chatid, image, {
+                        ...options,
+                        caption: fileroute.message
+                    });
                 }
                 else {
                     await bot.sendChatAction(chatid, "upload_document", options);
