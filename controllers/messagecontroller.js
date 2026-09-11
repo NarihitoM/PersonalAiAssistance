@@ -10,11 +10,9 @@ import os from "os";
 import https from "https";
 import fs from "fs";
 import supabase from "../config/supabaseservice.js";
-import axios from "axios";
-import PDFParser from "pdf2json";
 import PDFDocument from "pdfkit";
 import streamBuffers from "stream-buffers";
-import { withPhotoAction, checkImageCooldown, sendBotMessage } from "../utils/utils.js";
+import { withPhotoAction, checkImageCooldown, sendBotMessage, getPdfTextFromUrl } from "../utils/utils.js";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -305,39 +303,6 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
         });
     }
 }
-
-//Decode PDF FIle(I ASK AI LOL)
-const getPdfTextFromUrl = async (fileUrl) => {
-    const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
-    const buffer = response.data;
-
-    return new Promise((resolve, reject) => {
-        const pdfParser = new PDFParser();
-
-        pdfParser.on("pdfParser_dataError", err => reject(err));
-        pdfParser.on("pdfParser_dataReady", pdfData => {
-            try {
-                const text = pdfData.Pages
-                    .map(page => page.Texts
-                        .map(t => {
-                            try {
-                                return decodeURIComponent(t.R[0].T);
-                            } catch {
-                                return t.R[0].T;
-                            }
-                        })
-                        .join(" "))
-                    .join("\n");
-                resolve(text);
-            } catch (err) {
-                reject(err);
-            }
-        });
-
-        pdfParser.parseBuffer(buffer);
-    });
-};
-
 
 //SUPER MESSAGE
 const MAX_AI_RETRIES = 3;

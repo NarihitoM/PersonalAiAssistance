@@ -1,5 +1,7 @@
 import telegramifyMarkdown from "telegramify-markdown";
 import userquery from "../model/userquery.js";
+import axios from "axios";
+import PDFParser from "pdf2json";
 
 export const IMAGE_COOLDOWN_MS = 60 * 60 * 1000;
 
@@ -33,3 +35,31 @@ export async function sendBotMessage(bot, chatid, text, options = {}) {
         await bot.sendMessage(chatid, text, sendOptions);
     }
 }
+
+export const getPdfTextFromUrl = async (fileUrl) => {
+    const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
+    const buffer = response.data;
+    return new Promise((resolve, reject) => {
+        const pdfParser = new PDFParser();
+        pdfParser.on("pdfParser_dataError", err => reject(err));
+        pdfParser.on("pdfParser_dataReady", pdfData => {
+            try {
+                const text = pdfData.Pages
+                    .map(page => page.Texts
+                        .map(t => {
+                            try {
+                                return decodeURIComponent(t.R[0].T);
+                            } catch {
+                                return t.R[0].T;
+                            }
+                        })
+                        .join(" "))
+                    .join("\n");
+                resolve(text);
+            } catch (err) {
+                reject(err);
+            }
+        });
+        pdfParser.parseBuffer(buffer);
+    });
+};
