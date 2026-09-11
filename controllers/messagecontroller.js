@@ -2,6 +2,7 @@ import { groq, analyzeImage, generateImage } from "../config/aiservice.js";
 import telegramifyMarkdown from "telegramify-markdown";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
+import { tools } from "../tools/tools.js";
 import userquery from "../model/userquery.js";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
@@ -58,6 +59,130 @@ async function sendBotMessage(bot, chatid, text, options = {}) {
     } catch (err) {
         console.log("sendBotMessage parse failed, falling back to plain text:", err.message);
         await bot.sendMessage(chatid, text, sendOptions);
+    }
+}
+
+async function handleAIResponse(bot, chatid, options, response) {
+    const responseMessage = response.choices[0].message;
+    const toolCall = responseMessage.tool_calls?.[0];
+
+    if (!toolCall) {
+        const aimessage = responseMessage.content;
+
+        await userquery.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $push: {
+                messages: {
+                    role: "assistant",
+                    content: aimessage
+                }
+            }
+        }, {
+            upsert: true
+        });
+
+        await sendBotMessage(bot, chatid, aimessage, options);
+        return;
+    }
+
+    const args = JSON.parse(toolCall.function.arguments);
+
+    if (toolCall.function.name === "create_voice") {
+        await bot.sendChatAction(chatid, "upload_voice", options);
+
+        const speech = await groq.audio.speech.create({
+            model: modelaudio,
+            voice: "hannah",
+            input: args.audiocontent,
+            response_format: "wav"
+        });
+
+        const buffer = Buffer.from(await speech.arrayBuffer());
+
+        await bot.sendAudio(chatid, buffer, {
+            ...options,
+            caption: args.message,
+            title: args.audioname,
+            performer: "Narihito Assistant"
+        });
+        return;
+    }
+
+    if (toolCall.function.name === "generate_image") {
+        const cooldown = await checkImageCooldown(chatid);
+        if (!cooldown.allowed) {
+            await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
+            return;
+        }
+
+        try {
+            const image = await withPhotoAction(bot, chatid, options, () => generateImage(args.prompt));
+
+            await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
+
+            await bot.sendPhoto(chatid, image, {
+                ...options,
+                caption: args.message
+            });
+        } catch (err) {
+            console.log("Image generation failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
+        }
+        return;
+    }
+
+    // create_file
+    await bot.sendChatAction(chatid, "upload_document", options);
+
+    await userquery.findOneAndUpdate({
+        userid: chatid
+    }, {
+        $push: {
+            messages: {
+                role: "assistant",
+                content: args.message
+            }
+        }
+    }, {
+        upsert: true
+    });
+
+    const tempDir = os.tmpdir();
+    const filename = path.join(tempDir, args.filename);
+
+    if (args.filetype === "pdf") {
+        const pdfDoc = new PDFDocument({ margin: 50 });
+        const writableStream = new streamBuffers.WritableStreamBuffer();
+
+        pdfDoc.pipe(writableStream);
+
+        pdfDoc.font("Helvetica")
+            .fontSize(12)
+            .text(args.filecontent, {
+                align: "left"
+            });
+
+        pdfDoc.end();
+
+        await new Promise(resolve =>
+            writableStream.on("close", resolve)
+        );
+
+        const buffer = writableStream.getContents();
+
+        await bot.sendDocument(chatid, buffer, {
+            ...options,
+            title: args.filename,
+            caption: args.message
+        });
+    } else {
+        fs.writeFileSync(filename, args.filecontent, "utf-8");
+
+        await bot.sendDocument(chatid, filename, {
+            ...options,
+            caption: args.message
+        });
     }
 }
 
@@ -134,6 +259,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const response = await groq.chat.completions.create({
                 model: model,
+                tools,
+                tool_choice: "auto",
                 messages: [
                     {
                         role: "system",
@@ -147,125 +274,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ]
             });
-            const aimessage = response.choices[0].message.content;
-            //Fileroute
-            if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
-                const fileroute = JSON.parse(aimessage);
-
-                if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_voice", options);
-
-                    const response = await groq.audio.speech.create({
-                        model: modelaudio,
-                        voice: "hannah",
-
-                        input: fileroute.audiocontent,
-                        response_format: "wav"
-                    });
-
-                    const buffer = Buffer.from(await response.arrayBuffer());
-
-                    await bot.sendAudio(chatid, buffer, {
-                        ...options,
-                        caption: fileroute.message,
-                        title: fileroute.audioname,
-                        performer: fileroute.performer
-                    })
-                }
-
-                else if (fileroute.type === "image") {
-                    const cooldown = await checkImageCooldown(chatid);
-                    if (!cooldown.allowed) {
-                        await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
-                        return;
-                    }
-
-                    try {
-                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
-
-                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
-
-                        await bot.sendPhoto(chatid, image, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    } catch (err) {
-                        console.log("Image generation failed:", err.message);
-                        await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
-                    }
-                }
-
-                else {
-                    await bot.sendChatAction(chatid, "upload_document", options);
-
-                    await userquery.findOneAndUpdate({
-                        userid: chatid
-                    }, {
-                        $push: {
-                            messages: {
-                                role: "assistant",
-                                content: aimessage
-                            }
-                        }
-                    }, {
-                        upsert: true
-                    })
-
-                    const tempDir = os.tmpdir();
-                    const filename = path.join(tempDir, fileroute.filename);
-
-                    if (fileroute.filetype === "pdf") {
-                        const pdfDoc = new PDFDocument({ margin: 50 });
-                        const writableStream = new streamBuffers.WritableStreamBuffer();
-
-                        pdfDoc.pipe(writableStream);
-
-                        pdfDoc.font("Helvetica")
-                            .fontSize(12)
-                            .text(fileroute.filecontent, {
-                                align: "left"
-                            });
-
-                        pdfDoc.end();
-
-                        await new Promise(resolve =>
-                            writableStream.on("close", resolve)
-                        );
-
-                        const buffer = writableStream.getContents();
-
-                        await bot.sendDocument(chatid, buffer, {
-                            ...options,
-                            title: fileroute.filename,
-                            caption: fileroute.message
-                        });
-                    }
-                    else {
-                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
-
-                        await bot.sendDocument(chatid, filename, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-                }
-            }
-            else {
-                await userquery.findOneAndUpdate({
-                    userid: chatid
-                }, {
-                    $push: {
-                        messages: {
-                            role: "assistant",
-                            content: aimessage
-                        }
-                    }
-                }, {
-                    upsert: true
-                });
-
-                await sendBotMessage(bot, chatid, aimessage, options);
-            }
+            await handleAIResponse(bot, chatid, options, response);
         }
         //Photo route
         else if (msg.photo) {
@@ -299,6 +308,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const response2 = await groq.chat.completions.create({
                 model: model,
+                tools,
+                tool_choice: "auto",
                 messages: [
                     {
                         role: "system",
@@ -313,126 +324,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 ]
             });
 
-            const aimessage2 = response2.choices[0].message.content;
-
-            console.log(aimessage2);
-
-            //File route
-            if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
-                const fileroute = JSON.parse(aimessage2);
-
-                if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_voice", options);
-
-                    const response = await groq.audio.speech.create({
-                        model: modelaudio,
-                        voice: "hannah",
-                        input: fileroute.audiocontent,
-                        response_format: "wav"
-                    });
-
-                    const buffer = Buffer.from(await response.arrayBuffer());
-
-                    await bot.sendAudio(chatid, buffer, {
-                        ...options,
-                        caption: fileroute.message,
-                        title: fileroute.audioname,
-                        performer: fileroute.performer
-                    })
-                }
-
-                else if (fileroute.type === "image") {
-                    const cooldown = await checkImageCooldown(chatid);
-                    if (!cooldown.allowed) {
-                        await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
-                        return;
-                    }
-
-                    try {
-                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
-
-                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
-
-                        await bot.sendPhoto(chatid, image, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    } catch (err) {
-                        console.log("Image generation failed:", err.message);
-                        await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
-                    }
-                }
-                else {
-                    await bot.sendChatAction(chatid, "upload_document", options);
-
-                    await userquery.findOneAndUpdate({
-                        userid: chatid
-                    }, {
-                        $push: {
-                            messages: {
-                                role: "assistant",
-                                content: aimessage2
-                            }
-                        }
-                    }, {
-                        upsert: true
-                    })
-
-                    const tempDir = os.tmpdir();
-                    const filename = path.join(tempDir, fileroute.filename);
-
-                    if (fileroute.filetype === "pdf") {
-                        const pdfDoc = new PDFDocument({ margin: 50 });
-                        const writableStream = new streamBuffers.WritableStreamBuffer();
-
-                        pdfDoc.pipe(writableStream);
-
-                        pdfDoc.font("Helvetica")
-                            .fontSize(12)
-                            .text(fileroute.filecontent, {
-                                align: "left"
-                            });
-
-                        pdfDoc.end();
-
-                        await new Promise(resolve =>
-                            writableStream.on("close", resolve)
-                        );
-
-                        const buffer = writableStream.getContents();
-
-                        await bot.sendDocument(chatid, buffer, {
-                            ...options,
-                            title: fileroute.filename,
-                            caption: fileroute.message
-                        });
-                    }
-                    else {
-                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
-
-                        await bot.sendDocument(chatid, filename, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-                }
-            }
-            else {
-                await userquery.findOneAndUpdate({
-                    userid: chatid
-                }, {
-                    $push: {
-                        messages: {
-                            role: "assistant",
-                            content: aimessage2
-                        }
-                    }
-                }, {
-                    upsert: true
-                });
-
-                await sendBotMessage(bot, chatid, aimessage2, options);
-            }
+            await handleAIResponse(bot, chatid, options, response2);
         }
         else if (msg.animation) {
             const fileid = msg.animation.file_id;
@@ -520,6 +412,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const response = await groq.chat.completions.create({
                 model: model,
+                tools,
+                tool_choice: "auto",
                 messages: [
                     {
                         role: "system",
@@ -532,22 +426,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 ]
             });
 
-            const finalaireply = response.choices[0].message.content;
-
-            await userquery.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $push: {
-                    messages: {
-                        role: "assistant",
-                        content: finalaireply
-                    }
-                }
-            }, {
-                upsert: true
-            });
-
-            await sendBotMessage(bot, chatid, finalaireply, options);
+            await handleAIResponse(bot, chatid, options, response);
         }
         else if (msg.document && msg.document.mime_type && msg.document.mime_type.startsWith("video/")) {
             const fileid = msg.document.file_id;
@@ -573,6 +452,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const response = await groq.chat.completions.create({
                 model: model,
+                tools,
+                tool_choice: "auto",
                 messages: [
                     {
                         role: "system",
@@ -585,22 +466,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 ]
             });
 
-            const finalaireply = response.choices[0].message.content;
-
-            await userquery.findOneAndUpdate({
-                userid: chatid
-            }, {
-                $push: {
-                    messages: {
-                        role: "assistant",
-                        content: finalaireply
-                    }
-                }
-            }, {
-                upsert: true
-            });
-
-            await sendBotMessage(bot, chatid, finalaireply, options);
+            await handleAIResponse(bot, chatid, options, response);
         }
         else if (msg.sticker) {
             const fileid = msg.sticker.file_id;
@@ -630,6 +496,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 const response = await groq.chat.completions.create({
                     model: model,
+                    tools,
+                    tool_choice: "auto",
                     messages: [
                         {
                             role: "system",
@@ -642,22 +510,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ]
                 });
 
-                const finalaireply = response.choices[0].message.content;
-
-                await userquery.findOneAndUpdate({
-                    userid: chatid
-                }, {
-                    $push: {
-                        messages: {
-                            role: "assistant",
-                            content: finalaireply
-                        }
-                    }
-                }, {
-                    upsert: true
-                });
-
-                await sendBotMessage(bot, chatid, finalaireply, options);
+                await handleAIResponse(bot, chatid, options, response);
             } else {
                 await bot.sendChatAction(chatid, "upload_photo", options);
                 const imagetext = await analyzeImage(systempromptforimage, filelink);
@@ -684,6 +537,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 const response = await groq.chat.completions.create({
                     model: model,
+                    tools,
+                    tool_choice: "auto",
                     messages: [
                         {
                             role: "system",
@@ -696,22 +551,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ]
                 });
 
-                const finalaireply = response.choices[0].message.content;
-
-                await userquery.findOneAndUpdate({
-                    userid: chatid
-                }, {
-                    $push: {
-                        messages: {
-                            role: "assistant",
-                            content: finalaireply
-                        }
-                    }
-                }, {
-                    upsert: true
-                });
-
-                await sendBotMessage(bot, chatid, finalaireply, options);
+                await handleAIResponse(bot, chatid, options, response);
             }
         }
         //Voiceroute
@@ -751,6 +591,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const response = await groq.chat.completions.create({
                 model: model,
+                tools,
+                tool_choice: "auto",
                 messages: [
                     {
                         role: "system",
@@ -765,123 +607,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 ]
             });
 
-            const aimessage = response.choices[0].message.content;
-            //File route
-            if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
-                const fileroute = JSON.parse(aimessage);
-
-                if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_voice", options);
-
-                    const response = await groq.audio.speech.create({
-                        model: modelaudio,
-                        voice: "hannah",
-
-                        input: fileroute.audiocontent,
-                        response_format: "wav"
-                    });
-
-                    const buffer = Buffer.from(await response.arrayBuffer());
-
-                    await bot.sendAudio(chatid, buffer, {
-                        ...options,
-                        caption: fileroute.message,
-                        title: fileroute.audioname,
-                        performer: fileroute.performer
-                    })
-                }
-
-                else if (fileroute.type === "image") {
-                    const cooldown = await checkImageCooldown(chatid);
-                    if (!cooldown.allowed) {
-                        await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
-                        return;
-                    }
-
-                    try {
-                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
-
-                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
-
-                        await bot.sendPhoto(chatid, image, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    } catch (err) {
-                        console.log("Image generation failed:", err.message);
-                        await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
-                    }
-                }
-                else {
-                    await bot.sendChatAction(chatid, "upload_document", options);
-
-                    await userquery.findOneAndUpdate({
-                        userid: chatid
-                    }, {
-                        $push: {
-                            messages: {
-                                role: "assistant",
-                                content: aimessage
-                            }
-                        }
-                    }, {
-                        upsert: true
-                    })
-
-                    const tempDir = os.tmpdir();
-                    const filename = path.join(tempDir, fileroute.filename);
-
-                    if (fileroute.filetype === "pdf") {
-                        const pdfDoc = new PDFDocument({ margin: 50 });
-                        const writableStream = new streamBuffers.WritableStreamBuffer();
-
-                        pdfDoc.pipe(writableStream);
-
-                        pdfDoc.font("Helvetica")
-                            .fontSize(12)
-                            .text(fileroute.filecontent, {
-                                align: "left"
-                            });
-
-                        pdfDoc.end();
-
-                        await new Promise(resolve =>
-                            writableStream.on("close", resolve)
-                        );
-
-                        const buffer = writableStream.getContents();
-
-                        await bot.sendDocument(chatid, buffer, {
-                            ...options,
-                            title: fileroute.filename,
-                            caption: fileroute.message
-                        });
-                    }
-                    else {
-                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
-
-                        await bot.sendDocument(chatid, filename, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-                }
-            }
-            else {
-                await userquery.findOneAndUpdate({
-                    userid: chatid
-                }, {
-                    $push: {
-                        messages: {
-                            role: "assistant",
-                            content: aimessage
-                        }
-                    }
-                }, {
-                    upsert: true
-                });
-                await sendBotMessage(bot, chatid, aimessage, options);
-            }
+            await handleAIResponse(bot, chatid, options, response);
         }
         //Video Transcript
         else if (msg.video) {
@@ -976,6 +702,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const response = await groq.chat.completions.create({
                 model: model,
+                tools,
+                tool_choice: "auto",
                 messages: [
                     {
                         role: "system",
@@ -990,124 +718,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 ]
             });
 
-            const aimessage = response.choices[0].message.content;
-            //Fileroute
-            if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
-                const fileroute = JSON.parse(aimessage);
-
-                if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_voice", options);
-
-                    const response = await groq.audio.speech.create({
-                        model: modelaudio,
-                        voice: "hannah",
-
-                        input: fileroute.audiocontent,
-                        response_format: "wav"
-                    });
-
-                    const buffer = Buffer.from(await response.arrayBuffer());
-
-                    await bot.sendAudio(chatid, buffer, {
-                        ...options,
-                        caption: fileroute.message,
-                        title: fileroute.audioname,
-                        performer: fileroute.performer
-                    })
-                }
-
-                else if (fileroute.type === "image") {
-                    const cooldown = await checkImageCooldown(chatid);
-                    if (!cooldown.allowed) {
-                        await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
-                        return;
-                    }
-
-                    try {
-                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
-
-                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
-
-                        await bot.sendPhoto(chatid, image, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    } catch (err) {
-                        console.log("Image generation failed:", err.message);
-                        await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
-                    }
-                }
-                else {
-                    await bot.sendChatAction(chatid, "upload_document", options);
-
-                    await userquery.findOneAndUpdate({
-                        userid: chatid
-                    }, {
-                        $push: {
-                            messages: {
-                                role: "assistant",
-                                content: aimessage
-                            }
-                        }
-                    }, {
-                        upsert: true
-                    })
-
-                    const tempDir = os.tmpdir();
-                    const filename = path.join(tempDir, fileroute.filename);
-
-                    if (fileroute.filetype === "pdf") {
-                        const pdfDoc = new PDFDocument({ margin: 50 });
-                        const writableStream = new streamBuffers.WritableStreamBuffer();
-
-                        pdfDoc.pipe(writableStream);
-
-                        pdfDoc.font("Helvetica")
-                            .fontSize(12)
-                            .text(fileroute.filecontent, {
-                                align: "left"
-                            });
-
-                        pdfDoc.end();
-
-                        await new Promise(resolve =>
-                            writableStream.on("close", resolve)
-                        );
-
-                        const buffer = writableStream.getContents();
-
-                        await bot.sendDocument(chatid, buffer, {
-                            ...options,
-                            title: fileroute.filename,
-                            caption: fileroute.message
-                        });
-                    }
-                    else {
-                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
-
-                        await bot.sendDocument(chatid, filename, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-                }
-            }
-            else {
-                await userquery.findOneAndUpdate({
-                    userid: chatid
-                }, {
-                    $push: {
-                        messages: {
-                            role: "assistant",
-                            content: aimessage
-                        }
-                    }
-                }, {
-                    upsert: true
-                });
-
-                await sendBotMessage(bot, chatid, aimessage, options);
-            }
+            await handleAIResponse(bot, chatid, options, response);
         }
         //File route
         else if (msg.document) {
@@ -1143,6 +754,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 await bot.sendChatAction(chatid, "typing", options);
                 const response = await groq.chat.completions.create({
                     model: model,
+                    tools,
+                    tool_choice: "auto",
                     messages: [
                         {
                             role: "system",
@@ -1157,123 +770,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ]
                 });
 
-                const aimessage = response.choices[0].message.content;
-                if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
-                    const fileroute = JSON.parse(aimessage);
-
-                    if (fileroute.type === "audio") {
-                        await bot.sendChatAction(chatid, "upload_voice", options);
-
-                        const response = await groq.audio.speech.create({
-                            model: modelaudio,
-                            voice: "hannah",
-
-                            input: fileroute.audiocontent,
-                            response_format: "wav"
-                        });
-
-                        const buffer = Buffer.from(await response.arrayBuffer());
-
-                        await bot.sendAudio(chatid, buffer, {
-                            ...options,
-                            caption: fileroute.message,
-                            title: fileroute.audioname,
-                            performer: fileroute.performer
-                        })
-                    }
-
-                    else if (fileroute.type === "image") {
-                        const cooldown = await checkImageCooldown(chatid);
-                        if (!cooldown.allowed) {
-                            await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
-                            return;
-                        }
-
-                        try {
-                            const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
-
-                            await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
-
-                            await bot.sendPhoto(chatid, image, {
-                                ...options,
-                                caption: fileroute.message
-                            });
-                        } catch (err) {
-                            console.log("Image generation failed:", err.message);
-                            await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
-                        }
-                    }
-                    else {
-                        await bot.sendChatAction(chatid, "upload_document", options);
-
-                        await userquery.findOneAndUpdate({
-                            userid: chatid
-                        }, {
-                            $push: {
-                                messages: {
-                                    role: "assistant",
-                                    content: aimessage
-                                }
-                            }
-                        }, {
-                            upsert: true
-                        })
-
-                        const tempDir = os.tmpdir();
-                        const filename = path.join(tempDir, fileroute.filename);
-
-                        if (fileroute.filetype === "pdf") {
-                            const pdfDoc = new PDFDocument({ margin: 50 });
-                            const writableStream = new streamBuffers.WritableStreamBuffer();
-
-                            pdfDoc.pipe(writableStream);
-
-                            pdfDoc.font("Helvetica")
-                                .fontSize(12)
-                                .text(fileroute.filecontent, {
-                                    align: "left"
-                                });
-
-                            pdfDoc.end();
-
-                            await new Promise(resolve =>
-                                writableStream.on("close", resolve)
-                            );
-
-                            const buffer = writableStream.getContents();
-
-                            await bot.sendDocument(chatid, buffer, {
-                                ...options,
-                                title: fileroute.filename,
-                                caption: fileroute.message
-                            });
-                        }
-                        else {
-                            fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
-
-                            await bot.sendDocument(chatid, filename, {
-                                ...options,
-                                caption: fileroute.message
-                            });
-                        }
-                    }
-                }
-                else {
-                    await userquery.findOneAndUpdate({
-                        userid: chatid
-                    }, {
-                        $push: {
-                            messages: {
-                                role: "assistant",
-                                content: aimessage
-                            }
-                        }
-                    }, {
-                        upsert: true
-                    });
-
-                    await sendBotMessage(bot, chatid, aimessage, options);
-                }
+                await handleAIResponse(bot, chatid, options, response);
             }
             //PDF file route
             else if (msg.document.mime_type === "application/pdf") {
@@ -1300,6 +797,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 await bot.sendChatAction(chatid, "typing", options);
                 const response = await groq.chat.completions.create({
                     model: model,
+                    tools,
+                    tool_choice: "auto",
                     messages: [
                         {
                             role: "system",
@@ -1314,122 +813,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ]
                 });
 
-                const aimessage = response.choices[0].message.content;
-                if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
-                    const fileroute = JSON.parse(aimessage);
-                    if (fileroute.type === "audio") {
-                        await bot.sendChatAction(chatid, "upload_voice", options);
-
-                        const response = await groq.audio.speech.create({
-                            model: modelaudio,
-                            voice: "hannah",
-
-                            input: fileroute.audiocontent,
-                            response_format: "wav"
-                        });
-
-                        const buffer = Buffer.from(await response.arrayBuffer());
-
-                        await bot.sendAudio(chatid, buffer, {
-                            ...options,
-                            caption: fileroute.message,
-                            title: fileroute.audioname,
-                            performer: fileroute.performer
-                        })
-                    }
-
-                    else if (fileroute.type === "image") {
-                        const cooldown = await checkImageCooldown(chatid);
-                        if (!cooldown.allowed) {
-                            await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
-                            return;
-                        }
-
-                        try {
-                            const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
-
-                            await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
-
-                            await bot.sendPhoto(chatid, image, {
-                                ...options,
-                                caption: fileroute.message
-                            });
-                        } catch (err) {
-                            console.log("Image generation failed:", err.message);
-                            await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
-                        }
-                    }
-                    else {
-                        await bot.sendChatAction(chatid, "upload_document", options);
-
-                        await userquery.findOneAndUpdate({
-                            userid: chatid
-                        }, {
-                            $push: {
-                                messages: {
-                                    role: "assistant",
-                                    content: aimessage
-                                }
-                            }
-                        }, {
-                            upsert: true
-                        })
-
-                        const tempDir = os.tmpdir();
-                        const filename = path.join(tempDir, fileroute.filename);
-
-                        if (fileroute.filetype === "pdf") {
-                            const pdfDoc = new PDFDocument({ margin: 50 });
-                            const writableStream = new streamBuffers.WritableStreamBuffer();
-
-                            pdfDoc.pipe(writableStream);
-
-                            pdfDoc.font("Helvetica")
-                                .fontSize(12)
-                                .text(fileroute.filecontent, {
-                                    align: "left"
-                                });
-
-                            pdfDoc.end();
-
-                            await new Promise(resolve =>
-                                writableStream.on("close", resolve)
-                            );
-
-                            const buffer = writableStream.getContents();
-
-                            await bot.sendDocument(chatid, buffer, {
-                                ...options,
-                                title: fileroute.filename,
-                                caption: fileroute.message
-                            });
-                        }
-                        else {
-                            fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
-
-                            await bot.sendDocument(chatid, filename, {
-                                ...options,
-                                caption: fileroute.message
-                            });
-                        }
-                    }
-                }
-                else {
-                    await userquery.findOneAndUpdate({
-                        userid: chatid
-                    }, {
-                        $push: {
-                            messages: {
-                                role: "assistant",
-                                content: aimessage
-                            }
-                        }
-                    }, {
-                        upsert: true
-                    });
-
-                    await sendBotMessage(bot, chatid, aimessage, options);
-                }
+                await handleAIResponse(bot, chatid, options, response);
             }
             //DOCX File route
             else if (msg.document.mime_type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
@@ -1454,6 +838,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 await bot.sendChatAction(chatid, "typing", options);
                 const response = await groq.chat.completions.create({
                     model: model,
+                    tools,
+                    tool_choice: "auto",
                     messages: [
                         {
                             role: "system",
@@ -1468,124 +854,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ]
                 });
 
-                const aimessage = response.choices[0].message.content;
-                if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
-                    const fileroute = JSON.parse(aimessage);
-                    if (fileroute.type === "audio") {
-                        await bot.sendChatAction(chatid, "upload_voice", options);
-
-                        const response = await groq.audio.speech.create({
-                            model: modelaudio,
-                            voice: "hannah",
-
-                            input: fileroute.audiocontent,
-                            response_format: "wav"
-                        });
-
-                        const buffer = Buffer.from(await response.arrayBuffer());
-
-                        await bot.sendAudio(chatid, buffer, {
-                            ...options,
-                            caption: fileroute.message,
-                            title: fileroute.audioname,
-                            performer: fileroute.performer
-                        })
-                    }
-
-                    else if (fileroute.type === "image") {
-                        const cooldown = await checkImageCooldown(chatid);
-                        if (!cooldown.allowed) {
-                            await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
-                            return;
-                        }
-
-                        try {
-                            const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
-
-                            await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
-
-                            await bot.sendPhoto(chatid, image, {
-                                ...options,
-                                caption: fileroute.message
-                            });
-                        } catch (err) {
-                            console.log("Image generation failed:", err.message);
-                            await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
-                        }
-                    }
-                    else {
-                        await bot.sendChatAction(chatid, "upload_document", options);
-
-                        await userquery.findOneAndUpdate({
-                            userid: chatid
-                        }, {
-                            $push: {
-                                messages: {
-                                    role: "assistant",
-                                    content: aimessage
-                                }
-                            }
-                        }, {
-                            upsert: true
-                        })
-
-                        const tempDir = os.tmpdir();
-                        const filename = path.join(tempDir, fileroute.filename);
-
-                        if (fileroute.filetype === "pdf") {
-                            const pdfDoc = new PDFDocument({ margin: 50 });
-                            const writableStream = new streamBuffers.WritableStreamBuffer();
-
-                            pdfDoc.pipe(writableStream);
-
-                            pdfDoc.font("Helvetica")
-                                .fontSize(12)
-                                .text(fileroute.filecontent, {
-                                    align: "left"
-                                });
-
-                            pdfDoc.end();
-
-                            await new Promise(resolve =>
-                                writableStream.on("close", resolve)
-                            );
-
-                            const buffer = writableStream.getContents();
-
-                            await bot.sendDocument(chatid, buffer, {
-                                ...options,
-                                title: fileroute.filename,
-                                caption: fileroute.message
-                            });
-                        }
-                        else {
-                            fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
-
-                            await bot.sendDocument(chatid, filename, {
-                                ...options,
-                                caption: fileroute.message
-                            });
-                        }
-                    }
-                }
-
-                else {
-                    await userquery.findOneAndUpdate({
-                        userid: chatid
-                    }, {
-                        $push: {
-                            messages: {
-                                role: "assistant",
-                                content: aimessage
-                            }
-                        }
-                    }, {
-                        upsert: true
-                    });
-
-                    await sendBotMessage(bot, chatid, aimessage, options);
-
-                }
+                await handleAIResponse(bot, chatid, options, response);
             }
             else if (msg.document.mime_type === "image/png" || msg.document.mime_type === "image/jpeg") {
                 const imagetext1 = await analyzeImage(systempromptforimage, filelink, captiontext, msg.document.mime_type);
@@ -1611,6 +880,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 const response2 = await groq.chat.completions.create({
                     model: model,
+                    tools,
+                    tool_choice: "auto",
                     messages: [
                         {
                             role: "system",
@@ -1625,125 +896,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ]
                 });
 
-                const aimessage2 = response2.choices[0].message.content;
-
-                console.log(aimessage2);
-
-                //File route
-                if (aimessage2.startsWith("{") && aimessage2.endsWith("}")) {
-                    const fileroute = JSON.parse(aimessage2);
-                    if (fileroute.type === "audio") {
-                        await bot.sendChatAction(chatid, "upload_voice", options);
-
-                        const response = await groq.audio.speech.create({
-                            model: modelaudio,
-                            voice: "hannah",
-                            input: fileroute.audiocontent,
-                            response_format: "wav"
-                        });
-
-                        const buffer = Buffer.from(await response.arrayBuffer());
-
-                        await bot.sendAudio(chatid, buffer, {
-                            ...options,
-                            caption: fileroute.message,
-                            title: fileroute.audioname,
-                            performer: fileroute.performer
-                        })
-                    }
-
-                    else if (fileroute.type === "image") {
-                        const cooldown = await checkImageCooldown(chatid);
-                        if (!cooldown.allowed) {
-                            await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
-                            return;
-                        }
-
-                        try {
-                            const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
-
-                            await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
-
-                            await bot.sendPhoto(chatid, image, {
-                                ...options,
-                                caption: fileroute.message
-                            });
-                        } catch (err) {
-                            console.log("Image generation failed:", err.message);
-                            await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
-                        }
-                    }
-                    else {
-                        await bot.sendChatAction(chatid, "upload_document", options);
-
-                        await userquery.findOneAndUpdate({
-                            userid: chatid
-                        }, {
-                            $push: {
-                                messages: {
-                                    role: "assistant",
-                                    content: aimessage2
-                                }
-                            }
-                        }, {
-                            upsert: true
-                        })
-
-                        const tempDir = os.tmpdir();
-                        const filename = path.join(tempDir, fileroute.filename);
-
-                        if (fileroute.filetype === "pdf") {
-                            const pdfDoc = new PDFDocument({ margin: 50 });
-                            const writableStream = new streamBuffers.WritableStreamBuffer();
-
-                            pdfDoc.pipe(writableStream);
-
-                            pdfDoc.font("Helvetica")
-                                .fontSize(12)
-                                .text(fileroute.filecontent, {
-                                    align: "left"
-                                });
-
-                            pdfDoc.end();
-
-                            await new Promise(resolve =>
-                                writableStream.on("close", resolve)
-                            );
-
-                            const buffer = writableStream.getContents();
-
-                            await bot.sendDocument(chatid, buffer, {
-                                ...options,
-                                title: fileroute.filename,
-                                caption: fileroute.message
-                            });
-                        }
-                        else {
-                            fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
-
-                            await bot.sendDocument(chatid, filename, {
-                                ...options,
-                                caption: fileroute.message
-                            });
-                        }
-                    }
-                }
-                else {
-                    await userquery.findOneAndUpdate({
-                        userid: chatid
-                    }, {
-                        $push: {
-                            messages: {
-                                role: "assistant",
-                                content: aimessage2
-                            }
-                        }
-                    }, {
-                        upsert: true
-                    });
-
-                    await sendBotMessage(bot, chatid, aimessage2, options);
-                }
+                await handleAIResponse(bot, chatid, options, response2);
             }
         }
         else if (msg.audio) {
@@ -1778,6 +931,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const response = await groq.chat.completions.create({
                 model: model,
+                tools,
+                tool_choice: "auto",
                 messages: [
                     {
                         role: "system",
@@ -1791,123 +946,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ]
             });
-            const aimessage = response.choices[0].message.content;
-            //Fileroute
-            if (aimessage.startsWith("{") && aimessage.endsWith("}")) {
-                const fileroute = JSON.parse(aimessage);
-                if (fileroute.type === "audio") {
-                    await bot.sendChatAction(chatid, "upload_voice", options);
-
-                    const response = await groq.audio.speech.create({
-                        model: modelaudio,
-                        voice: "hannah",
-
-                        input: fileroute.audiocontent,
-                        response_format: "wav"
-                    });
-
-                    const buffer = Buffer.from(await response.arrayBuffer());
-
-                    await bot.sendAudio(chatid, buffer, {
-                        ...options,
-                        caption: fileroute.message,
-                        title: fileroute.audioname,
-                        performer: fileroute.performer
-                    })
-                }
-
-                else if (fileroute.type === "image") {
-                    const cooldown = await checkImageCooldown(chatid);
-                    if (!cooldown.allowed) {
-                        await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
-                        return;
-                    }
-
-                    try {
-                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
-
-                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
-
-                        await bot.sendPhoto(chatid, image, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    } catch (err) {
-                        console.log("Image generation failed:", err.message);
-                        await bot.sendMessage(chatid, "Sorry, image generation failed. Please try again.", options);
-                    }
-                }
-                else {
-                    await bot.sendChatAction(chatid, "upload_document", options);
-
-                    await userquery.findOneAndUpdate({
-                        userid: chatid
-                    }, {
-                        $push: {
-                            messages: {
-                                role: "assistant",
-                                content: aimessage
-                            }
-                        }
-                    }, {
-                        upsert: true
-                    })
-
-                    const tempDir = os.tmpdir();
-                    const filename = path.join(tempDir, fileroute.filename);
-
-                    if (fileroute.filetype === "pdf") {
-                        const pdfDoc = new PDFDocument({ margin: 50 });
-                        const writableStream = new streamBuffers.WritableStreamBuffer();
-
-                        pdfDoc.pipe(writableStream);
-
-                        pdfDoc.font("Helvetica")
-                            .fontSize(12)
-                            .text(fileroute.filecontent, {
-                                align: "left"
-                            });
-
-                        pdfDoc.end();
-
-                        await new Promise(resolve =>
-                            writableStream.on("close", resolve)
-                        );
-
-                        const buffer = writableStream.getContents();
-
-                        await bot.sendDocument(chatid, buffer, {
-                            ...options,
-                            title: fileroute.filename,
-                            caption: fileroute.message
-                        });
-                    }
-                    else {
-                        fs.writeFileSync(filename, fileroute.filecontent, "utf-8");
-
-                        await bot.sendDocument(chatid, filename, {
-                            ...options,
-                            caption: fileroute.message
-                        });
-                    }
-                }
-            }
-            else {
-                await userquery.findOneAndUpdate({
-                    userid: chatid
-                }, {
-                    $push: {
-                        messages: {
-                            role: "assistant",
-                            content: aimessage
-                        }
-                    }
-                }, {
-                    upsert: true
-                });
-
-                await sendBotMessage(bot, chatid, aimessage, options);
-            }
+            await handleAIResponse(bot, chatid, options, response);
         }
     } catch (err) {
         console.log(err);
