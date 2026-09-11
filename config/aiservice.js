@@ -55,8 +55,16 @@ export async function webMap(url, { limit = 20 } = {}) {
 }
 
 export async function youtubeSearch(query, { limit = 5 } = {}) {
-    const result = await firecrawl.search(query, { limit, includeDomains: ["youtube.com"] });
-    return (result.web || []).filter(r => r.url?.includes("youtube.com")).map(r => ({ title: r.title, url: r.url, description: r.description }));
+    let result = await firecrawl.search(query, { limit, includeDomains: ["youtube.com"] });
+    let web = result.web || [];
+    if (web.length === 0) {
+        result = await firecrawl.search(`${query} site:youtube.com`, { limit });
+        web = result.web || [];
+    }
+    const filtered = web.filter(r => r.url?.includes("youtube.com") || r.url?.includes("youtu.be"));
+    const final = filtered.length > 0 ? filtered : web;
+    if (final.length === 0) return [{ title: "No results", url: `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, description: `No direct results, try searching YouTube directly for "${query}"` }];
+    return final.slice(0, limit).map(r => ({ title: r.title || r.url, url: r.url, description: r.description || "" }));
 }
 
 export async function youtubeTranscript(urlOrId) {
