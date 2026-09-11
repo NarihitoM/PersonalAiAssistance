@@ -54,6 +54,8 @@ Capabilities:
 - Create Telegram polls and surveys.
 - Schedule reminders.
 - Send locations/venues on the map.
+- Search YouTube videos.
+- Get YouTube video transcripts.
 
 
 Role:

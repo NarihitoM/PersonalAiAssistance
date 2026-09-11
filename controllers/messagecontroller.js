@@ -1,4 +1,4 @@
-import { groq, analyzeImage, generateImage, webSearch, webScrape, webCrawl, webMap, model, modelaudio, transcriptmodel } from "../config/aiservice.js";
+import { groq, analyzeImage, generateImage, webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscript, model, modelaudio, transcriptmodel } from "../config/aiservice.js";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import { tools } from "../tools/tools.js";
@@ -248,6 +248,44 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
             await bot.sendMessage(chatid, "Sorry, failed to send location: " + err.message, options);
         }
         return;
+    }
+
+    if (toolCall.function.name === "youtube_search") {
+        await bot.sendChatAction(chatid, "typing", options);
+        let results;
+        try {
+            results = await youtubeSearch(args.query, { limit: args.limit });
+        } catch (err) {
+            console.log("YouTube search failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, YouTube search failed: " + err.message, options);
+            return;
+        }
+        const followUp = await groq.chat.completions.create({
+            model,
+            tools,
+            tool_choice: "auto",
+            messages: [...messages, responseMessage, { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }]
+        });
+        return handleAIResponse(bot, chatid, options, followUp, messages);
+    }
+
+    if (toolCall.function.name === "youtube_transcript") {
+        await bot.sendChatAction(chatid, "typing", options);
+        let results;
+        try {
+            results = await youtubeTranscript(args.url);
+        } catch (err) {
+            console.log("YouTube transcript failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, YouTube transcript failed: " + err.message, options);
+            return;
+        }
+        const followUp = await groq.chat.completions.create({
+            model,
+            tools,
+            tool_choice: "auto",
+            messages: [...messages, responseMessage, { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }]
+        });
+        return handleAIResponse(bot, chatid, options, followUp, messages);
     }
 
     // create_file

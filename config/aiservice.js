@@ -54,6 +54,47 @@ export async function webMap(url, { limit = 20 } = {}) {
     return (result.links || []).map(l => ({ url: l.url, title: l.title, description: l.description }));
 }
 
+export async function youtubeSearch(query, { limit = 5 } = {}) {
+    const result = await firecrawl.search(query, { limit, includeDomains: ["youtube.com"] });
+    return (result.web || []).filter(r => r.url?.includes("youtube.com")).map(r => ({ title: r.title, url: r.url, description: r.description }));
+}
+
+export async function youtubeTranscript(urlOrId) {
+    const videoId = (() => {
+        const m = String(urlOrId).match(/(?:v=|\/)([0-9A-Za-z_-]{11})/);
+        return m ? m[1] : String(urlOrId).trim();
+    })();
+    const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+    try {
+        const doc = await firecrawl.scrape(watchUrl, { formats: ["markdown"], onlyMainContent: true, timeout: 30000, waitFor: 3000 });
+        const raw = doc.markdown || doc.html || "";
+        if (raw && raw.length > 200) {
+            const truncated = raw.length > 15000 ? raw.slice(0, 15000) + "\n\n[truncated]" : raw;
+            return { videoId, url: watchUrl, transcript: truncated, metadata: doc.metadata, source: "firecrawl" };
+        }
+    } catch {}
+
+    const html = await fetch(watchUrl, { headers: { "User-Agent": "Mozilla/5.0" } }).then(r => r.text());
+    const captionMatch = html.match(/"captionTracks":\s*(\[.*?\])/s);
+    if (captionMatch) {
+        try {
+            const tracks = JSON.parse(captionMatch[1].replace(/\\u0026/g, "&").replace(/\\/g, ""));
+            const track = tracks.find(t => t.languageCode === "en") || tracks[0];
+            if (track?.baseUrl) {
+                const xml = await fetch(track.baseUrl).then(r => r.text());
+                const texts = [...xml.matchAll(/<text[^>]*>(.*?)<\/text>/g)].map(m => m[1].replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/<[^>]+>/g, ""));
+                const transcript = texts.join(" ");
+                if (transcript.length > 0) {
+                    const truncated = transcript.length > 15000 ? transcript.slice(0, 15000) + "\n\n[truncated]" : transcript;
+                    return { videoId, url: watchUrl, transcript: truncated, source: "captions" };
+                }
+            }
+        } catch {}
+    }
+    throw new Error("Transcript not available for this video");
+}
+
 export async function generateImage(prompt, { timeoutMs = 60000 } = {}) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);

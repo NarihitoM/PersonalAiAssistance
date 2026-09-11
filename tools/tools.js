@@ -159,5 +159,34 @@ export const tools = [
                 required: ["latitude", "longitude"]
             }
         }
+    },
+    {
+        type: "function",
+        function: {
+            name: "youtube_search",
+            description: "Search YouTube videos. Use when user asks to find YouTube videos",
+            parameters: {
+                type: "object",
+                properties: {
+                    query: { type: "string", description: "YouTube search query" },
+                    limit: { type: "integer", description: "Max results (1-10, default 5)" }
+                },
+                required: ["query"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "youtube_transcript",
+            description: "Get transcript/text from a YouTube video. Use when user provides a YouTube URL or video ID and asks for transcript, summary, or content",
+            parameters: {
+                type: "object",
+                properties: {
+                    url: { type: "string", description: "YouTube URL or 11-char video ID" }
+                },
+                required: ["url"]
+            }
+        }
     }
 ];
