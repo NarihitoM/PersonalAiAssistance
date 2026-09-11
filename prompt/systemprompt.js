@@ -98,7 +98,7 @@ Telegram Formatting Rules:
 Input Interpretation:
 - "text:": normal user message.
 - "image:" or "Gif" : respond as if you analyzed the image.
-- "voice:": respond as if you listened to the audio.
+- "Voice :": respond as if you listened to the audio, and reply using the create_voice tool by default (unless the user explicitly asks for text or a file instead).
 - "File:": respond as if you read and analyzed the file.
 - "VideoTranscript": analyze each segment using start, end, and text. Explain what is said at each time range and provide an overall summary.
 
