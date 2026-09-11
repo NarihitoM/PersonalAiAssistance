@@ -22,6 +22,21 @@ const transcriptmodel = "whisper-large-v3-turbo"
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
+//Image generation cooldown
+const IMAGE_COOLDOWN_MS = 60 * 60 * 1000;
+
+async function checkImageCooldown(chatid) {
+    const user = await userquery.findOne({ userid: chatid });
+    const last = user?.lastImageGeneratedAt;
+
+    if (last && Date.now() - last.getTime() < IMAGE_COOLDOWN_MS) {
+        const remainingMin = Math.ceil((IMAGE_COOLDOWN_MS - (Date.now() - last.getTime())) / 60000);
+        return { allowed: false, remainingMin };
+    }
+
+    return { allowed: true };
+}
+
 //Styling
 async function sendBotMessage(bot, chatid, text, options = {}) {
     await bot.sendChatAction(chatid, "typing", options);
@@ -148,10 +163,18 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 }
 
                 else if (fileroute.type === "image") {
+                    const cooldown = await checkImageCooldown(chatid);
+                    if (!cooldown.allowed) {
+                        await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
+                        return;
+                    }
+
                     await bot.sendChatAction(chatid, "upload_photo", options);
                     await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                     const image = await generateImage(fileroute.prompt);
+
+                    await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
                     await bot.sendPhoto(chatid, image, {
                         ...options,
@@ -306,10 +329,18 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 }
 
                 else if (fileroute.type === "image") {
+                    const cooldown = await checkImageCooldown(chatid);
+                    if (!cooldown.allowed) {
+                        await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
+                        return;
+                    }
+
                     await bot.sendChatAction(chatid, "upload_photo", options);
                     await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                     const image = await generateImage(fileroute.prompt);
+
+                    await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
                     await bot.sendPhoto(chatid, image, {
                         ...options,
@@ -746,10 +777,18 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 }
 
                 else if (fileroute.type === "image") {
+                    const cooldown = await checkImageCooldown(chatid);
+                    if (!cooldown.allowed) {
+                        await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
+                        return;
+                    }
+
                     await bot.sendChatAction(chatid, "upload_photo", options);
                     await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                     const image = await generateImage(fileroute.prompt);
+
+                    await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
                     await bot.sendPhoto(chatid, image, {
                         ...options,
@@ -961,10 +1000,18 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 }
 
                 else if (fileroute.type === "image") {
+                    const cooldown = await checkImageCooldown(chatid);
+                    if (!cooldown.allowed) {
+                        await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
+                        return;
+                    }
+
                     await bot.sendChatAction(chatid, "upload_photo", options);
                     await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                     const image = await generateImage(fileroute.prompt);
+
+                    await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
                     await bot.sendPhoto(chatid, image, {
                         ...options,
@@ -1117,10 +1164,18 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     }
 
                     else if (fileroute.type === "image") {
+                        const cooldown = await checkImageCooldown(chatid);
+                        if (!cooldown.allowed) {
+                            await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
+                            return;
+                        }
+
                         await bot.sendChatAction(chatid, "upload_photo", options);
                         await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                         const image = await generateImage(fileroute.prompt);
+
+                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
                         await bot.sendPhoto(chatid, image, {
                             ...options,
@@ -1263,10 +1318,18 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     }
 
                     else if (fileroute.type === "image") {
+                        const cooldown = await checkImageCooldown(chatid);
+                        if (!cooldown.allowed) {
+                            await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
+                            return;
+                        }
+
                         await bot.sendChatAction(chatid, "upload_photo", options);
                         await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                         const image = await generateImage(fileroute.prompt);
+
+                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
                         await bot.sendPhoto(chatid, image, {
                             ...options,
@@ -1407,10 +1470,18 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     }
 
                     else if (fileroute.type === "image") {
+                        const cooldown = await checkImageCooldown(chatid);
+                        if (!cooldown.allowed) {
+                            await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
+                            return;
+                        }
+
                         await bot.sendChatAction(chatid, "upload_photo", options);
                         await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                         const image = await generateImage(fileroute.prompt);
+
+                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
                         await bot.sendPhoto(chatid, image, {
                             ...options,
@@ -1557,10 +1628,18 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     }
 
                     else if (fileroute.type === "image") {
+                        const cooldown = await checkImageCooldown(chatid);
+                        if (!cooldown.allowed) {
+                            await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
+                            return;
+                        }
+
                         await bot.sendChatAction(chatid, "upload_photo", options);
                         await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                         const image = await generateImage(fileroute.prompt);
+
+                        await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
                         await bot.sendPhoto(chatid, image, {
                             ...options,
@@ -1711,10 +1790,18 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 }
 
                 else if (fileroute.type === "image") {
+                    const cooldown = await checkImageCooldown(chatid);
+                    if (!cooldown.allowed) {
+                        await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before generating another image.`, options);
+                        return;
+                    }
+
                     await bot.sendChatAction(chatid, "upload_photo", options);
                     await bot.sendMessage(chatid, "Please wait, generating your image (about 1 minute)...", options);
 
                     const image = await generateImage(fileroute.prompt);
+
+                    await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
                     await bot.sendPhoto(chatid, image, {
                         ...options,
