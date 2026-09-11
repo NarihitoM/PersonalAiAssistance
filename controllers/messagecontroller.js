@@ -559,7 +559,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const fileid = msg.voice.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            await bot.sendChatAction(chatid, "upload_video", options)
+            await bot.sendChatAction(chatid, "record_voice", options)
 
             const transcription = await groq.audio.transcriptions.create({
                 model: transcriptmodel,
