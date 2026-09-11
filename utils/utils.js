@@ -15,6 +15,26 @@ export async function withPhotoAction(bot, chatid, options, task) {
     }
 }
 
+export async function withTypingAction(bot, chatid, options, task) {
+    await bot.sendChatAction(chatid, "typing", options);
+    const interval = setInterval(() => bot.sendChatAction(chatid, "typing", options), 4000);
+    try {
+        return await task();
+    } finally {
+        clearInterval(interval);
+    }
+}
+
+export async function withChatAction(bot, chatid, action, options, task) {
+    await bot.sendChatAction(chatid, action, options);
+    const interval = setInterval(() => bot.sendChatAction(chatid, action, options), 4000);
+    try {
+        return await task();
+    } finally {
+        clearInterval(interval);
+    }
+}
+
 export async function checkImageCooldown(chatid) {
     const user = await userquery.findOne({ userid: chatid });
     const last = user?.lastImageGeneratedAt;

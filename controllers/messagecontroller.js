@@ -12,7 +12,7 @@ import fs from "fs";
 import supabase from "../config/supabaseservice.js";
 import PDFDocument from "pdfkit";
 import streamBuffers from "stream-buffers";
-import { withPhotoAction, checkImageCooldown, sendBotMessage, getPdfTextFromUrl } from "../utils/utils.js";
+import { withPhotoAction, withTypingAction, withChatAction, checkImageCooldown, sendBotMessage, getPdfTextFromUrl } from "../utils/utils.js";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -43,14 +43,12 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
     const args = JSON.parse(toolCall.function.arguments);
 
     if (toolCall.function.name === "create_voice") {
-        await bot.sendChatAction(chatid, "upload_voice", options);
-
-        const speech = await groq.audio.speech.create({
+        const speech = await withChatAction(bot, chatid, "upload_voice", options, () => groq.audio.speech.create({
             model: modelaudio,
             voice: "hannah",
             input: args.audiocontent,
             response_format: "wav"
-        });
+        }));
 
         const buffer = Buffer.from(await speech.arrayBuffer());
 
@@ -88,18 +86,16 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
     }
 
     if (toolCall.function.name === "web_search") {
-        await bot.sendChatAction(chatid, "typing", options);
-
         let results;
         try {
-            results = await webSearch(args.query);
+            results = await withTypingAction(bot, chatid, options, () => webSearch(args.query));
         } catch (err) {
             console.log("Web search failed:", err.message);
             await bot.sendMessage(chatid, "Sorry, web search failed. Please try again.", options);
             return;
         }
 
-        const followUp = await groq.chat.completions.create({
+        const followUp = await withTypingAction(bot, chatid, options, () => groq.chat.completions.create({
             model,
             tools,
             tool_choice: "auto",
@@ -108,24 +104,22 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
                 responseMessage,
                 { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }
             ]
-        });
+        }));
 
         return handleAIResponse(bot, chatid, options, followUp, messages);
     }
 
     if (toolCall.function.name === "web_scrape") {
-        await bot.sendChatAction(chatid, "typing", options);
-
         let results;
         try {
-            results = await webScrape(args.url, { onlyMainContent: args.onlyMainContent, formats: args.formats });
+            results = await withTypingAction(bot, chatid, options, () => webScrape(args.url, { onlyMainContent: args.onlyMainContent, formats: args.formats }));
         } catch (err) {
             console.log("Web scrape failed:", err.message);
             await bot.sendMessage(chatid, "Sorry, web scrape failed. Please try again. " + err.message, options);
             return;
         }
 
-        const followUp = await groq.chat.completions.create({
+        const followUp = await withTypingAction(bot, chatid, options, () => groq.chat.completions.create({
             model,
             tools,
             tool_choice: "auto",
@@ -134,24 +128,22 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
                 responseMessage,
                 { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }
             ]
-        });
+        }));
 
         return handleAIResponse(bot, chatid, options, followUp, messages);
     }
 
     if (toolCall.function.name === "web_crawl") {
-        await bot.sendChatAction(chatid, "typing", options);
-
         let results;
         try {
-            results = await webCrawl(args.url, { limit: args.limit, maxDiscoveryDepth: args.maxDiscoveryDepth });
+            results = await withTypingAction(bot, chatid, options, () => webCrawl(args.url, { limit: args.limit, maxDiscoveryDepth: args.maxDiscoveryDepth }));
         } catch (err) {
             console.log("Web crawl failed:", err.message);
             await bot.sendMessage(chatid, "Sorry, web crawl failed. Please try again. " + err.message, options);
             return;
         }
 
-        const followUp = await groq.chat.completions.create({
+        const followUp = await withTypingAction(bot, chatid, options, () => groq.chat.completions.create({
             model,
             tools,
             tool_choice: "auto",
@@ -160,24 +152,22 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
                 responseMessage,
                 { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }
             ]
-        });
+        }));
 
         return handleAIResponse(bot, chatid, options, followUp, messages);
     }
 
     if (toolCall.function.name === "web_map") {
-        await bot.sendChatAction(chatid, "typing", options);
-
         let results;
         try {
-            results = await webMap(args.url, { limit: args.limit });
+            results = await withTypingAction(bot, chatid, options, () => webMap(args.url, { limit: args.limit }));
         } catch (err) {
             console.log("Web map failed:", err.message);
             await bot.sendMessage(chatid, "Sorry, web map failed. Please try again. " + err.message, options);
             return;
         }
 
-        const followUp = await groq.chat.completions.create({
+        const followUp = await withTypingAction(bot, chatid, options, () => groq.chat.completions.create({
             model,
             tools,
             tool_choice: "auto",
@@ -186,7 +176,7 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
                 responseMessage,
                 { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }
             ]
-        });
+        }));
 
         return handleAIResponse(bot, chatid, options, followUp, messages);
     }
@@ -259,95 +249,94 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
     }
 
     if (toolCall.function.name === "youtube_search") {
-        await bot.sendChatAction(chatid, "typing", options);
         let results;
         try {
-            results = await youtubeSearch(args.query, { limit: args.limit });
+            results = await withTypingAction(bot, chatid, options, () => youtubeSearch(args.query, { limit: args.limit }));
         } catch (err) {
             console.log("YouTube search failed:", err.message);
             await bot.sendMessage(chatid, "Sorry, YouTube search failed: " + err.message, options);
             return;
         }
-        const followUp = await groq.chat.completions.create({
+        const followUp = await withTypingAction(bot, chatid, options, () => groq.chat.completions.create({
             model,
             tools,
             tool_choice: "auto",
             messages: [...messages, responseMessage, { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }]
-        });
+        }));
         return handleAIResponse(bot, chatid, options, followUp, messages);
     }
 
     if (toolCall.function.name === "youtube_transcript") {
-        await bot.sendChatAction(chatid, "typing", options);
         let results;
         try {
-            results = await youtubeTranscript(args.url);
+            results = await withTypingAction(bot, chatid, options, () => youtubeTranscript(args.url));
         } catch (err) {
             console.log("YouTube transcript failed:", err.message);
             await bot.sendMessage(chatid, "Sorry, YouTube transcript failed: " + err.message, options);
             return;
         }
-        const followUp = await groq.chat.completions.create({
+        const followUp = await withTypingAction(bot, chatid, options, () => groq.chat.completions.create({
             model,
             tools,
             tool_choice: "auto",
             messages: [...messages, responseMessage, { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }]
-        });
+        }));
         return handleAIResponse(bot, chatid, options, followUp, messages);
     }
 
     // create_file
-    await bot.sendChatAction(chatid, "upload_document", options);
-
-    await userquery.findOneAndUpdate({
-        userid: chatid
-    }, {
-        $push: {
-            messages: {
-                role: "assistant",
-                content: args.message
+    await withChatAction(bot, chatid, "upload_document", options, async () => {
+        await userquery.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $push: {
+                messages: {
+                    role: "assistant",
+                    content: args.message
+                }
             }
-        }
-    }, {
-        upsert: true
-    });
+        }, {
+            upsert: true
+        });
 
-    const tempDir = os.tmpdir();
-    const filename = path.join(tempDir, args.filename);
+        const tempDir = os.tmpdir();
+        const filename = path.join(tempDir, args.filename);
 
-    if (args.filetype === "pdf") {
-        const pdfDoc = new PDFDocument({ margin: 50 });
-        const writableStream = new streamBuffers.WritableStreamBuffer();
+        if (args.filetype === "pdf") {
+            const pdfDoc = new PDFDocument({ margin: 50 });
+            const writableStream = new streamBuffers.WritableStreamBuffer();
 
-        pdfDoc.pipe(writableStream);
+            pdfDoc.pipe(writableStream);
 
-        pdfDoc.font("Helvetica")
-            .fontSize(12)
-            .text(args.filecontent, {
-                align: "left"
+            pdfDoc.font("Helvetica")
+                .fontSize(12)
+                .text(args.filecontent, {
+                    align: "left"
+                });
+
+            pdfDoc.end();
+
+            await new Promise(resolve =>
+                writableStream.on("close", resolve)
+            );
+
+            const buffer = writableStream.getContents();
+
+            await bot.sendDocument(chatid, buffer, {
+                ...options,
+                title: args.filename,
+                caption: args.message
             });
+        } else {
+            fs.writeFileSync(filename, args.filecontent, "utf-8");
 
-        pdfDoc.end();
-
-        await new Promise(resolve =>
-            writableStream.on("close", resolve)
-        );
-
-        const buffer = writableStream.getContents();
-
-        await bot.sendDocument(chatid, buffer, {
-            ...options,
-            title: args.filename,
-            caption: args.message
-        });
-    } else {
-        fs.writeFileSync(filename, args.filecontent, "utf-8");
-
-        await bot.sendDocument(chatid, filename, {
-            ...options,
-            caption: args.message
-        });
-    }
+            await bot.sendDocument(chatid, filename, {
+                ...options,
+                caption: args.message
+            });
+        }
+    });
+    return;
 }
 
 //SUPER MESSAGE
