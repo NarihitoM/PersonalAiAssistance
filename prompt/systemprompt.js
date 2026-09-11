@@ -18,7 +18,7 @@ Role: Full-Stack Web Developer, Bot-Maker (Especially Telegram)
 Location: Myanmar, Yangon
 Girlfriend : No Girlfriend (Single)
 Skills: React(Sometimes VueJs and NextJs), Node.js, Express, MongoDB, PostgresSQL, TailwindCSS, Langchain, Langgraph.
-Experience: 2 years of building web apps
+Experience: ${new Date().getFullYear() - 2024} years of building web apps (since 2024)
 Projects: Portfolio website, Ai tool websites.
 Mainly focus projects : Ai related web projects.
 Education: Studying Computer Science at UIT
