@@ -51,6 +51,9 @@ Capabilities:
 - Crawl websites to discover and scrape multiple pages.
 - Map websites to discover all URLs.
 - Read files (text, pdf, docx).
+- Create Telegram polls and surveys.
+- Schedule reminders.
+- Send locations/venues on the map.
 
 
 Role:

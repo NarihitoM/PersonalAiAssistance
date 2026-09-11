@@ -237,6 +237,65 @@ async function handleAIResponse(bot, chatid, options, response, messages) {
         return handleAIResponse(bot, chatid, options, followUp, messages);
     }
 
+    if (toolCall.function.name === "create_poll") {
+        try {
+            const opts = args.options?.slice(0, 10) || [];
+            if (opts.length < 2) throw new Error("Poll needs at least 2 options");
+
+            if (args.message) await sendBotMessage(bot, chatid, args.message, options);
+
+            await bot.sendPoll(chatid, args.question, opts, {
+                ...options,
+                is_anonymous: args.is_anonymous ?? true,
+                allows_multiple_answers: args.allows_multiple_answers ?? false
+            });
+        } catch (err) {
+            console.log("Create poll failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, failed to create poll: " + err.message, options);
+        }
+        return;
+    }
+
+    if (toolCall.function.name === "schedule_reminder") {
+        try {
+            const delayMs = Math.min(Math.max(args.delay_minutes, 1), 1440) * 60 * 1000;
+
+            await bot.sendMessage(chatid, args.message || `Reminder set for ${args.delay_minutes} minute(s) from now.`, options);
+
+            setTimeout(async () => {
+                try {
+                    await bot.sendMessage(chatid, `Reminder: ${args.reminder_text}`, options);
+                } catch (e) {
+                    console.log("Reminder send failed:", e.message);
+                }
+            }, delayMs);
+
+            await userquery.findOneAndUpdate({ userid: chatid }, {
+                $push: { messages: { role: "assistant", content: args.message || `Reminder set: ${args.reminder_text} in ${args.delay_minutes}m` } }
+            }, { upsert: true });
+        } catch (err) {
+            console.log("Schedule reminder failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, failed to set reminder: " + err.message, options);
+        }
+        return;
+    }
+
+    if (toolCall.function.name === "send_location") {
+        try {
+            if (args.message) await sendBotMessage(bot, chatid, args.message, options);
+
+            if (args.title || args.address) {
+                await bot.sendVenue(chatid, args.latitude, args.longitude, args.title || "Location", args.address || "", options);
+            } else {
+                await bot.sendLocation(chatid, args.latitude, args.longitude, options);
+            }
+        } catch (err) {
+            console.log("Send location failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, failed to send location: " + err.message, options);
+        }
+        return;
+    }
+
     // create_file
     await bot.sendChatAction(chatid, "upload_document", options);
 

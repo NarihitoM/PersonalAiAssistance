@@ -107,5 +107,57 @@ export const tools = [
                 required: ["url"]
             }
         }
+    },
+    {
+        type: "function",
+        function: {
+            name: "create_poll",
+            description: "Create a Telegram poll in the chat. Use when user asks to create a poll, vote, or survey",
+            parameters: {
+                type: "object",
+                properties: {
+                    question: { type: "string", description: "Poll question" },
+                    options: { type: "array", items: { type: "string" }, description: "Poll options, 2-10 items" },
+                    is_anonymous: { type: "boolean", description: "Anonymous poll, default true" },
+                    allows_multiple_answers: { type: "boolean", description: "Allow multiple answers, default false" },
+                    message: { type: "string", description: "Message to send along with the poll" }
+                },
+                required: ["question", "options"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "schedule_reminder",
+            description: "Schedule a reminder message to be sent later in this chat. Use when user asks to remind them about something",
+            parameters: {
+                type: "object",
+                properties: {
+                    reminder_text: { type: "string", description: "Reminder content to send later" },
+                    delay_minutes: { type: "integer", description: "Delay in minutes (1-1440, max 24h)" },
+                    message: { type: "string", description: "Confirmation message to send immediately" }
+                },
+                required: ["reminder_text", "delay_minutes"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "send_location",
+            description: "Send a location/venue on the map. Use when user asks to share a location",
+            parameters: {
+                type: "object",
+                properties: {
+                    latitude: { type: "number", description: "Latitude" },
+                    longitude: { type: "number", description: "Longitude" },
+                    title: { type: "string", description: "Venue title, optional" },
+                    address: { type: "string", description: "Venue address, optional" },
+                    message: { type: "string", description: "Message to send along with location" }
+                },
+                required: ["latitude", "longitude"]
+            }
+        }
     }
 ];
