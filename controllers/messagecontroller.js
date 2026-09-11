@@ -25,6 +25,17 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 //Image generation cooldown
 const IMAGE_COOLDOWN_MS = 60 * 60 * 1000;
 
+async function withPhotoAction(bot, chatid, options, task) {
+    await bot.sendChatAction(chatid, "upload_photo", options);
+    const interval = setInterval(() => bot.sendChatAction(chatid, "upload_photo", options), 4000);
+
+    try {
+        return await task();
+    } finally {
+        clearInterval(interval);
+    }
+}
+
 async function checkImageCooldown(chatid) {
     const user = await userquery.findOne({ userid: chatid });
     const last = user?.lastImageGeneratedAt;
@@ -169,8 +180,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         return;
                     }
 
-                    await bot.sendChatAction(chatid, "upload_photo", options);
-                    const image = await generateImage(fileroute.prompt);
+                    const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
                     await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
@@ -333,8 +343,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         return;
                     }
 
-                    await bot.sendChatAction(chatid, "upload_photo", options);
-                    const image = await generateImage(fileroute.prompt);
+                    const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
                     await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
@@ -779,8 +788,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         return;
                     }
 
-                    await bot.sendChatAction(chatid, "upload_photo", options);
-                    const image = await generateImage(fileroute.prompt);
+                    const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
                     await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
@@ -1000,8 +1008,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         return;
                     }
 
-                    await bot.sendChatAction(chatid, "upload_photo", options);
-                    const image = await generateImage(fileroute.prompt);
+                    const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
                     await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
@@ -1162,8 +1169,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             return;
                         }
 
-                        await bot.sendChatAction(chatid, "upload_photo", options);
-                        const image = await generateImage(fileroute.prompt);
+                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
                         await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
@@ -1314,8 +1320,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             return;
                         }
 
-                        await bot.sendChatAction(chatid, "upload_photo", options);
-                        const image = await generateImage(fileroute.prompt);
+                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
                         await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
@@ -1464,8 +1469,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             return;
                         }
 
-                        await bot.sendChatAction(chatid, "upload_photo", options);
-                        const image = await generateImage(fileroute.prompt);
+                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
                         await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
@@ -1620,8 +1624,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             return;
                         }
 
-                        await bot.sendChatAction(chatid, "upload_photo", options);
-                        const image = await generateImage(fileroute.prompt);
+                        const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
                         await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
@@ -1780,8 +1783,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         return;
                     }
 
-                    await bot.sendChatAction(chatid, "upload_photo", options);
-                    const image = await generateImage(fileroute.prompt);
+                    const image = await withPhotoAction(bot, chatid, options, () => generateImage(fileroute.prompt));
 
                     await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
