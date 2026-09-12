@@ -1,8 +1,8 @@
 import { configDotenv } from "dotenv";
-import { createbot } from "../config/botservice.js";
-import { message } from "../controllers/messagecontroller.js";
-import usersession from "../model/usersession.js";
-import processedMessage from "../model/processedMessage.js";
+import { createbot } from "../src/services/botservice.js";
+import { message } from "../src/controllers/messagecontroller.js";
+import usersession from "../src/models/usersession.js";
+import processedMessage from "../src/models/processedMessage.js";
 
 configDotenv();
 

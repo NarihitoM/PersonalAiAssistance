@@ -1,5 +1,5 @@
 import TelegramBot from "node-telegram-bot-api";
-import { mongoconnect } from "../config/mongoservice.js";
+import { mongoconnect } from "./mongoservice.js";
 
 let botInstance = null;
 

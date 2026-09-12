@@ -1,5 +1,5 @@
 import telegramifyMarkdown from "telegramify-markdown";
-import userquery from "../model/userquery.js";
+import userquery from "../models/userquery.js";
 import axios from "axios";
 import PDFParser from "pdf2json";
 
