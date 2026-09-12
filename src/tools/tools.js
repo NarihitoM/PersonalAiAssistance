@@ -188,5 +188,20 @@ export const tools = [
                 required: ["url"]
             }
         }
+    },
+    {
+        type: "function",
+        function: {
+            name: "analyze_image",
+            description: "Analyze an image at a public URL using Gemini vision. Use when user sends an image, provides an image URL, or asks to describe/answer about an image. Returns detailed visual description.",
+            parameters: {
+                type: "object",
+                properties: {
+                    image_url: { type: "string", description: "Publicly accessible image URL to analyze (Telegram file link or any https URL)" },
+                    prompt: { type: "string", description: "Optional question or instruction about what to focus on in the image" }
+                },
+                required: ["image_url"]
+            }
+        }
     }
 ];

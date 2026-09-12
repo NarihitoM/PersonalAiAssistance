@@ -2,7 +2,7 @@ import { groq, modelaudio, transcriptmodel } from "../services/groqservice.js";
 import { chatCompletion } from "../services/xkiroservice.js";
 import { webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscript } from "../services/firecrawlservice.js";
 import { generateImage } from "../services/unoservice.js";
-import { analyzeImage } from "../services/geminiservice.js";
+import { analyzeImage, analyzeImageBuffer } from "../services/geminiservice.js";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompts/systemprompt.js";
 import { tools } from "../tools/tools.js";
@@ -13,7 +13,6 @@ import path from "path";
 import os from "os";
 import https from "https";
 import fs from "fs";
-import supabase from "../services/supabaseservice.js";
 import PDFDocument from "pdfkit";
 import streamBuffers from "stream-buffers";
 import { withPhotoAction, withTypingAction, withChatAction, checkImageCooldown, sendBotMessage, getPdfTextFromUrl } from "../utils/utils.js";
@@ -298,6 +297,23 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
         return handleAIResponse(bot, chatid, options, followUp, messages, depth + 1);
     }
 
+    if (toolCall.function.name === "analyze_image") {
+        let results;
+        try {
+            results = await withChatAction(bot, chatid, "upload_photo", options, () => analyzeImage(systempromptforimage, args.image_url, args.prompt || ""));
+        } catch (err) {
+            console.log("Analyze image failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, image analysis failed: " + err.message, options);
+            return;
+        }
+        const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
+            tools,
+            tool_choice: "auto",
+            messages: [...messages, responseMessage, { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ analysis: results, image_url: args.image_url }) }]
+        }));
+        return handleAIResponse(bot, chatid, options, followUp, messages, depth + 1);
+    }
+
     // create_file
     await withChatAction(bot, chatid, "upload_document", options, async () => {
         await userquery.findOneAndUpdate({
@@ -407,16 +423,12 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             }));
             await handleAIResponse(bot, chatid, options, response, messages);
         }
-        //Photo route
+        //Photo route - tool-driven via analyze_image
         else if (msg.photo) {
             const fileid = msg.photo[msg.photo.length - 1].file_id;
             const filelink = await bot.getFileLink(fileid);
             const captionmsg = msg.caption ? `Caption : ${msg.caption}` : "";
-
-            const imagetext1 = await withChatAction(bot, chatid, "upload_photo", options, () => analyzeImage(systempromptforimage, filelink, captionmsg));
-
-            const aimessage1 = `image : ${imagetext1}`;
-
+            const imageMessage = `User sent an image at URL: ${filelink} ${captionmsg} - Call analyze_image with image_url to inspect it before answering.`;
 
             if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
@@ -424,7 +436,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 $push: {
                     messages: {
                         role: "user",
-                        content: `${aimessage1},${captionmsg}`
+                        content: imageMessage
                     }
                 }
             }, {
@@ -486,35 +498,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     .on("error", reject);
             });
 
-            const screenshotBuffer = fs.createReadStream(tmpScreenshotPath);
-            const screenshotFilename = `SS-Anim-${Date.now()}.jpg`;
+            const screenshotBuffer = fs.readFileSync(tmpScreenshotPath);
 
-            const { error: ssError } = await supabase.storage
-                .from("image-video")
-                .upload(screenshotFilename, screenshotBuffer, {
-                    upsert: true,
-                    contentType: 'image/jpeg'
-                });
+            const imagetext = await analyzeImageBuffer(systempromptforimage, screenshotBuffer, "", "image/jpeg");
 
-            if (ssError) {
-                console.log(ssError);
-            }
-
-            const { data: ssData } = await supabase.storage
-                .from("image-video")
-                .getPublicUrl(screenshotFilename);
-
-            const finalScreenshotUrl = ssData.publicUrl;
-
-            const imagetext = await analyzeImage(systempromptforimage, finalScreenshotUrl);
-
-            const { error: removeError } = await supabase.storage
-                .from("audio")
-                .remove([screenshotFilename]);
-
-            if (removeError) {
-                console.log(removeError);
-            }
+            fs.unlink(tmpScreenshotPath, () => {});
 
             const aimessage = imagetext;
             const gifanalyse = `Gif : ${aimessage}`;
@@ -635,10 +623,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 await handleAIResponse(bot, chatid, options, response, messages);
             } else {
-                const imagetext = await withChatAction(bot, chatid, "upload_photo", options, () => analyzeImage(systempromptforimage, filelink));
-
-                const aimessage = imagetext;
-                const gifanalyse = `Gif : ${aimessage}`;
+                const imageMessage = `User sent a sticker image at URL: ${filelink} Emoji: ${msg.sticker.emoji || "🫧"} - Call analyze_image with image_url to inspect it before answering.`;
 
                 if (attempt === 1) await userquery.findOneAndUpdate({
                     userid: chatid
@@ -646,7 +631,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     $push: {
                         messages: {
                             role: "user",
-                            content: gifanalyse
+                            content: imageMessage
                         }
                     }
                 }, {
@@ -736,7 +721,6 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}.mp4`);
             const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}.mp3`);
-            const audiofilename = `Audio-${Date.now()}.mp3`
 
             await bot.sendChatAction(chatid, "upload_video", options);
 
@@ -764,38 +748,17 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     .on("error", reject);
             });
 
-            //content to change buffer
-            const audiobuffer = fs.createReadStream(tmpAudioPath);
-
-            await bot.sendChatAction(chatid, "upload_video", options);
-
-            const { error } = await supabase.storage.from("audio").upload(audiofilename, audiobuffer, {
-                upsert: true
-            })
-            if (error) {
-                console.log(error);
-            }
-
-            const { data } = await supabase.storage.from("audio").getPublicUrl(audiofilename);
-            const finalaudiourl = data.publicUrl;
-
-
-
             await bot.sendChatAction(chatid, "upload_video", options);
 
             const transcript = await groq.audio.transcriptions.create({
                 model: transcriptmodel,
-                url: finalaudiourl,
+                file: fs.createReadStream(tmpAudioPath),
                 language: "en",
                 response_format: "verbose_json",
                 timestamp_granularities: ["word", "segment"]
             });
 
-
-            const { error: err } = await supabase.storage.from("audio").remove(audiofilename);
-            if (err) {
-                console.log(err);
-            }
+            fs.unlink(tmpAudioPath, () => {});
 
             const datalist = `VideoTranscript : ${JSON.stringify(transcript.segments)}`;
             const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please transcript this";
@@ -972,9 +935,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 await handleAIResponse(bot, chatid, options, response, messages);
             }
             else if (msg.document.mime_type === "image/png" || msg.document.mime_type === "image/jpeg") {
-                const imagetext1 = await withChatAction(bot, chatid, "upload_photo", options, () => analyzeImage(systempromptforimage, filelink, captiontext, msg.document.mime_type));
-
-                const aimessage1 = `image : ${imagetext1}`;
+                const imageMessage = `User sent an image document at URL: ${filelink} ${captiontext} - Call analyze_image with image_url to inspect it before answering.`;
 
                 if (attempt === 1) await userquery.findOneAndUpdate({
                     userid: chatid
@@ -982,7 +943,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     $push: {
                         messages: {
                             role: "user",
-                            content: `${aimessage1},${captiontext}`
+                            content: imageMessage
                         }
                     }
                 }, {
