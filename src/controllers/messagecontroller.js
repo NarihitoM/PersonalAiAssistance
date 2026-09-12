@@ -1,7 +1,7 @@
 import { groq, modelaudio, transcriptmodel } from "../services/groqservice.js";
 import { chatCompletion } from "../services/xkiroservice.js";
 import { webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscript } from "../services/firecrawlservice.js";
-import { generateImage } from "../services/unoservice.js";
+import { generateImage } from "../services/imageservice.js";
 import { analyzeImage, analyzeImageBuffer, assertPublicHttpsUrl } from "../services/geminiservice.js";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompts/systemprompt.js";
