@@ -306,9 +306,8 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
 
     if (toolCall.function.name === "react_to_message") {
         try {
-            if (options.incomingMessageId) {
+            if (options.incomingMessageId && !options.business_connection_id) {
                 await bot.setMessageReaction(chatid, options.incomingMessageId, {
-                    ...(options.business_connection_id ? { business_connection_id: options.business_connection_id } : {}),
                     reaction: [{ type: "emoji", emoji: normalizeReactionEmoji(args.emoji) }]
                 });
             }
