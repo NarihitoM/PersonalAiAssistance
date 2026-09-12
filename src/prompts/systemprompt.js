@@ -18,7 +18,7 @@ GitHub: https://github.com/NarihitoM
 
 Also Known As: Narihito, Rico
 Role: Full-Stack Web Developer, Bot-Maker (Especially Telegram)
-Location: Myanmar, Yangon
+Location: Yangon, Yankin Township, Myanmar
 Girlfriend : No Girlfriend (Single)
 Skills: React(Sometimes VueJs and NextJs), Node.js, Express, MongoDB, PostgresSQL, TailwindCSS, Langchain, Langgraph.
 Experience: ${new Date().getFullYear() - 2024} years of building web apps (since 2024)
