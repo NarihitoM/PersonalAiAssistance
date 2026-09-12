@@ -77,6 +77,11 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             title: args.audioname,
             performer: "Narihito Assistant"
         });
+
+        await userquery.findOneAndUpdate({ userid: chatid }, {
+            $push: { messages: { role: "assistant", content: `Voice sent: ${args.audioname} | ${args.message} | Content: ${args.audiocontent.slice(0, 500)}` } }
+        }, { upsert: true });
+
         return;
     }
 
@@ -96,10 +101,17 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
                 ...options,
                 caption: args.message
             });
+
+            await userquery.findOneAndUpdate({ userid: chatid }, {
+                $push: { messages: { role: "assistant", content: `Image generated: ${args.prompt} | Caption: ${args.message}` } }
+            }, { upsert: true });
         } catch (err) {
             const isTimeout = err.name === "AbortError" || /aborted|timeout/i.test(err.message || "");
             console.log("Image generation failed:", err.message);
             await bot.sendMessage(chatid, isTimeout ? "Image generation timed out. Please try again with a simpler prompt." : "Sorry, image generation failed. Please try again.", options);
+            await userquery.findOneAndUpdate({ userid: chatid }, {
+                $push: { messages: { role: "assistant", content: `Image generation failed: ${err.message}` } }
+            }, { upsert: true });
         }
         return;
     }
