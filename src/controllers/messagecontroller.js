@@ -372,9 +372,6 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const message = `text : ${msg.text}`;
 
-            await bot.sendChatAction(chatid, "typing", options);
-
-
             if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
             }, {
@@ -389,7 +386,6 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             });
 
             const historymessage = await userquery.findOne({ userid: chatid });
-            await bot.sendChatAction(chatid, "typing", options);
 
                 const messages = [
                     {
@@ -404,11 +400,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response = await chatCompletion({
+            const response = await withTypingAction(bot, chatid, options, () => chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
-            });
+            }));
             await handleAIResponse(bot, chatid, options, response, messages);
         }
         //Photo route
@@ -417,13 +413,9 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const filelink = await bot.getFileLink(fileid);
             const captionmsg = msg.caption ? `Caption : ${msg.caption}` : "";
 
-            await bot.sendChatAction(chatid, "upload_photo", options)
-
-            const imagetext1 = await analyzeImage(systempromptforimage, filelink, captionmsg);
+            const imagetext1 = await withChatAction(bot, chatid, "upload_photo", options, () => analyzeImage(systempromptforimage, filelink, captionmsg));
 
             const aimessage1 = `image : ${imagetext1}`;
-
-            await bot.sendChatAction(chatid, "typing", options);
 
 
             if (attempt === 1) await userquery.findOneAndUpdate({
@@ -454,11 +446,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response2 = await chatCompletion({
+            const response2 = await withTypingAction(bot, chatid, options, () => chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
-            });
+            }));
 
             await handleAIResponse(bot, chatid, options, response2, messages);
         }
@@ -481,8 +473,6 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     file.on("error", reject);
                 }).on("error", reject);
             });
-
-            await bot.sendChatAction(chatid, "typing", options);
 
             await new Promise((resolve, reject) => {
                 ffmpeg(tmpAnimationPath)
@@ -544,8 +534,6 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const historymessage = await userquery.findOne({ userid: chatid });
 
-            await bot.sendChatAction(chatid, "typing", options);
-
                 const messages = [
                     {
                         role: "system",
@@ -557,11 +545,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     }))
                 ];
 
-            const response = await chatCompletion({
+            const response = await withTypingAction(bot, chatid, options, () => chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
-            });
+            }));
 
             await handleAIResponse(bot, chatid, options, response, messages);
         }
@@ -585,8 +573,6 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             const historymessage = await userquery.findOne({ userid: chatid });
 
-            await bot.sendChatAction(chatid, "typing", options);
-
                 const messages = [
                     {
                         role: "system",
@@ -598,11 +584,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     }))
                 ];
 
-            const response = await chatCompletion({
+            const response = await withTypingAction(bot, chatid, options, () => chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
-            });
+            }));
 
             await handleAIResponse(bot, chatid, options, response, messages);
         }
@@ -630,8 +616,6 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 const historymessage = await userquery.findOne({ userid: chatid });
 
-                await bot.sendChatAction(chatid, "typing", options);
-
                     const messages = [
                         {
                             role: "system",
@@ -643,16 +627,15 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         }))
                     ];
 
-                const response = await chatCompletion({
+                const response = await withTypingAction(bot, chatid, options, () => chatCompletion({
                     tools,
                     tool_choice: "auto",
                     messages
-                });
+                }));
 
                 await handleAIResponse(bot, chatid, options, response, messages);
             } else {
-                await bot.sendChatAction(chatid, "upload_photo", options);
-                const imagetext = await analyzeImage(systempromptforimage, filelink);
+                const imagetext = await withChatAction(bot, chatid, "upload_photo", options, () => analyzeImage(systempromptforimage, filelink));
 
                 const aimessage = imagetext;
                 const gifanalyse = `Gif : ${aimessage}`;
@@ -672,8 +655,6 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 const historymessage = await userquery.findOne({ userid: chatid });
 
-                await bot.sendChatAction(chatid, "typing", options);
-
                     const messages = [
                         {
                             role: "system",
@@ -685,11 +666,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         }))
                     ];
 
-                const response = await chatCompletion({
-                    tools,
-                    tool_choice: "auto",
-                    messages
-                });
+                const response = await withTypingAction(bot, chatid, options, () => chatCompletion({
+                tools,
+                tool_choice: "auto",
+                messages
+            }));
 
                 await handleAIResponse(bot, chatid, options, response, messages);
             }
@@ -699,20 +680,14 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const fileid = msg.voice.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            await bot.sendChatAction(chatid, "record_voice", options)
-
-            const transcription = await groq.audio.transcriptions.create({
+            const transcription = await withChatAction(bot, chatid, "record_voice", options, () => groq.audio.transcriptions.create({
                 model: transcriptmodel,
                 prompt: "Please reply only in english. with correct grammar and vocabulary.",
                 language: "en",
                 url: filelink
-            })
+            }))
 
             const transcripttext = `Voice : ${transcription.text}`;
-
-
-
-            await bot.sendChatAction(chatid, "typing", options);
 
             if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
@@ -742,11 +717,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response = await chatCompletion({
+            const response = await withTypingAction(bot, chatid, options, () => chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
-            });
+            }));
 
             await handleAIResponse(bot, chatid, options, response, messages);
         }
@@ -839,9 +814,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             });
 
             const historymessage = await userquery.findOne({ userid: chatid });
-            await bot.sendChatAction(chatid, "typing", options);
-
-                const messages = [
+            const messages = [
                     {
                         role: "system",
                         content: systemprompt
@@ -854,11 +827,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response = await chatCompletion({
+            const response = await withTypingAction(bot, chatid, options, () => chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
-            });
+            }));
 
             await handleAIResponse(bot, chatid, options, response, messages);
         }
@@ -893,8 +866,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 const historymessage = await userquery.findOne({ userid: chatid })
 
-                await bot.sendChatAction(chatid, "typing", options);
-                    const messages = [
+                const messages = [
                         {
                             role: "system",
                             content: systemprompt
@@ -907,11 +879,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         ))
                     ];
 
-                const response = await chatCompletion({
-                    tools,
-                    tool_choice: "auto",
-                    messages
-                });
+                const response = await withTypingAction(bot, chatid, options, () => chatCompletion({
+                tools,
+                tool_choice: "auto",
+                messages
+            }));
 
                 await handleAIResponse(bot, chatid, options, response, messages);
             }
@@ -937,8 +909,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 const historymessage = await userquery.findOne({ userid: chatid })
 
-                await bot.sendChatAction(chatid, "typing", options);
-                    const messages = [
+                const messages = [
                         {
                             role: "system",
                             content: systemprompt
@@ -951,11 +922,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         ))
                     ];
 
-                const response = await chatCompletion({
-                    tools,
-                    tool_choice: "auto",
-                    messages
-                });
+                const response = await withTypingAction(bot, chatid, options, () => chatCompletion({
+                tools,
+                tool_choice: "auto",
+                messages
+            }));
 
                 await handleAIResponse(bot, chatid, options, response, messages);
             }
@@ -979,8 +950,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
                 const historymessage = await userquery.findOne({ userid: chatid })
 
-                await bot.sendChatAction(chatid, "typing", options);
-                    const messages = [
+                const messages = [
                         {
                             role: "system",
                             content: systemprompt
@@ -993,20 +963,18 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         ))
                     ];
 
-                const response = await chatCompletion({
-                    tools,
-                    tool_choice: "auto",
-                    messages
-                });
+                const response = await withTypingAction(bot, chatid, options, () => chatCompletion({
+                tools,
+                tool_choice: "auto",
+                messages
+            }));
 
                 await handleAIResponse(bot, chatid, options, response, messages);
             }
             else if (msg.document.mime_type === "image/png" || msg.document.mime_type === "image/jpeg") {
-                const imagetext1 = await analyzeImage(systempromptforimage, filelink, captiontext, msg.document.mime_type);
+                const imagetext1 = await withChatAction(bot, chatid, "upload_photo", options, () => analyzeImage(systempromptforimage, filelink, captiontext, msg.document.mime_type));
 
                 const aimessage1 = `image : ${imagetext1}`;
-
-                await bot.sendChatAction(chatid, "typing", options);
 
                 if (attempt === 1) await userquery.findOneAndUpdate({
                     userid: chatid
@@ -1036,11 +1004,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         ))
                     ];
 
-                const response2 = await chatCompletion({
-                    tools,
-                    tool_choice: "auto",
-                    messages
-                });
+                const response2 = await withTypingAction(bot, chatid, options, () => chatCompletion({
+                tools,
+                tool_choice: "auto",
+                messages
+            }));
 
                 await handleAIResponse(bot, chatid, options, response2, messages);
             }
@@ -1049,12 +1017,10 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const fileid = msg.audio.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            await bot.sendChatAction(chatid, "upload_document", options);
-
-            const result = await groq.audio.transcriptions.create({
+            const result = await withChatAction(bot, chatid, "upload_document", options, () => groq.audio.transcriptions.create({
                 model: transcriptmodel,
                 url: filelink
-            });
+            }));
 
             const audiotext = `Audio : ${result.text}`;
 
@@ -1073,9 +1039,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             });
 
             const historymessage = await userquery.findOne({ userid: chatid });
-            await bot.sendChatAction(chatid, "typing", options);
-
-                const messages = [
+            const messages = [
                     {
                         role: "system",
                         content: systemprompt
@@ -1088,11 +1052,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response = await chatCompletion({
+            const response = await withTypingAction(bot, chatid, options, () => chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
-            });
+            }));
             await handleAIResponse(bot, chatid, options, response, messages);
         }
     } catch (err) {
