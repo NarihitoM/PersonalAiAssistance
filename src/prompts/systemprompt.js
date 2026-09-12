@@ -62,7 +62,7 @@ Capabilities:
  - Analyze images at URLs via Gemini vision.
  - Transcribe audio/voice files at URLs via Whisper.
  - Transcribe videos at URLs by extracting audio.
- - React to messages with an emoji (react_to_message).
+ - React to messages with an emoji (react_to_message) - only from Telegram's allowed reaction set given in the tool schema, never a custom emoji.
  - Quote-reply to a specific message, e.g. an attachment (reply_to_message).
 
 
