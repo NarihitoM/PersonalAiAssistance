@@ -21,6 +21,14 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 
 const MAX_TOOL_DEPTH = 5;
 
+const ALLOWED_REACTIONS = ["👍", "👎", "❤", "🔥", "🥰", "👏", "😁", "🤔", "🤯", "😱", "🤬", "😢", "🎉", "🤩", "🤮", "💩", "🙏", "👌", "🕊", "🤡", "🥱", "🥴", "😍", "🐳", "🌚", "🌭", "💯", "🤣", "⚡", "🍌", "🏆", "💔", "🤨", "😐", "🍓", "🍾", "💋", "🖕", "😈", "😴", "😭", "🤓", "👻", "👀", "🎃", "🙈", "😇", "😨", "🤝", "🤗", "🎅", "🎄", "☃", "💅", "🤪", "🗿", "🆒", "💘", "🙉", "🦄", "😘", "💊", "🙊", "😎", "👾", "🤷", "😡"];
+
+function normalizeReactionEmoji(emoji) {
+    const stripped = String(emoji || "").replace(/️/g, "");
+    const match = ALLOWED_REACTIONS.find(r => r.replace(/️/g, "") === stripped);
+    return match || "👍";
+}
+
 async function handleAIResponse(bot, chatid, options, response, messages, depth = 0) {
     if (depth > MAX_TOOL_DEPTH) {
         console.log(`handleAIResponse max depth ${MAX_TOOL_DEPTH} reached, stopping`);
@@ -300,7 +308,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
         try {
             if (options.incomingMessageId) {
                 await bot.setMessageReaction(chatid, options.incomingMessageId, {
-                    reaction: [{ type: "emoji", emoji: args.emoji }]
+                    reaction: [{ type: "emoji", emoji: normalizeReactionEmoji(args.emoji) }]
                 });
             }
 

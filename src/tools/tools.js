@@ -243,8 +243,7 @@ export const tools = [
                 properties: {
                     emoji: {
                         type: "string",
-                        enum: ["👍", "👎", "❤", "🔥", "🥰", "👏", "😁", "🤔", "🤯", "😱", "🤬", "😢", "🎉", "🤩", "🤮", "💩", "🙏", "👌", "🕊", "🤡", "🥱", "🥴", "😍", "🐳", "🌚", "🌭", "💯", "🤣", "⚡", "🍌", "🏆", "💔", "🤨", "😐", "🍓", "🍾", "💋", "🖕", "😈", "😴", "😭", "🤓", "👻", "👀", "🎃", "🙈", "😇", "😨", "🤝", "🤗", "🎅", "🎄", "☃", "💅", "🤪", "🗿", "🆒", "💘", "🙉", "🦄", "😘", "💊", "🙊", "😎", "👾", "🤷", "😡"],
-                        description: "A single emoji from the allowed Telegram reaction set to react with"
+                        description: "A single emoji to react with. Prefer common ones like 👍 👎 ❤ 🔥 🥰 👏 😁 🤔 😱 😢 🎉 🤩 🙏 😍 💯 🤣 😭 😎 - if it isn't a valid Telegram reaction emoji, a fallback will be used automatically."
                     },
                     message: { type: "string", description: "Text reply to send along with the reaction" }
                 },
