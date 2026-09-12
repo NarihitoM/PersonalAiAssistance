@@ -67,10 +67,10 @@ export async function generateImage(prompt, { timeoutMs = 60000 } = {}) {
 
     try {
         try {
-            return await generateImageWithOpenRouter(prompt, controller.signal);
-        } catch (err) {
-            console.log("OpenRouter image generation failed, falling back to UnoRouter:", err.message);
             return await generateImageWithUno(prompt, controller.signal);
+        } catch (err) {
+            console.log("UnoRouter image generation failed, falling back to OpenRouter (paid):", err.message);
+            return await generateImageWithOpenRouter(prompt, controller.signal);
         }
     } finally {
         clearTimeout(timeout);
