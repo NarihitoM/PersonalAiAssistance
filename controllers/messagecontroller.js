@@ -1,4 +1,4 @@
-import { groq, xkiro, analyzeImage, generateImage, webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscript, model, modelaudio, transcriptmodel } from "../config/aiservice.js";
+import { groq, chatCompletion, analyzeImage, generateImage, webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscript, modelaudio, transcriptmodel } from "../config/aiservice.js";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import { tools } from "../tools/tools.js";
@@ -111,8 +111,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             return;
         }
 
-        const followUp = await withTypingAction(bot, chatid, options, () => xkiro.chat.completions.create({
-            model,
+        const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
             tools,
             tool_choice: "auto",
             messages: [
@@ -135,8 +134,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             return;
         }
 
-        const followUp = await withTypingAction(bot, chatid, options, () => xkiro.chat.completions.create({
-            model,
+        const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
             tools,
             tool_choice: "auto",
             messages: [
@@ -159,8 +157,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             return;
         }
 
-        const followUp = await withTypingAction(bot, chatid, options, () => xkiro.chat.completions.create({
-            model,
+        const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
             tools,
             tool_choice: "auto",
             messages: [
@@ -183,8 +180,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             return;
         }
 
-        const followUp = await withTypingAction(bot, chatid, options, () => xkiro.chat.completions.create({
-            model,
+        const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
             tools,
             tool_choice: "auto",
             messages: [
@@ -273,8 +269,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             await bot.sendMessage(chatid, "Sorry, YouTube search failed: " + err.message, options);
             return;
         }
-        const followUp = await withTypingAction(bot, chatid, options, () => xkiro.chat.completions.create({
-            model,
+        const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
             tools,
             tool_choice: "auto",
             messages: [...messages, responseMessage, { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }]
@@ -291,8 +286,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
             await bot.sendMessage(chatid, "Sorry, YouTube transcript failed: " + err.message, options);
             return;
         }
-        const followUp = await withTypingAction(bot, chatid, options, () => xkiro.chat.completions.create({
-            model,
+        const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
             tools,
             tool_choice: "auto",
             messages: [...messages, responseMessage, { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify(results) }]
@@ -406,8 +400,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response = await xkiro.chat.completions.create({
-                model: model,
+            const response = await chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
@@ -457,8 +450,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response2 = await xkiro.chat.completions.create({
-                model: model,
+            const response2 = await chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
@@ -561,8 +553,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     }))
                 ];
 
-            const response = await xkiro.chat.completions.create({
-                model: model,
+            const response = await chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
@@ -603,8 +594,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     }))
                 ];
 
-            const response = await xkiro.chat.completions.create({
-                model: model,
+            const response = await chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
@@ -649,8 +639,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         }))
                     ];
 
-                const response = await xkiro.chat.completions.create({
-                    model: model,
+                const response = await chatCompletion({
                     tools,
                     tool_choice: "auto",
                     messages
@@ -692,8 +681,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         }))
                     ];
 
-                const response = await xkiro.chat.completions.create({
-                    model: model,
+                const response = await chatCompletion({
                     tools,
                     tool_choice: "auto",
                     messages
@@ -750,8 +738,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response = await xkiro.chat.completions.create({
-                model: model,
+            const response = await chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
@@ -863,8 +850,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response = await xkiro.chat.completions.create({
-                model: model,
+            const response = await chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
@@ -917,8 +903,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         ))
                     ];
 
-                const response = await xkiro.chat.completions.create({
-                    model: model,
+                const response = await chatCompletion({
                     tools,
                     tool_choice: "auto",
                     messages
@@ -962,8 +947,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         ))
                     ];
 
-                const response = await xkiro.chat.completions.create({
-                    model: model,
+                const response = await chatCompletion({
                     tools,
                     tool_choice: "auto",
                     messages
@@ -1005,8 +989,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         ))
                     ];
 
-                const response = await xkiro.chat.completions.create({
-                    model: model,
+                const response = await chatCompletion({
                     tools,
                     tool_choice: "auto",
                     messages
@@ -1049,8 +1032,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                         ))
                     ];
 
-                const response2 = await xkiro.chat.completions.create({
-                    model: model,
+                const response2 = await chatCompletion({
                     tools,
                     tool_choice: "auto",
                     messages
@@ -1102,8 +1084,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     ))
                 ];
 
-            const response = await xkiro.chat.completions.create({
-                model: model,
+            const response = await chatCompletion({
                 tools,
                 tool_choice: "auto",
                 messages
