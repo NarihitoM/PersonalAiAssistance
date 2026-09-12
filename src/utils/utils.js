@@ -3,7 +3,7 @@ import userquery from "../models/userquery.js";
 import axios from "axios";
 import PDFParser from "pdf2json";
 
-export const IMAGE_COOLDOWN_MS = 60 * 60 * 1000;
+export const IMAGE_COOLDOWN_MS = 1 * 60 * 1000;
 
 export async function withPhotoAction(bot, chatid, options, task) {
     try { await bot.sendChatAction(chatid, "upload_photo", options); } catch {}

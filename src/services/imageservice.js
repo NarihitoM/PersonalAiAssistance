@@ -60,6 +60,7 @@ async function generateImageWithOpenRouter(prompt, signal) {
         : image;
 }
 
+
 export async function generateImage(prompt, { timeoutMs = 60000 } = {}) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
