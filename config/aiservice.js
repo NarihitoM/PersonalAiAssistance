@@ -16,7 +16,9 @@ const FALLBACK_MODELS = [
     "qwen/qwen3-max:free",
     "qwen/qwen3.5-plus:free",
     "minimax/minimax-m2:free",
-    "minimax/minimax-m3:free"
+    "minimax/minimax-m3:free",
+    "deepseek/deepseek-v4-pro",
+    "deepseek/deepseek-v4-flash"
 ];
 
 export const groq = new Groq({ apiKey: process.env.AI });
