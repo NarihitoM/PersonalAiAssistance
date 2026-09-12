@@ -237,7 +237,7 @@ export const tools = [
         type: "function",
         function: {
             name: "react_to_message",
-            description: "React to the user's message with a single emoji. Use SPARINGLY, only when a reaction genuinely fits (something funny, impressive, sweet, or emotionally notable) - most messages should just get a normal reply with no reaction.",
+            description: "React to the user's message with a single emoji and reply. Use this for every normal text reply - put your full reply text in the message field and pick a fitting emoji.",
             parameters: {
                 type: "object",
                 properties: {
@@ -246,9 +246,9 @@ export const tools = [
                         enum: ["👍", "👎", "❤", "🔥", "🥰", "👏", "😁", "🤔", "🤯", "😱", "🤬", "😢", "🎉", "🤩", "🤮", "💩", "🙏", "👌", "🕊", "🤡", "🥱", "🥴", "😍", "🐳", "🌚", "🌭", "💯", "🤣", "⚡", "🍌", "🏆", "💔", "🤨", "😐", "🍓", "🍾", "💋", "🖕", "😈", "😴", "😭", "🤓", "👻", "👀", "🎃", "🙈", "😇", "😨", "🤝", "🤗", "🎅", "🎄", "☃", "💅", "🤪", "🗿", "🆒", "💘", "🙉", "🦄", "😘", "💊", "🙊", "😎", "👾", "🤷", "😡"],
                         description: "A single emoji from the allowed Telegram reaction set to react with"
                     },
-                    message: { type: "string", description: "Optional text reply to send along with the reaction" }
+                    message: { type: "string", description: "Text reply to send along with the reaction" }
                 },
-                required: ["emoji"]
+                required: ["emoji", "message"]
             }
         }
     },
