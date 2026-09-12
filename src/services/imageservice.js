@@ -6,7 +6,7 @@ const UNO_BASE_URL = "https://api.unorouter.com/v1";
 const unoImageModel = "flux-2-klein-4b:free";
 
 const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
-const openrouterImageModel = "sourceful/riverflow-v2.5-fast";
+const openrouterImageModel = "google/gemini-2.5-flash-image";
 
 async function generateImageWithUno(prompt, signal) {
     const response = await fetch(`${UNO_BASE_URL}/images/generations`, {
