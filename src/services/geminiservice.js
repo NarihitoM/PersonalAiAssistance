@@ -17,7 +17,7 @@ function isPrivateIp(ip) {
     return lower === "::1" || lower.startsWith("fc") || lower.startsWith("fd") || lower.startsWith("fe80") || lower === "::";
 }
 
-async function assertPublicHttpsUrl(rawUrl) {
+export async function assertPublicHttpsUrl(rawUrl) {
     const url = new URL(rawUrl);
     if (url.protocol !== "https:") throw new Error("Only https URLs are allowed");
 

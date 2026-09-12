@@ -222,6 +222,35 @@ export const tools = [
     {
         type: "function",
         function: {
+            name: "reply_to_message",
+            description: "Send your text reply as a Telegram quote-reply directly on top of the user's message. Use this when replying about a specific attachment (photo, video, document, voice) or a specific earlier message, so it's clear what you're responding to. Not needed for normal back-and-forth chat.",
+            parameters: {
+                type: "object",
+                properties: {
+                    message: { type: "string", description: "The reply text" }
+                },
+                required: ["message"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "react_to_message",
+            description: "React to the user's message with a single emoji. Use SPARINGLY, only when a reaction genuinely fits (something funny, impressive, sweet, or emotionally notable) - most messages should just get a normal reply with no reaction.",
+            parameters: {
+                type: "object",
+                properties: {
+                    emoji: { type: "string", description: "A single emoji to react with, e.g. 👍, ❤️, 🔥, 😁" },
+                    message: { type: "string", description: "Optional text reply to send along with the reaction" }
+                },
+                required: ["emoji"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
             name: "transcribe_video",
             description: "Transcribe a video file at a public URL by extracting audio and using Whisper. Use when user sends a video or provides a video URL and you need transcript with timestamps. Returns segments with start, end, text.",
             parameters: {

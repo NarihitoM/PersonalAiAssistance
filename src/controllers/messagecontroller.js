@@ -2,7 +2,7 @@ import { groq, modelaudio, transcriptmodel } from "../services/groqservice.js";
 import { chatCompletion } from "../services/xkiroservice.js";
 import { webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscript } from "../services/firecrawlservice.js";
 import { generateImage } from "../services/unoservice.js";
-import { analyzeImage, analyzeImageBuffer } from "../services/geminiservice.js";
+import { analyzeImage, analyzeImageBuffer, assertPublicHttpsUrl } from "../services/geminiservice.js";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompts/systemprompt.js";
 import { tools } from "../tools/tools.js";
@@ -275,6 +275,46 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
         return;
     }
 
+    if (toolCall.function.name === "reply_to_message") {
+        await sendBotMessage(bot, chatid, args.message, {
+            ...options,
+            reply_to_message_id: options.incomingMessageId
+        });
+
+        await userquery.findOneAndUpdate({
+            userid: chatid
+        }, {
+            $push: {
+                messages: {
+                    role: "assistant",
+                    content: args.message
+                }
+            }
+        }, {
+            upsert: true
+        });
+        return;
+    }
+
+    if (toolCall.function.name === "react_to_message") {
+        try {
+            if (options.incomingMessageId) {
+                await bot.setMessageReaction(chatid, options.incomingMessageId, {
+                    reaction: [{ type: "emoji", emoji: args.emoji }]
+                });
+            }
+
+            if (args.message) await sendBotMessage(bot, chatid, args.message, options);
+
+            await userquery.findOneAndUpdate({ userid: chatid }, {
+                $push: { messages: { role: "assistant", content: `Reacted with ${args.emoji}${args.message ? ` | ${args.message}` : ""}` } }
+            }, { upsert: true });
+        } catch (err) {
+            console.log("React to message failed:", err.message);
+        }
+        return;
+    }
+
     if (toolCall.function.name === "youtube_search") {
         let results;
         try {
@@ -330,6 +370,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
         let results;
         try {
             results = await withTypingAction(bot, chatid, options, async () => {
+                await assertPublicHttpsUrl(args.audio_url);
                 const tr = await groq.audio.transcriptions.create({
                     model: transcriptmodel,
                     url: args.audio_url,
@@ -355,11 +396,22 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
         let results;
         try {
             results = await withTypingAction(bot, chatid, options, async () => {
+                await assertPublicHttpsUrl(args.video_url);
                 const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}-toolvideo.mp4`);
                 const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}-toolvideo.mp3`);
                 await new Promise((resolve, reject) => {
                     const file = fs.createWriteStream(tmpVideoPath);
-                    https.get(args.video_url, (res) => {
+                    const req = https.get(args.video_url, (res) => {
+                        if (res.statusCode >= 300 && res.statusCode < 400) {
+                            req.destroy();
+                            reject(new Error("redirects not allowed"));
+                            return;
+                        }
+                        if (res.statusCode !== 200) {
+                            req.destroy();
+                            reject(new Error(`bad status ${res.statusCode}`));
+                            return;
+                        }
                         res.pipe(file);
                         file.on("finish", resolve);
                         file.on("error", reject);
@@ -458,6 +510,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
     if (businessConnectionId) {
         options.business_connection_id = businessConnectionId;
     }
+    options.incomingMessageId = msg.message_id;
 
 
     //Message route
