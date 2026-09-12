@@ -1,13 +1,35 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { configDotenv } from "dotenv";
+import dns from "dns/promises";
+import net from "net";
 
 configDotenv();
 
 const gemini = new GoogleGenerativeAI(process.env.GEMINI);
 const visionmodel = gemini.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
+function isPrivateIp(ip) {
+    if (net.isIPv4(ip)) {
+        const [a, b] = ip.split(".").map(Number);
+        return a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || a === 0;
+    }
+    const lower = ip.toLowerCase();
+    return lower === "::1" || lower.startsWith("fc") || lower.startsWith("fd") || lower.startsWith("fe80") || lower === "::";
+}
+
+async function assertPublicHttpsUrl(rawUrl) {
+    const url = new URL(rawUrl);
+    if (url.protocol !== "https:") throw new Error("Only https URLs are allowed");
+
+    const addresses = await dns.lookup(url.hostname, { all: true });
+    if (addresses.length === 0 || addresses.some(a => isPrivateIp(a.address))) {
+        throw new Error("URL resolves to a disallowed address");
+    }
+}
+
 export async function analyzeImage(systemPrompt, imageUrl, captionText = "", knownMimeType = "") {
-    const imageResponse = await fetch(imageUrl);
+    await assertPublicHttpsUrl(imageUrl);
+    const imageResponse = await fetch(imageUrl, { redirect: "error" });
     const arrayBuffer = await imageResponse.arrayBuffer();
     const headerMimeType = imageResponse.headers.get("content-type");
     const mimeType = knownMimeType
