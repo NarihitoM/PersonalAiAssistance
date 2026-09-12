@@ -1,6 +1,6 @@
 # Narihito AI Assistant
 
-<img src="src/assets/img/NariAiAssistant.png" alt="Narihito AI Assistant" width="480" />
+<img src="src/assets/img/NariAiAssistant.png" alt="Narihito AI Assistant" width="220" />
 
 A Telegram bot that acts as Narihito's personal AI assistant — chats, listens to voice notes, reads images/files, generates images and voice replies, and searches the web, all through real tool calling.
 
