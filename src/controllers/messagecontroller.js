@@ -329,7 +329,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
     if (toolCall.function.name === "transcribe_audio") {
         let results;
         try {
-            results = await withChatAction(bot, chatid, "record_voice", options, async () => {
+            results = await withChatAction(bot, chatid, "upload_document", options, async () => {
                 const tr = await groq.audio.transcriptions.create({
                     model: transcriptmodel,
                     url: args.audio_url,
