@@ -9,12 +9,7 @@ export const model = "qwen/qwen3-max:free";
 const GROQ_FALLBACK_MODEL = "openai/gpt-oss-120b";
 
 const FALLBACK_MODELS = [
-    "qwen/qwen3-max:free",
-    "qwen/qwen3.5-plus:free",
-    "minimax/minimax-m2:free",
-    "minimax/minimax-m3:free",
-    "deepseek/deepseek-v4-pro",
-    "deepseek/deepseek-v4-flash"
+    "qwen/qwen3-max:free"
 ];
 
 export const xkiro = new OpenAI({ baseURL: "https://api.xkiro.com/v1", apiKey: process.env.XKIRO });
