@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { configDotenv } from "dotenv";
 import { groq } from "./groqservice.js";
+import { mistralChatCompletion, mistralChatModel } from "./mistralservice.js";
 
 configDotenv();
 
@@ -33,6 +34,16 @@ export async function chatCompletion(params) {
         return await groq.chat.completions.create({ ...params, model: GROQ_FALLBACK_MODEL });
     } catch (err) {
         console.log(`groq model ${GROQ_FALLBACK_MODEL} failed:`, err.message);
-        throw err;
+        lastErr = err;
     }
+    if (process.env.MISTRAL) {
+        try {
+            console.log("groq failed, falling back to Mistral");
+            return await mistralChatCompletion(params);
+        } catch (err) {
+            console.log(`mistral model ${mistralChatModel} failed:`, err.message);
+            lastErr = err;
+        }
+    }
+    throw lastErr;
 }
