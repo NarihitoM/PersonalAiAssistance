@@ -4,7 +4,7 @@ import { webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscrip
 import { generateImage } from "../services/imageservice.js";
 import { analyzeImage, analyzeImageBuffer, assertPublicHttpsUrl } from "../services/geminiservice.js";
 import mammoth from "mammoth";
-import { systemprompt, systempromptforimage } from "../prompts/systemprompt.js";
+import { systemprompt, systempromptforimage, getSystemPrompt } from "../prompts/systemprompt.js";
 import { tools } from "../tools/tools.js";
 import userquery from "../models/userquery.js";
 import ffmpeg from "fluent-ffmpeg";
@@ -545,7 +545,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const messages = [
                     {
                         role: "system",
-                        content: systemprompt
+                        content: getSystemPrompt()
                     },
                     ...historymessage.messages.slice(-6).map((element) => (
                         {
@@ -587,7 +587,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const messages = [
                     {
                         role: "system",
-                        content: systemprompt
+                        content: getSystemPrompt()
                     },
                     ...historymessage.messages.slice(-6).map((element) => (
                         {
@@ -664,7 +664,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const messages = [
                     {
                         role: "system",
-                        content: systemprompt
+                        content: getSystemPrompt()
                     },
                     ...historymessage.messages.slice(-6).map((element) => ({
                         role: element.role,
@@ -703,7 +703,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const messages = [
                     {
                         role: "system",
-                        content: systemprompt
+                        content: getSystemPrompt()
                     },
                     ...historymessage.messages.slice(-6).map((element) => ({
                         role: element.role,
@@ -746,7 +746,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     const messages = [
                         {
                             role: "system",
-                            content: systemprompt
+                            content: getSystemPrompt()
                         },
                         ...historymessage.messages.slice(-6).map((element) => ({
                             role: element.role,
@@ -782,7 +782,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     const messages = [
                         {
                             role: "system",
-                            content: systemprompt
+                            content: getSystemPrompt()
                         },
                         ...historymessage.messages.slice(-6).map((element) => ({
                             role: element.role,
@@ -823,7 +823,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const messages = [
                     {
                         role: "system",
-                        content: systemprompt
+                        content: getSystemPrompt()
                     },
                     ...historymessage.messages.slice(-6).map((element) => (
                         {
@@ -865,7 +865,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const messages = [
                     {
                         role: "system",
-                        content: systemprompt
+                        content: getSystemPrompt()
                     },
                     ...historymessage.messages.slice(-6).map((element) => (
                         {
@@ -917,7 +917,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const messages = [
                         {
                             role: "system",
-                            content: systemprompt
+                            content: getSystemPrompt()
                         },
                         ...historymessage.messages.slice(-6).map((element) => (
                             {
@@ -960,7 +960,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const messages = [
                         {
                             role: "system",
-                            content: systemprompt
+                            content: getSystemPrompt()
                         },
                         ...historymessage.messages.slice(-6).map((element) => (
                             {
@@ -1001,7 +1001,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 const messages = [
                         {
                             role: "system",
-                            content: systemprompt
+                            content: getSystemPrompt()
                         },
                         ...historymessage.messages.slice(-6).map((element) => (
                             {
@@ -1040,7 +1040,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     const messages = [
                         {
                             role: "system",
-                            content: systemprompt
+                            content: getSystemPrompt()
                         },
                         ...historymessage.messages.slice(-6).map((element) => (
                             {
@@ -1081,7 +1081,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const messages = [
                     {
                         role: "system",
-                        content: systemprompt
+                        content: getSystemPrompt()
                     },
                     ...historymessage.messages.slice(-6).map((element) => (
                         {

@@ -158,3 +158,10 @@ Response rules:
 - Do not mention analysis tools or external systems.
 - Focus only on what can reasonably be observed from the image.
 `;
+
+export function getSystemPrompt() {
+    const now = new Date();
+    return `${systemprompt}
+Current Time (UTC): ${now.toUTCString()}
+Use this when the user asks about time, date, day, or scheduling anything. If the user mentions their city or country, convert to their local time from UTC yourself.`;
+}
