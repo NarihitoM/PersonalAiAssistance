@@ -8,7 +8,7 @@ configDotenv();
 
 const UNO_BASE_URL = "https://api.unorouter.com/v1";
 const unoImageModel = "flux-2-klein-4b:free";
-export const model = "minimax/minimax-m3:free";
+export const model = "qwen/qwen3-max:free";
 export const modelaudio = "canopylabs/orpheus-v1-english";
 export const transcriptmodel = "whisper-large-v3-turbo";
 
