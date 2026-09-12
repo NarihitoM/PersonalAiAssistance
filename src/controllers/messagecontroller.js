@@ -312,7 +312,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
     if (toolCall.function.name === "analyze_image") {
         let results;
         try {
-            results = await withChatAction(bot, chatid, "upload_photo", options, () => analyzeImage(systempromptforimage, args.image_url, args.prompt || ""));
+            results = await withTypingAction(bot, chatid, options, () => analyzeImage(systempromptforimage, args.image_url, args.prompt || ""));
         } catch (err) {
             console.log("Analyze image failed:", err.message);
             await bot.sendMessage(chatid, "Sorry, image analysis failed: " + err.message, options);
@@ -329,7 +329,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
     if (toolCall.function.name === "transcribe_audio") {
         let results;
         try {
-            results = await withChatAction(bot, chatid, "upload_document", options, async () => {
+            results = await withTypingAction(bot, chatid, options, async () => {
                 const tr = await groq.audio.transcriptions.create({
                     model: transcriptmodel,
                     url: args.audio_url,
@@ -354,7 +354,7 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
     if (toolCall.function.name === "transcribe_video") {
         let results;
         try {
-            results = await withChatAction(bot, chatid, "upload_video", options, async () => {
+            results = await withTypingAction(bot, chatid, options, async () => {
                 const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}-toolvideo.mp4`);
                 const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}-toolvideo.mp3`);
                 await new Promise((resolve, reject) => {
@@ -548,7 +548,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const fileid = msg.animation.file_id;
             const filelink = await bot.getFileLink(fileid);
 
-            await bot.sendChatAction(chatid, "upload_video", options);
+            await bot.sendChatAction(chatid, "typing", options);
 
             const tmpAnimationPath = path.join(os.tmpdir(), `${Date.now()}-anim.mp4`);
             const tmpScreenshotDir = os.tmpdir();
@@ -828,7 +828,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
             const filelink = await bot.getFileLink(fileid);
             const filecontent = await fetch(filelink);
             const filebuffer = await filecontent.arrayBuffer();
-            await bot.sendChatAction(chatid, "upload_document", options);
+            await bot.sendChatAction(chatid, "typing", options);
             const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please analyse this file";
 
             //Txt file route
