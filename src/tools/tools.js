@@ -203,5 +203,35 @@ export const tools = [
                 required: ["image_url"]
             }
         }
+    },
+    {
+        type: "function",
+        function: {
+            name: "transcribe_audio",
+            description: "Transcribe an audio/voice file at a public URL using Whisper. Use when user sends a voice message, audio file, or provides an audio URL and you need the spoken text. Returns transcribed text.",
+            parameters: {
+                type: "object",
+                properties: {
+                    audio_url: { type: "string", description: "Publicly accessible audio/voice file URL to transcribe (Telegram file link or any https URL)" },
+                    prompt: { type: "string", description: "Optional prompt to guide transcription (e.g. language hint)" }
+                },
+                required: ["audio_url"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "transcribe_video",
+            description: "Transcribe a video file at a public URL by extracting audio and using Whisper. Use when user sends a video or provides a video URL and you need transcript with timestamps. Returns segments with start, end, text.",
+            parameters: {
+                type: "object",
+                properties: {
+                    video_url: { type: "string", description: "Publicly accessible video file URL to transcribe (Telegram file link or any https URL)" },
+                    caption: { type: "string", description: "Optional caption or question about the video" }
+                },
+                required: ["video_url"]
+            }
+        }
     }
 ];

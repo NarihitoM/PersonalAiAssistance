@@ -314,6 +314,72 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
         return handleAIResponse(bot, chatid, options, followUp, messages, depth + 1);
     }
 
+    if (toolCall.function.name === "transcribe_audio") {
+        let results;
+        try {
+            results = await withChatAction(bot, chatid, "record_voice", options, async () => {
+                const tr = await groq.audio.transcriptions.create({
+                    model: transcriptmodel,
+                    url: args.audio_url,
+                    prompt: args.prompt || undefined,
+                    language: "en"
+                });
+                return tr.text || tr;
+            });
+        } catch (err) {
+            console.log("Transcribe audio failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, audio transcription failed: " + err.message, options);
+            return;
+        }
+        const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
+            tools,
+            tool_choice: "auto",
+            messages: [...messages, responseMessage, { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ transcript: results, audio_url: args.audio_url }) }]
+        }));
+        return handleAIResponse(bot, chatid, options, followUp, messages, depth + 1);
+    }
+
+    if (toolCall.function.name === "transcribe_video") {
+        let results;
+        try {
+            results = await withChatAction(bot, chatid, "upload_video", options, async () => {
+                const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}-toolvideo.mp4`);
+                const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}-toolvideo.mp3`);
+                await new Promise((resolve, reject) => {
+                    const file = fs.createWriteStream(tmpVideoPath);
+                    https.get(args.video_url, (res) => {
+                        res.pipe(file);
+                        file.on("finish", resolve);
+                        file.on("error", reject);
+                    }).on("error", reject);
+                });
+                await new Promise((resolve, reject) => {
+                    ffmpeg(tmpVideoPath).noVideo().audioCodec("libmp3lame").audioBitrate(128).format("mp3").save(tmpAudioPath).on("end", resolve).on("error", reject);
+                });
+                const transcript = await groq.audio.transcriptions.create({
+                    model: transcriptmodel,
+                    file: fs.createReadStream(tmpAudioPath),
+                    language: "en",
+                    response_format: "verbose_json",
+                    timestamp_granularities: ["word", "segment"]
+                });
+                fs.unlink(tmpVideoPath, () => {});
+                fs.unlink(tmpAudioPath, () => {});
+                return transcript.segments || transcript;
+            });
+        } catch (err) {
+            console.log("Transcribe video failed:", err.message);
+            await bot.sendMessage(chatid, "Sorry, video transcription failed: " + err.message, options);
+            return;
+        }
+        const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
+            tools,
+            tool_choice: "auto",
+            messages: [...messages, responseMessage, { role: "tool", tool_call_id: toolCall.id, content: JSON.stringify({ transcript: results, video_url: args.video_url, caption: args.caption || "" }) }]
+        }));
+        return handleAIResponse(bot, chatid, options, followUp, messages, depth + 1);
+    }
+
     // create_file
     await withChatAction(bot, chatid, "upload_document", options, async () => {
         await userquery.findOneAndUpdate({
@@ -660,19 +726,11 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 await handleAIResponse(bot, chatid, options, response, messages);
             }
         }
-        //Voiceroute
+        //Voiceroute - tool-driven via transcribe_audio
         else if (msg.voice) {
             const fileid = msg.voice.file_id;
             const filelink = await bot.getFileLink(fileid);
-
-            const transcription = await withChatAction(bot, chatid, "record_voice", options, () => groq.audio.transcriptions.create({
-                model: transcriptmodel,
-                prompt: "Please reply only in english. with correct grammar and vocabulary.",
-                language: "en",
-                url: filelink
-            }))
-
-            const transcripttext = `Voice : ${transcription.text}`;
+            const voiceMessage = `User sent a voice message at URL: ${filelink} - Call transcribe_audio with audio_url to transcribe it before answering.`;
 
             if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
@@ -680,7 +738,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 $push: {
                     messages: {
                         role: "user",
-                        content: transcripttext
+                        content: voiceMessage
                     }
                 }
             }, {
@@ -710,58 +768,12 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
 
             await handleAIResponse(bot, chatid, options, response, messages);
         }
-        //Video Transcript
+        //Video Transcript - tool-driven via transcribe_video
         else if (msg.video) {
-            console.log(msg.caption);
-
             const fileid = msg.video.file_id;
             const filelink = await bot.getFileLink(fileid);
-
-            await bot.sendChatAction(chatid, "upload_video", options);
-
-            const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}.mp4`);
-            const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}.mp3`);
-
-            await bot.sendChatAction(chatid, "upload_video", options);
-
-            //Read the buffer value from url
-            await new Promise((resolve, reject) => {
-                const file = fs.createWriteStream(tmpVideoPath);
-                https.get(filelink, (res) => {
-                    res.pipe(file);
-                    file.on("finish", resolve);
-                    file.on("error", reject);
-                }).on("error", reject);
-            });
-
-            await bot.sendChatAction(chatid, "upload_video", options);
-
-            //Put the content into audio path
-            await new Promise((resolve, reject) => {
-                ffmpeg(tmpVideoPath)
-                    .noVideo()
-                    .audioCodec("libmp3lame")
-                    .audioBitrate(128)
-                    .format("mp3")
-                    .save(tmpAudioPath)
-                    .on("end", resolve)
-                    .on("error", reject);
-            });
-
-            await bot.sendChatAction(chatid, "upload_video", options);
-
-            const transcript = await groq.audio.transcriptions.create({
-                model: transcriptmodel,
-                file: fs.createReadStream(tmpAudioPath),
-                language: "en",
-                response_format: "verbose_json",
-                timestamp_granularities: ["word", "segment"]
-            });
-
-            fs.unlink(tmpAudioPath, () => {});
-
-            const datalist = `VideoTranscript : ${JSON.stringify(transcript.segments)}`;
-            const captiontext = msg.caption ? `text : ${msg.caption}` : "text : Please transcript this";
+            const captiontext = msg.caption ? `Caption : ${msg.caption}` : "";
+            const videoMessage = `User sent a video at URL: ${filelink} ${captiontext} - Call transcribe_video with video_url to transcribe it before answering.`;
 
             if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
@@ -769,7 +781,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 $push: {
                     messages: {
                         role: "user",
-                        content: `${datalist},${captiontext}`
+                        content: videoMessage
                     }
                 }
             }, {
@@ -863,7 +875,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     $push: {
                         messages: {
                             role: "user",
-                            content: `${pdffiledata},${captiontext},${RAGresult}`
+                            content: `${pdffiledata},${captiontext}`
                         }
                     }
                 }, {
@@ -904,7 +916,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     $push: {
                         messages: {
                             role: "user",
-                            content: `${docxfiledata},${captiontext},${RAGresult}`
+                            content: `${docxfiledata},${captiontext}`
                         }
                     }
                 }, {
@@ -977,14 +989,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
         else if (msg.audio) {
             const fileid = msg.audio.file_id;
             const filelink = await bot.getFileLink(fileid);
-
-            const result = await withChatAction(bot, chatid, "upload_document", options, () => groq.audio.transcriptions.create({
-                model: transcriptmodel,
-                url: filelink
-            }));
-
-            const audiotext = `Audio : ${result.text}`;
-
+            const audioMessage = `User sent an audio file at URL: ${filelink} Title: ${msg.audio.title || ""} Performer: ${msg.audio.performer || ""} - Call transcribe_audio with audio_url to transcribe it before answering.`;
 
             if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
@@ -992,7 +997,7 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 $push: {
                     messages: {
                         role: "user",
-                        content: audiotext
+                        content: audioMessage
                     }
                 }
             }, {
