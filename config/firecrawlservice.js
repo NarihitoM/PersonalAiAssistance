@@ -1,41 +1,7 @@
-import Groq from "groq-sdk";
-import OpenAI from "openai";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Firecrawl } from "firecrawl";
 import { configDotenv } from "dotenv";
 
 configDotenv();
-
-const UNO_BASE_URL = "https://api.unorouter.com/v1";
-const unoImageModel = "flux-2-klein-4b:free";
-export const model = "qwen/qwen3-max:free";
-export const modelaudio = "canopylabs/orpheus-v1-english";
-export const transcriptmodel = "whisper-large-v3-turbo";
-
-const FALLBACK_MODELS = [
-    "qwen/qwen3-max:free",
-    "qwen/qwen3.5-plus:free",
-    "minimax/minimax-m2:free",
-    "minimax/minimax-m3:free",
-    "deepseek/deepseek-v4-pro",
-    "deepseek/deepseek-v4-flash"
-];
-
-export const groq = new Groq({ apiKey: process.env.AI });
-export const xkiro = new OpenAI({ baseURL: "https://api.xkiro.com/v1", apiKey: process.env.XKIRO });
-
-export async function chatCompletion(params) {
-    let lastErr;
-    for (const fallbackModel of FALLBACK_MODELS) {
-        try {
-            return await xkiro.chat.completions.create({ ...params, model: fallbackModel });
-        } catch (err) {
-            console.log(`xkiro model ${fallbackModel} failed:`, err.message);
-            lastErr = err;
-        }
-    }
-    throw lastErr;
-}
 
 const firecrawl = new Firecrawl({ apiKey: process.env.FIRECRAWL });
 
@@ -126,56 +92,3 @@ export async function youtubeTranscript(urlOrId) {
     }
     throw new Error("Transcript not available for this video");
 }
-
-export async function generateImage(prompt, { timeoutMs = 60000 } = {}) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
-    try {
-        const response = await fetch(`${UNO_BASE_URL}/images/generations`, {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${process.env.UNO}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ model: unoImageModel, prompt }),
-            signal: controller.signal
-        });
-
-        if (!response.ok) {
-            throw new Error(`UnoRouter image generation failed: ${response.status} ${await response.text()}`);
-        }
-
-        const data = await response.json();
-        const image = data.data?.[0];
-        if (!image) throw new Error("UnoRouter returned no image data");
-
-        return image.b64_json
-            ? Buffer.from(image.b64_json, "base64")
-            : image.url;
-    } finally {
-        clearTimeout(timeout);
-    }
-}
-
-const gemini = new GoogleGenerativeAI(process.env.GEMINI);
-const visionmodel = gemini.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-
-export async function analyzeImage(systemPrompt, imageUrl, captionText = "", knownMimeType = "") {
-    const imageResponse = await fetch(imageUrl);
-    const arrayBuffer = await imageResponse.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-    const headerMimeType = imageResponse.headers.get("content-type");
-    const mimeType = knownMimeType
-        || (headerMimeType && headerMimeType !== "application/octet-stream" ? headerMimeType : "image/jpeg");
-
-    const result = await visionmodel.generateContent([
-        systemPrompt,
-        captionText,
-        { inlineData: { data: base64, mimeType } }
-    ]);
-
-    return result.response.text();
-}
-
-

@@ -1,4 +1,8 @@
-import { groq, chatCompletion, analyzeImage, generateImage, webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscript, modelaudio, transcriptmodel } from "../config/aiservice.js";
+import { groq, modelaudio, transcriptmodel } from "../config/groqservice.js";
+import { chatCompletion } from "../config/xkiroservice.js";
+import { webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscript } from "../config/firecrawlservice.js";
+import { generateImage } from "../config/unoservice.js";
+import { analyzeImage } from "../config/geminiservice.js";
 import mammoth from "mammoth";
 import { systemprompt, systempromptforimage } from "../prompt/systemprompt.js";
 import { tools } from "../tools/tools.js";
