@@ -239,30 +239,6 @@ async function handleAIResponse(bot, chatid, options, response, messages, depth 
         return;
     }
 
-    if (toolCall.function.name === "schedule_reminder") {
-        try {
-            const delayMs = Math.min(Math.max(args.delay_minutes, 1), 1440) * 60 * 1000;
-
-            await bot.sendMessage(chatid, args.message || `Reminder set for ${args.delay_minutes} minute(s) from now.`, options);
-
-            setTimeout(async () => {
-                try {
-                    await bot.sendMessage(chatid, `Reminder: ${args.reminder_text}`, options);
-                } catch (e) {
-                    console.log("Reminder send failed:", e.message);
-                }
-            }, delayMs);
-
-            await userquery.findOneAndUpdate({ userid: chatid }, {
-                $push: { messages: { role: "assistant", content: args.message || `Reminder set: ${args.reminder_text} in ${args.delay_minutes}m` } }
-            }, { upsert: true });
-        } catch (err) {
-            console.log("Schedule reminder failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, failed to set reminder: " + err.message, options);
-        }
-        return;
-    }
-
     if (toolCall.function.name === "send_location") {
         try {
             if (args.message) await sendBotMessage(bot, chatid, args.message, options);

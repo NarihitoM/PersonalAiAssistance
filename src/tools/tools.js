@@ -129,22 +129,6 @@ export const tools = [
     {
         type: "function",
         function: {
-            name: "schedule_reminder",
-            description: "Schedule a reminder message to be sent later in this chat. Use when user asks to remind them about something",
-            parameters: {
-                type: "object",
-                properties: {
-                    reminder_text: { type: "string", description: "Reminder content to send later" },
-                    delay_minutes: { type: "integer", description: "Delay in minutes (1-1440, max 24h)" },
-                    message: { type: "string", description: "Confirmation message to send immediately" }
-                },
-                required: ["reminder_text", "delay_minutes"]
-            }
-        }
-    },
-    {
-        type: "function",
-        function: {
             name: "send_location",
             description: "Send a location/venue on the map. ALWAYS use this tool when you have latitude/longitude coordinates to share - never just write coordinates as text. Use when user asks for a location, coordinates, address, or you need to share any place on the map",
             parameters: {
