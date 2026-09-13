@@ -5,11 +5,11 @@ import { mistralChatCompletion, mistralChatModel } from "./mistralservice.js";
 
 configDotenv();
 
-export const model = "qwen/qwen3-max:free";
+export const model = "minimax/minimax-m3:free";
 const GROQ_FALLBACK_MODEL = "openai/gpt-oss-120b";
 
 const FALLBACK_MODELS = [
-    "qwen/qwen3-max:free"
+    "minimax/minimax-m3:free"
 ];
 
 export const xkiro = new OpenAI({ baseURL: "https://api.xkiro.com/v1", apiKey: process.env.XKIRO });
