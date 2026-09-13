@@ -277,6 +277,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
                 await bot.setMessageReaction(chatid, options.incomingMessageId, {
                     reaction: [{ type: "emoji", emoji: normalizeReactionEmoji(args.emoji) }]
                 });
+                if (args.message) await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 700));
             }
 
             if (args.message) await sendBotMessage(bot, chatid, args.message, options);
