@@ -20,6 +20,17 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 
 const MAX_TOOL_DEPTH = 5;
 
+function parseStrayReactionJson(content) {
+    const text = String(content || "").trim();
+    if (!text.startsWith("{") || !text.endsWith("}")) return null;
+    try {
+        const parsed = JSON.parse(text);
+        return parsed && typeof parsed.emoji === "string" ? parsed : null;
+    } catch {
+        return null;
+    }
+}
+
 export async function handleAIResponse(bot, chatid, options, response, messages, depth = 0) {
     if (depth > MAX_TOOL_DEPTH) {
         console.log(`handleAIResponse max depth ${MAX_TOOL_DEPTH} reached, stopping`);
@@ -31,6 +42,14 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
 
     if (!toolCall) {
         let aimessage = responseMessage.content;
+
+        const strayReaction = parseStrayReactionJson(aimessage);
+        if (strayReaction) {
+            return handleAIResponse(bot, chatid, options, {
+                choices: [{ message: { tool_calls: [{ id: "stray-reaction", function: { name: "react_to_message", arguments: JSON.stringify(strayReaction) } }] } }]
+            }, messages, depth);
+        }
+
         if (!aimessage || !String(aimessage).trim()) {
             console.log("handleAIResponse: empty content, raw response:", JSON.stringify(responseMessage).slice(0, 2000));
             aimessage = responseMessage.content || "";
