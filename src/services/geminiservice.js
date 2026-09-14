@@ -2,11 +2,23 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { configDotenv } from "dotenv";
 import dns from "dns/promises";
 import net from "net";
+import OpenAI from "openai";
 
 configDotenv();
 
 const gemini = new GoogleGenerativeAI(process.env.GEMINI);
 const visionmodel = gemini.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+
+export const geminiChatModel = "gemini-2.5-flash";
+
+const geminiOpenAI = new OpenAI({
+    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
+    apiKey: process.env.GEMINI
+});
+
+export async function geminiChatCompletion(params) {
+    return geminiOpenAI.chat.completions.create({ ...params, model: geminiChatModel });
+}
 
 function isPrivateIp(ip) {
     if (net.isIPv4(ip)) {

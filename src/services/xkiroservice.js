@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { configDotenv } from "dotenv";
 import { groq } from "./groqservice.js";
 import { mistralChatCompletion, mistralChatModel } from "./mistralservice.js";
+import { geminiChatCompletion, geminiChatModel } from "./geminiservice.js";
 
 configDotenv();
 
@@ -18,6 +19,14 @@ export const xkiro = new OpenAI({ baseURL: "https://api.xkiro.com/v1", apiKey: p
 
 export async function chatCompletion(params) {
     let lastErr;
+    if (process.env.GEMINI) {
+        try {
+            return await geminiChatCompletion(params);
+        } catch (err) {
+            console.log(`gemini model ${geminiChatModel} failed:`, err.message);
+            lastErr = err;
+        }
+    }
     for (const fallbackModel of FALLBACK_MODELS) {
         try {
             return await xkiro.chat.completions.create({ ...params, model: fallbackModel });
