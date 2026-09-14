@@ -9,9 +9,9 @@ export const model = "mistralai/mistral-medium-3.5";
 const GROQ_FALLBACK_MODEL = "openai/gpt-oss-120b";
 
 const FALLBACK_MODELS = [
+    "sensenova/sensenova-6.8-flash-lite",
     "mistralai/mistral-medium-3.5",
     "mistralai/mistral-small-2603",
-    "sensenova/sensenova-6.8-flash-lite"
 ];
 
 export const xkiro = new OpenAI({ baseURL: "https://api.xkiro.com/v1", apiKey: process.env.XKIRO });
