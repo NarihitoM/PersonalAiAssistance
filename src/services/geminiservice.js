@@ -20,6 +20,7 @@ export async function geminiChatCompletion(params) {
     return geminiOpenAI.chat.completions.create({ ...params, model: geminiChatModel });
 }
 
+
 function isPrivateIp(ip) {
     if (net.isIPv4(ip)) {
         const [a, b] = ip.split(".").map(Number);

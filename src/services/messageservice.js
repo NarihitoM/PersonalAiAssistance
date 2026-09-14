@@ -1,5 +1,4 @@
-import { groq, modelaudio, transcriptmodel } from "./groqservice.js";
-import { chatCompletion } from "./xkiroservice.js";
+import { groq, modelaudio, transcriptmodel, chatCompletion } from "./chatservice.js";
 import { webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscript } from "./firecrawlservice.js";
 import { generateImage } from "./imageservice.js";
 import { analyzeImage, assertPublicHttpsUrl } from "./geminiservice.js";
