@@ -1,4 +1,4 @@
-import { chatCompletion } from "../services/chatservice.js";
+import { chatCompletion } from "../services/aiservice.js";
 import { analyzeImageBuffer } from "../services/geminiservice.js";
 import { handleAIResponse } from "../services/messageservice.js";
 import mammoth from "mammoth";
