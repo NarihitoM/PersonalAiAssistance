@@ -79,7 +79,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
         });
 
         await userquery.findOneAndUpdate({ userid: chatid }, {
-            $push: { messages: { role: "assistant", content: `Voice sent: ${args.audioname} | ${args.message} | Content: ${args.audiocontent.slice(0, 500)}` } }
+            $push: { messages: { role: "assistant", content: args.message } }
         }, { upsert: true });
 
         return;
@@ -103,7 +103,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             });
 
             await userquery.findOneAndUpdate({ userid: chatid }, {
-                $push: { messages: { role: "assistant", content: `Image generated: ${args.prompt} | Caption: ${args.message}` } }
+                $push: { messages: { role: "assistant", content: args.message } }
             }, { upsert: true });
         } catch (err) {
             console.log("Image generation failed:", err.message);
@@ -133,7 +133,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             });
 
             await userquery.findOneAndUpdate({ userid: chatid }, {
-                $push: { messages: { role: "assistant", content: `Image edited: ${args.prompt} | Caption: ${args.message}` } }
+                $push: { messages: { role: "assistant", content: args.message } }
             }, { upsert: true });
         } catch (err) {
             console.log("Image edit failed:", err.message);
