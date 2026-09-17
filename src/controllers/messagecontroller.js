@@ -33,7 +33,19 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
     try {
         if (msg.text) {
 
-            const message = `text : ${msg.text}`;
+            let replyImageUrl = "";
+            if (msg.reply_to_message?.photo) {
+                try {
+                    const rid = msg.reply_to_message.photo[msg.reply_to_message.photo.length - 1].file_id;
+                    replyImageUrl = await bot.getFileLink(rid);
+                } catch {}
+            } else if (msg.reply_to_message?.document?.mime_type?.startsWith("image/")) {
+                try {
+                    replyImageUrl = await bot.getFileLink(msg.reply_to_message.document.file_id);
+                } catch {}
+            }
+            const replyPart = replyImageUrl ? ` [Replying to image at URL: ${replyImageUrl} - if user asks to edit this image, call edit_image with this image_url]` : "";
+            const message = `text : ${msg.text}${replyPart}`;
 
             if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
