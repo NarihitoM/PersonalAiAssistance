@@ -82,7 +82,21 @@ async function editImageWithOpenRouter(imageUrl, prompt, signal, model) {
     if (!res.ok) throw new Error(`Failed to fetch source image: ${res.status} ${await res.text().catch(() => "")}`);
     const buf = Buffer.from(await res.arrayBuffer());
     if (buf.length > 8 * 1024 * 1024) throw new Error("Source image too large (>8MB)");
-    const ct = res.headers.get("content-type") || "image/jpeg";
+    let ct = res.headers.get("content-type") || "";
+    if (!ct || ct === "application/octet-stream" || !ct.startsWith("image/")) {
+        if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) ct = "image/png";
+        else if (buf[0] === 0xFF && buf[1] === 0xD8) ct = "image/jpeg";
+        else if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) ct = "image/gif";
+        else if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50) ct = "image/webp";
+        else {
+            const lower = imageUrl.toLowerCase().split("?")[0];
+            if (lower.endsWith(".png")) ct = "image/png";
+            else if (lower.endsWith(".webp")) ct = "image/webp";
+            else if (lower.endsWith(".gif")) ct = "image/gif";
+            else ct = "image/jpeg";
+        }
+    }
+    ct = ct.split(";")[0].trim();
     const imageDataUrl = `data:${ct};base64,${buf.toString("base64")}`;
 
     const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
