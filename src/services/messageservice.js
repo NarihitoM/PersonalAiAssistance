@@ -252,7 +252,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             });
 
             await userquery.findOneAndUpdate({ userid: chatid }, {
-                $push: { messages: { role: "assistant", content: `Poll created: ${args.question} | Options: ${opts.join(", ")}${args.message ? ` | Message: ${args.message}` : ""}` } }
+                $push: { messages: { role: "assistant", content: args.message || `Poll: ${args.question}` } }
             }, { upsert: true });
         } catch (err) {
             console.log("Create poll failed:", err.message);
@@ -272,7 +272,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             }
 
             await userquery.findOneAndUpdate({ userid: chatid }, {
-                $push: { messages: { role: "assistant", content: `Location sent: ${args.latitude},${args.longitude}${args.title ? ` | ${args.title}` : ""}${args.address ? ` | ${args.address}` : ""}${args.message ? ` | ${args.message}` : ""}` } }
+                $push: { messages: { role: "assistant", content: args.message || `Location: ${args.title || `${args.latitude},${args.longitude}`}` } }
             }, { upsert: true });
         } catch (err) {
             console.log("Send location failed:", err.message);
