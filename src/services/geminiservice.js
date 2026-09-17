@@ -7,7 +7,7 @@ import OpenAI from "openai";
 configDotenv();
 
 const gemini = new GoogleGenerativeAI(process.env.GEMINI);
-const visionmodel = gemini.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+const visionmodel = gemini.getGenerativeModel({ model: "gemini-3.8-flash" });
 
 export const geminiChatModel = "gemini-2.5-flash";
 
@@ -51,12 +51,25 @@ export async function assertPublicHttpsUrl(rawUrl) {
 export async function analyzeImage(systemPrompt, imageUrl, captionText = "", knownMimeType = "") {
     await assertPublicHttpsUrl(imageUrl);
     const imageResponse = await fetch(imageUrl, { redirect: "error" });
-    const arrayBuffer = await imageResponse.arrayBuffer();
-    const headerMimeType = imageResponse.headers.get("content-type");
-    const mimeType = knownMimeType
-        || (headerMimeType && headerMimeType !== "application/octet-stream" ? headerMimeType : "image/jpeg");
+    if (!imageResponse.ok) throw new Error(`Failed to fetch image: ${imageResponse.status}`);
+    const buffer = Buffer.from(await imageResponse.arrayBuffer());
+    let mimeType = knownMimeType || imageResponse.headers.get("content-type") || "";
+    if (!mimeType || mimeType === "application/octet-stream" || !mimeType.startsWith("image/")) {
+        if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) mimeType = "image/png";
+        else if (buffer[0] === 0xFF && buffer[1] === 0xD8) mimeType = "image/jpeg";
+        else if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) mimeType = "image/gif";
+        else if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50) mimeType = "image/webp";
+        else {
+            const lower = imageUrl.toLowerCase().split("?")[0];
+            if (lower.endsWith(".png")) mimeType = "image/png";
+            else if (lower.endsWith(".webp")) mimeType = "image/webp";
+            else if (lower.endsWith(".gif")) mimeType = "image/gif";
+            else mimeType = "image/jpeg";
+        }
+    }
+    mimeType = mimeType.split(";")[0].trim();
 
-    return analyzeImageBuffer(systemPrompt, Buffer.from(arrayBuffer), captionText, mimeType);
+    return analyzeImageBuffer(systemPrompt, buffer, captionText, mimeType);
 }
 
 export async function analyzeImageBuffer(systemPrompt, buffer, captionText = "", mimeType = "image/jpeg") {
