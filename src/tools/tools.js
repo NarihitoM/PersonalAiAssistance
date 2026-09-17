@@ -217,24 +217,7 @@ export const tools = [
             }
         }
     },
-    {
-        type: "function",
-        function: {
-            name: "react_to_message",
-            description: "React to the user's message with a single emoji and reply. Use this for every normal text reply - put your full reply text in the message field and pick a fitting emoji.",
-            parameters: {
-                type: "object",
-                properties: {
-                    emoji: {
-                        type: "string",
-                        description: "A single emoji to react with. Prefer common ones like 👍 👎 ❤ 🔥 🥰 👏 😁 🤔 😱 😢 🎉 🤩 🙏 😍 💯 🤣 😭 😎 - if it isn't a valid Telegram reaction emoji, a fallback will be used automatically."
-                    },
-                    message: { type: "string", description: "Text reply to send along with the reaction" }
-                },
-                required: ["emoji", "message"]
-            }
-        }
-    },
+
     {
         type: "function",
         function: {

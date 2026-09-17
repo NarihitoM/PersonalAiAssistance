@@ -13,22 +13,13 @@ import https from "https";
 import fs from "fs";
 import PDFDocument from "pdfkit";
 import streamBuffers from "stream-buffers";
-import { withPhotoAction, withTypingAction, withChatAction, checkImageCooldown, sendBotMessage, normalizeReactionEmoji } from "../utils/utils.js";
+import { withPhotoAction, withTypingAction, withChatAction, checkImageCooldown, sendBotMessage } from "../utils/utils.js";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 const MAX_TOOL_DEPTH = 5;
 
-function parseStrayReactionJson(content) {
-    const text = String(content || "").trim();
-    if (!text.startsWith("{") || !text.endsWith("}")) return null;
-    try {
-        const parsed = JSON.parse(text);
-        return parsed && typeof parsed.emoji === "string" ? parsed : null;
-    } catch {
-        return null;
-    }
-}
+
 
 export async function handleAIResponse(bot, chatid, options, response, messages, depth = 0) {
     if (depth > MAX_TOOL_DEPTH) {
@@ -41,13 +32,6 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
 
     if (!toolCall) {
         let aimessage = responseMessage.content;
-
-        const strayReaction = parseStrayReactionJson(aimessage);
-        if (strayReaction) {
-            return handleAIResponse(bot, chatid, options, {
-                choices: [{ message: { tool_calls: [{ id: "stray-reaction", function: { name: "react_to_message", arguments: JSON.stringify(strayReaction) } }] } }]
-            }, messages, depth);
-        }
 
         if (!aimessage || !String(aimessage).trim()) {
             console.log("handleAIResponse: empty content, raw response:", JSON.stringify(responseMessage).slice(0, 2000));
@@ -286,26 +270,6 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
         }, {
             upsert: true
         });
-        return;
-    }
-
-    if (toolCall.function.name === "react_to_message") {
-        try {
-            if (options.incomingMessageId && !options.business_connection_id) {
-                await bot.setMessageReaction(chatid, options.incomingMessageId, {
-                    reaction: [{ type: "emoji", emoji: normalizeReactionEmoji(args.emoji) }]
-                });
-                if (args.message) await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 700));
-            }
-
-            if (args.message) await sendBotMessage(bot, chatid, args.message, options);
-
-            await userquery.findOneAndUpdate({ userid: chatid }, {
-                $push: { messages: { role: "assistant", content: `Reacted with ${args.emoji}${args.message ? ` | ${args.message}` : ""}` } }
-            }, { upsert: true });
-        } catch (err) {
-            console.log("React to message failed:", err.message);
-        }
         return;
     }
 

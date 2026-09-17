@@ -5,14 +5,6 @@ import PDFParser from "pdf2json";
 
 export const IMAGE_COOLDOWN_MS = 1 * 60 * 1000;
 
-export const ALLOWED_REACTIONS = ["👍", "👎", "❤", "🔥", "🥰", "👏", "😁", "🤔", "🤯", "😱", "🤬", "😢", "🎉", "🤩", "🤮", "💩", "🙏", "👌", "🕊", "🤡", "🥱", "🥴", "😍", "🐳", "🌚", "🌭", "💯", "🤣", "⚡", "🍌", "🏆", "💔", "🤨", "😐", "🍓", "🍾", "💋", "🖕", "😈", "😴", "😭", "🤓", "👻", "👀", "🎃", "🙈", "😇", "😨", "🤝", "🤗", "🎅", "🎄", "☃", "💅", "🤪", "🗿", "🆒", "💘", "🙉", "🦄", "😘", "💊", "🙊", "😎", "👾", "🤷", "😡"];
-
-export function normalizeReactionEmoji(emoji) {
-    const stripped = String(emoji || "").replace(/️/g, "");
-    const match = ALLOWED_REACTIONS.find(r => r.replace(/️/g, "") === stripped);
-    return match || "👍";
-}
-
 export async function withPhotoAction(bot, chatid, options, task) {
     try { await bot.sendChatAction(chatid, "upload_photo", options); } catch {}
     const interval = setInterval(() => { bot.sendChatAction(chatid, "upload_photo", options).catch(() => {}); }, 4000);
