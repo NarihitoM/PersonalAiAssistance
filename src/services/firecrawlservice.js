@@ -1,9 +1,4 @@
-import { Firecrawl } from "firecrawl";
-import { configDotenv } from "dotenv";
-
-configDotenv();
-
-const firecrawl = new Firecrawl({ apiKey: process.env.FIRECRAWL });
+import { firecrawl } from "../config/firecrawl.js";
 
 export async function webSearch(query) {
     const result = await firecrawl.search(query, { limit: 5 });

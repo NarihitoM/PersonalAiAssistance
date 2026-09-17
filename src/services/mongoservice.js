@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
+import { MONGO_URI } from "../config/database.js";
 
 export const mongoconnect = async () => {
-    await mongoose.connect(process.env.URI).then(() => console.log("connect")).catch(() => console.log("Error"));
+    await mongoose.connect(MONGO_URI).then(() => console.log("connect")).catch(() => console.log("Error"));
 }

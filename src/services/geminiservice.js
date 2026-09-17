@@ -1,20 +1,8 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { configDotenv } from "dotenv";
 import dns from "dns/promises";
 import net from "net";
-import OpenAI from "openai";
+import { gemini, visionmodel, geminiChatModel as cfgGeminiChatModel, geminiOpenAI } from "../config/gemini.js";
 
-configDotenv();
-
-const gemini = new GoogleGenerativeAI(process.env.GEMINI);
-const visionmodel = gemini.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
-
-export const geminiChatModel = "gemini-2.5-flash";
-
-const geminiOpenAI = new OpenAI({
-    baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
-    apiKey: process.env.GEMINI
-});
+export const geminiChatModel = cfgGeminiChatModel;
 
 export async function geminiChatCompletion(params) {
     return geminiOpenAI.chat.completions.create({

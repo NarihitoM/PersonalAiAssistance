@@ -1,18 +1,10 @@
-import { configDotenv } from "dotenv";
-
-configDotenv();
-
-const UNO_BASE_URL = "https://api.unorouter.com/v1";
-const unoImageModel = "flux-2-klein-4b:free";
-
-const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
-const openrouterImageModel = "google/gemini-3.1-flash-lite-image";
+import { UNO_BASE_URL, unoImageModel, OPENROUTER_BASE_URL, openrouterImageModel, UNO_KEY, OPENROUTER_KEY } from "../config/image.js";
 
 async function generateImageWithUno(prompt, signal) {
     const response = await fetch(`${UNO_BASE_URL}/images/generations`, {
         method: "POST",
         headers: {
-            "Authorization": `Bearer ${process.env.UNO}`,
+            "Authorization": `Bearer ${UNO_KEY}`,
             "Content-Type": "application/json"
         },
         body: JSON.stringify({ model: unoImageModel, prompt }),
@@ -36,7 +28,7 @@ async function generateImageWithOpenRouter(prompt, signal) {
     const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
         method: "POST",
         headers: {
-            "Authorization": `Bearer ${process.env.OPENROUTER}`,
+            "Authorization": `Bearer ${OPENROUTER_KEY}`,
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -102,7 +94,7 @@ async function editImageWithOpenRouter(imageUrl, prompt, signal, model) {
     const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
         method: "POST",
         headers: {
-            "Authorization": `Bearer ${process.env.OPENROUTER}`,
+            "Authorization": `Bearer ${OPENROUTER_KEY}`,
             "Content-Type": "application/json"
         },
         body: JSON.stringify({

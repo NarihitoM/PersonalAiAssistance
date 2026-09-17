@@ -1,11 +1,11 @@
 import OpenAI from "openai";
 import Groq from "groq-sdk";
 import { Mistral } from "@mistralai/mistralai";
-import { configDotenv } from "dotenv";
+import { config } from "dotenv";
 import { geminiChatCompletion, geminiChatModel } from "./geminiservice.js";
 import { isModelFailed, markModelFailed, clearModelFailed } from "./rediscache.js";
 
-configDotenv();
+config();
 
 export const modelaudio = "canopylabs/orpheus-v1-english";
 export const transcriptmodel = "whisper-large-v3-turbo";
