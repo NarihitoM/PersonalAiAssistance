@@ -7,7 +7,7 @@ import OpenAI from "openai";
 configDotenv();
 
 const gemini = new GoogleGenerativeAI(process.env.GEMINI);
-const visionmodel = gemini.getGenerativeModel({ model: "gemini-3.8-flash" });
+const visionmodel = gemini.getGenerativeModel({ model: "gemini-3.6-flash" });
 
 export const geminiChatModel = "gemini-2.5-flash";
 
