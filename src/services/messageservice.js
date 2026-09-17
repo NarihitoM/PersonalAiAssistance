@@ -24,7 +24,6 @@ const MAX_TOOL_DEPTH = 5;
 export async function handleAIResponse(bot, chatid, options, response, messages, depth = 0) {
     if (depth > MAX_TOOL_DEPTH) {
         console.log(`handleAIResponse max depth ${MAX_TOOL_DEPTH} reached, stopping`);
-        await sendBotMessage(bot, chatid, "Sorry, I got stuck in a loop. Please try again with a simpler request.", options);
         return;
     }
     const responseMessage = response.choices[0].message;
@@ -107,9 +106,8 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
                 $push: { messages: { role: "assistant", content: `Image generated: ${args.prompt} | Caption: ${args.message}` } }
             }, { upsert: true });
         } catch (err) {
-            const isTimeout = err.name === "AbortError" || /aborted|timeout/i.test(err.message || "");
             console.log("Image generation failed:", err.message);
-            await bot.sendMessage(chatid, isTimeout ? "Image generation timed out. Please try again with a simpler prompt." : "Sorry, image generation failed. Please try again.", options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             await userquery.findOneAndUpdate({ userid: chatid }, {
                 $push: { messages: { role: "assistant", content: `Image generation failed: ${err.message}` } }
             }, { upsert: true });
@@ -138,9 +136,8 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
                 $push: { messages: { role: "assistant", content: `Image edited: ${args.prompt} | Caption: ${args.message}` } }
             }, { upsert: true });
         } catch (err) {
-            const isTimeout = err.name === "AbortError" || /aborted|timeout/i.test(err.message || "");
             console.log("Image edit failed:", err.message);
-            await bot.sendMessage(chatid, isTimeout ? "Image edit timed out. Please try again with a simpler edit." : "Sorry, image edit failed. Please try again.", options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             await userquery.findOneAndUpdate({ userid: chatid }, {
                 $push: { messages: { role: "assistant", content: `Image edit failed: ${err.message}` } }
             }, { upsert: true });
@@ -154,7 +151,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             results = await withTypingAction(bot, chatid, options, () => webSearch(args.query));
         } catch (err) {
             console.log("Web search failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, web search failed. Please try again.", options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             return;
         }
 
@@ -177,7 +174,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             results = await withTypingAction(bot, chatid, options, () => webScrape(args.url, { onlyMainContent: args.onlyMainContent, formats: args.formats }));
         } catch (err) {
             console.log("Web scrape failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, web scrape failed. Please try again. " + err.message, options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             return;
         }
 
@@ -200,7 +197,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             results = await withTypingAction(bot, chatid, options, () => webCrawl(args.url, { limit: args.limit, maxDiscoveryDepth: args.maxDiscoveryDepth }));
         } catch (err) {
             console.log("Web crawl failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, web crawl failed. Please try again. " + err.message, options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             return;
         }
 
@@ -223,7 +220,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             results = await withTypingAction(bot, chatid, options, () => webMap(args.url, { limit: args.limit }));
         } catch (err) {
             console.log("Web map failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, web map failed. Please try again. " + err.message, options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             return;
         }
 
@@ -258,7 +255,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             }, { upsert: true });
         } catch (err) {
             console.log("Create poll failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, failed to create poll: " + err.message, options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
         }
         return;
     }
@@ -278,7 +275,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             }, { upsert: true });
         } catch (err) {
             console.log("Send location failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, failed to send location: " + err.message, options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
         }
         return;
     }
@@ -310,7 +307,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             results = await withTypingAction(bot, chatid, options, () => youtubeSearch(args.query, { limit: args.limit }));
         } catch (err) {
             console.log("YouTube search failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, YouTube search failed: " + err.message, options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             return;
         }
         const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
@@ -327,7 +324,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             results = await withTypingAction(bot, chatid, options, () => youtubeTranscript(args.url));
         } catch (err) {
             console.log("YouTube transcript failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, YouTube transcript failed: " + err.message, options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             return;
         }
         const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
@@ -344,7 +341,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             results = await withTypingAction(bot, chatid, options, () => analyzeImage(systempromptforimage, args.image_url, args.prompt || ""));
         } catch (err) {
             console.log("Analyze image failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, image analysis failed: " + err.message, options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             return;
         }
         const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
@@ -370,7 +367,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             });
         } catch (err) {
             console.log("Transcribe audio failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, audio transcription failed: " + err.message, options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             return;
         }
         const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
@@ -422,7 +419,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             });
         } catch (err) {
             console.log("Transcribe video failed:", err.message);
-            await bot.sendMessage(chatid, "Sorry, video transcription failed: " + err.message, options);
+            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             return;
         }
         const followUp = await withTypingAction(bot, chatid, options, () => chatCompletion({
