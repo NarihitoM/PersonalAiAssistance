@@ -46,10 +46,15 @@ export async function mistralChatCompletion({ tools, messages }) {
     };
 }
 
-export const model = "mistralai/mistral-medium-3.5";
+export const model = "qwen/qwen3.8-max:free";
 const GROQ_FALLBACK_MODEL = "openai/gpt-oss-120b";
 
 const FALLBACK_MODELS = [
+    "qwen/qwen3.8-max:free",
+    "qwen/qwen3-max:free",
+    "qwen/qwen3.7-flash:free",
+    "qwen/qwen3.5-plus:free",
+    "minimax/minimax-m3:free",
     "mistralai/mistral-medium-3.5",
     "mistralai/mistral-small-2603",
     "sensenova/sensenova-6.8-flash-lite"
@@ -59,14 +64,6 @@ export const xkiro = new OpenAI({ baseURL: "https://api.xkiro.com/v1", apiKey: p
 
 export async function chatCompletion(params) {
     let lastErr;
-    if (process.env.GEMINI) {
-        try {
-            return await geminiChatCompletion(params);
-        } catch (err) {
-            console.log(`gemini model ${geminiChatModel} failed:`, err.message);
-            lastErr = err;
-        }
-    }
     for (const fallbackModel of FALLBACK_MODELS) {
         try {
             return await xkiro.chat.completions.create({ ...params, model: fallbackModel });
@@ -82,9 +79,18 @@ export async function chatCompletion(params) {
         console.log(`groq model ${GROQ_FALLBACK_MODEL} failed:`, err.message);
         lastErr = err;
     }
+    if (process.env.GEMINI) {
+        try {
+            console.log("groq failed, falling back to Gemini");
+            return await geminiChatCompletion(params);
+        } catch (err) {
+            console.log(`gemini model ${geminiChatModel} failed:`, err.message);
+            lastErr = err;
+        }
+    }
     if (process.env.MISTRAL) {
         try {
-            console.log("groq failed, falling back to Mistral");
+            console.log("gemini failed, falling back to Mistral");
             return await mistralChatCompletion(params);
         } catch (err) {
             console.log(`mistral model ${mistralChatModel} failed:`, err.message);

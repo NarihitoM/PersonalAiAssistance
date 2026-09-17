@@ -24,9 +24,9 @@ export const tools = [
             parameters: {
                 type: "object",
                 properties: {
-                    message: { type: "string", description: "Message to send along with the audio" },
+                    message: { type: "string", description: "Plain caption to show with audio, MUST NOT contain any [bracket] tones - keep it natural" },
                     audioname: { type: "string" },
-                    audiocontent: { type: "string", description: "Speech content including tone expressions like [cheerful], [whisper], [excited], etc." }
+                    audiocontent: { type: "string", description: "Speech content, MUST start with a tone like [friendly] or [cheerful] then the sentence, e.g. '[friendly] Hello there!'" }
                 },
                 required: ["message", "audioname", "audiocontent"]
             }

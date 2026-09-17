@@ -62,6 +62,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
     const args = JSON.parse(toolCall.function.arguments);
 
     if (toolCall.function.name === "create_voice") {
+        const cleanCaption = String(args.message || "").replace(/\[[^\]]*\]/g, "").replace(/\s{2,}/g, " ").trim();
         const speech = await withChatAction(bot, chatid, "upload_voice", options, () => groq.audio.speech.create({
             model: modelaudio,
             voice: "hannah",
@@ -73,13 +74,13 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
 
         await bot.sendAudio(chatid, buffer, {
             ...options,
-            caption: args.message,
+            caption: cleanCaption,
             title: args.audioname,
             performer: "Narihito Assistant"
         });
 
         await userquery.findOneAndUpdate({ userid: chatid }, {
-            $push: { messages: { role: "assistant", content: args.message } }
+            $push: { messages: { role: "assistant", content: cleanCaption } }
         }, { upsert: true });
 
         return;
