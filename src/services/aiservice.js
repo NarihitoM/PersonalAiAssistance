@@ -62,6 +62,12 @@ const FALLBACK_MODELS = [
 
 export const xkiro = new OpenAI({ baseURL: "https://api.xkiro.com/v1", apiKey: process.env.XKIRO });
 
+const UNO_FALLBACK_MODELS = [
+    "mistral-large-3-675b:free",
+    "gemini-3.6-flash:free"
+];
+export const uno = new OpenAI({ baseURL: "https://api.unorouter.com/v1", apiKey: process.env.UNO });
+
 export async function chatCompletion(params) {
     let lastErr;
     for (const fallbackModel of FALLBACK_MODELS) {
@@ -72,8 +78,17 @@ export async function chatCompletion(params) {
             lastErr = err;
         }
     }
+    for (const unoModel of UNO_FALLBACK_MODELS) {
+        try {
+            console.log(`xkiro all models failed, trying Uno ${unoModel}`);
+            return await uno.chat.completions.create({ ...params, model: unoModel });
+        } catch (err) {
+            console.log(`uno model ${unoModel} failed:`, err.message);
+            lastErr = err;
+        }
+    }
     try {
-        console.log("xkiro all models failed, falling back to Groq");
+        console.log("uno all models failed, falling back to Groq");
         return await groq.chat.completions.create({ ...params, model: GROQ_FALLBACK_MODEL });
     } catch (err) {
         console.log(`groq model ${GROQ_FALLBACK_MODEL} failed:`, err.message);
