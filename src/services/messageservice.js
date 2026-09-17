@@ -110,7 +110,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             console.log("Image generation failed:", err.message);
             await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             await userquery.findOneAndUpdate({ userid: chatid }, {
-                $push: { messages: { role: "assistant", content: `Image generation failed: ${err.message}` } }
+                $push: { messages: { role: "assistant", content: "Something went wrong. Please try again." } }
             }, { upsert: true });
         }
         return;
@@ -140,7 +140,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             console.log("Image edit failed:", err.message);
             await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
             await userquery.findOneAndUpdate({ userid: chatid }, {
-                $push: { messages: { role: "assistant", content: `Image edit failed: ${err.message}` } }
+                $push: { messages: { role: "assistant", content: "Something went wrong. Please try again." } }
             }, { upsert: true });
         }
         return;
