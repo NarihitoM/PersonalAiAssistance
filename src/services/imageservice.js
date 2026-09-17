@@ -77,16 +77,13 @@ export async function generateImage(prompt, { timeoutMs = 60000 } = {}) {
     }
 }
 
-async function editImageWithOpenRouter(imageUrl, prompt, signal) {
-    let imageDataUrl = imageUrl;
-    try {
-        const res = await fetch(imageUrl, { signal, redirect: "error" });
-        if (res.ok) {
-            const buf = Buffer.from(await res.arrayBuffer());
-            const ct = res.headers.get("content-type") || "image/jpeg";
-            imageDataUrl = `data:${ct};base64,${buf.toString("base64")}`;
-        }
-    } catch {}
+async function editImageWithOpenRouter(imageUrl, prompt, signal, model) {
+    const res = await fetch(imageUrl, { signal, redirect: "error" });
+    if (!res.ok) throw new Error(`Failed to fetch source image: ${res.status} ${await res.text().catch(() => "")}`);
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length > 8 * 1024 * 1024) throw new Error("Source image too large (>8MB)");
+    const ct = res.headers.get("content-type") || "image/jpeg";
+    const imageDataUrl = `data:${ct};base64,${buf.toString("base64")}`;
 
     const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
         method: "POST",
@@ -95,7 +92,7 @@ async function editImageWithOpenRouter(imageUrl, prompt, signal) {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            model: openrouterImageModel,
+            model,
             modalities: ["image", "text"],
             messages: [{
                 role: "user",
@@ -109,12 +106,16 @@ async function editImageWithOpenRouter(imageUrl, prompt, signal) {
     });
 
     if (!response.ok) {
-        throw new Error(`OpenRouter image edit failed: ${response.status} ${await response.text()}`);
+        const text = await response.text();
+        throw new Error(`OpenRouter image edit failed (${model}): ${response.status} ${text}`);
     }
 
     const data = await response.json();
     const image = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    if (!image) throw new Error("OpenRouter returned no edited image data");
+    if (!image) {
+        console.log("OpenRouter edit no image, full response:", JSON.stringify(data).slice(0, 4000));
+        throw new Error("OpenRouter returned no edited image data");
+    }
 
     return image.startsWith("data:")
         ? Buffer.from(image.split(",")[1], "base64")
@@ -125,7 +126,14 @@ export async function editImage(imageUrl, prompt, { timeoutMs = 60000 } = {}) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
-        return await editImageWithOpenRouter(imageUrl, prompt, controller.signal);
+        try {
+            return await editImageWithOpenRouter(imageUrl, prompt, controller.signal, openrouterImageModel);
+        } catch (err) {
+            console.log(`Primary edit model ${openrouterImageModel} failed:`, err.message.slice(0, 800));
+            const fallback = "google/gemini-2.5-flash-image";
+            console.log(`Trying fallback edit model ${fallback}`);
+            return await editImageWithOpenRouter(imageUrl, prompt, controller.signal, fallback);
+        }
     } finally {
         clearTimeout(timeout);
     }

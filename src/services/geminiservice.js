@@ -9,7 +9,7 @@ configDotenv();
 const gemini = new GoogleGenerativeAI(process.env.GEMINI);
 const visionmodel = gemini.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
-export const geminiChatModel = "gemini-3.8-flash";
+export const geminiChatModel = "gemini-2.5-flash";
 
 const geminiOpenAI = new OpenAI({
     baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/",
@@ -17,7 +17,15 @@ const geminiOpenAI = new OpenAI({
 });
 
 export async function geminiChatCompletion(params) {
-    return geminiOpenAI.chat.completions.create({ ...params, model: geminiChatModel });
+    return geminiOpenAI.chat.completions.create({
+        ...params,
+        model: geminiChatModel,
+        extra_body: {
+            google: {
+                thinking_config: { thinking_budget: 0 }
+            }
+        }
+    });
 }
 
 
