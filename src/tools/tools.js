@@ -36,7 +36,7 @@ export const tools = [
         type: "function",
         function: {
             name: "generate_image",
-            description: "Generate an image from a text prompt via UnoRouter flux-2-klein-4b:free. Use when user asks to create, draw, or generate an image. 1 hour cooldown per user.",
+            description: "Generate a brand new image from a text prompt (text-to-image). Use ONLY when user wants a new image from scratch and did NOT send a photo to edit. 1 minute cooldown per user.",
             parameters: {
                 type: "object",
                 properties: {
@@ -44,6 +44,22 @@ export const tools = [
                     prompt: { type: "string", description: "Detailed image generation prompt, be specific about style, composition, and details" }
                 },
                 required: ["message", "prompt"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
+            name: "edit_image",
+            description: "Edit/transform an existing image that the user sent. Use when user sends a photo (User sent an image at URL: ...) and asks to edit, change, remove, add, filter, restyle, cartoonify, or transform it. Pass the exact image_url from the user's message and a detailed edit instruction.",
+            parameters: {
+                type: "object",
+                properties: {
+                    image_url: { type: "string", description: "Exact image URL from the user's 'User sent an image at URL: ...' message - copy it verbatim" },
+                    prompt: { type: "string", description: "Detailed edit instruction, e.g. 'make background blur, add sunglasses, change to anime style while keeping face identity'" },
+                    message: { type: "string", description: "Caption/message to send along with the edited image" }
+                },
+                required: ["image_url", "prompt", "message"]
             }
         }
     },

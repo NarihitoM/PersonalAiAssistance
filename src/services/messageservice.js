@@ -1,6 +1,6 @@
 import { groq, modelaudio, transcriptmodel, chatCompletion } from "./aiservice.js";
 import { webSearch, webScrape, webCrawl, webMap, youtubeSearch, youtubeTranscript } from "./firecrawlservice.js";
-import { generateImage } from "./imageservice.js";
+import { generateImage, editImage } from "./imageservice.js";
 import { analyzeImage, assertPublicHttpsUrl } from "./geminiservice.js";
 import { systempromptforimage } from "../prompts/systemprompt.js";
 import { tools } from "../tools/tools.js";
@@ -112,6 +112,37 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             await bot.sendMessage(chatid, isTimeout ? "Image generation timed out. Please try again with a simpler prompt." : "Sorry, image generation failed. Please try again.", options);
             await userquery.findOneAndUpdate({ userid: chatid }, {
                 $push: { messages: { role: "assistant", content: `Image generation failed: ${err.message}` } }
+            }, { upsert: true });
+        }
+        return;
+    }
+
+    if (toolCall.function.name === "edit_image") {
+        const cooldown = await checkImageCooldown(chatid);
+        if (!cooldown.allowed) {
+            await bot.sendMessage(chatid, `Please wait ${cooldown.remainingMin} more minute(s) before editing another image.`, options);
+            return;
+        }
+
+        try {
+            const image = await withPhotoAction(bot, chatid, options, () => editImage(args.image_url, args.prompt, { timeoutMs: 60000 }));
+
+            await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
+
+            await bot.sendPhoto(chatid, image, {
+                ...options,
+                caption: args.message
+            });
+
+            await userquery.findOneAndUpdate({ userid: chatid }, {
+                $push: { messages: { role: "assistant", content: `Image edited: ${args.prompt} | Caption: ${args.message}` } }
+            }, { upsert: true });
+        } catch (err) {
+            const isTimeout = err.name === "AbortError" || /aborted|timeout/i.test(err.message || "");
+            console.log("Image edit failed:", err.message);
+            await bot.sendMessage(chatid, isTimeout ? "Image edit timed out. Please try again with a simpler edit." : "Sorry, image edit failed. Please try again.", options);
+            await userquery.findOneAndUpdate({ userid: chatid }, {
+                $push: { messages: { role: "assistant", content: `Image edit failed: ${err.message}` } }
             }, { upsert: true });
         }
         return;
