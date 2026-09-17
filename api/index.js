@@ -1,5 +1,5 @@
 import { configDotenv } from "dotenv";
-import { createbot } from "../src/services/botservice.js";
+import { createbot } from "../src/config/botconfig.js";
 import { message } from "../src/controllers/messagecontroller.js";
 import usersession from "../src/models/usersession.js";
 import processedMessage from "../src/models/processedMessage.js";

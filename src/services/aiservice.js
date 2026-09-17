@@ -1,19 +1,9 @@
-import OpenAI from "openai";
-import Groq from "groq-sdk";
-import { Mistral } from "@mistralai/mistralai";
-import { config } from "dotenv";
 import { geminiChatCompletion, geminiChatModel } from "./geminiservice.js";
 import { isModelFailed, markModelFailed, clearModelFailed } from "./rediscache.js";
+import { groq, mistral, xkiro, uno, FALLBACK_MODELS, UNO_FALLBACK_MODELS, GROQ_FALLBACK_MODEL, mistralChatModel, modelaudio, transcriptmodel } from "../config/aiconfig.js";
 
-config();
-
-export const modelaudio = "canopylabs/orpheus-v1-english";
-export const transcriptmodel = "whisper-large-v3-turbo";
-
-export const groq = new Groq({ apiKey: process.env.AI });
-
-export const mistralChatModel = "mistral-small-latest";
-export const mistral = new Mistral({ apiKey: process.env.MISTRAL });
+export { modelaudio, transcriptmodel, groq, mistral, mistralChatModel, xkiro, uno, FALLBACK_MODELS, UNO_FALLBACK_MODELS, GROQ_FALLBACK_MODEL };
+export const model = FALLBACK_MODELS[0];
 
 export async function mistralChatCompletion({ tools, messages }) {
     const res = await mistral.chat.complete({
@@ -46,28 +36,6 @@ export async function mistralChatCompletion({ tools, messages }) {
         }]
     };
 }
-
-export const model = "qwen/qwen3.8-max:free";
-const GROQ_FALLBACK_MODEL = "openai/gpt-oss-120b";
-
-const FALLBACK_MODELS = [
-    "qwen/qwen3.8-max:free",
-    "qwen/qwen3-max:free",
-    "qwen/qwen3.7-flash:free",
-    "qwen/qwen3.5-plus:free",
-    "minimax/minimax-m3:free",
-    "mistralai/mistral-medium-3.5",
-    "mistralai/mistral-small-2603",
-    "sensenova/sensenova-6.8-flash-lite"
-];
-
-export const xkiro = new OpenAI({ baseURL: "https://api.xkiro.com/v1", apiKey: process.env.XKIRO });
-
-const UNO_FALLBACK_MODELS = [
-    "mistral-large-3-675b:free",
-    "gemini-3.6-flash:free"
-];
-export const uno = new OpenAI({ baseURL: "https://api.unorouter.com/v1", apiKey: process.env.UNO });
 
 export async function chatCompletion(params) {
     let lastErr;
