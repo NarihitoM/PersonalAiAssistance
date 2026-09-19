@@ -24,7 +24,7 @@ async function generateImageWithUno(prompt, signal) {
         : image.url;
 }
 
-async function generateImageWithOpenRouter(prompt, signal) {
+async function generateImageWithOpenRouter(prompt, signal, model = openrouterImageModel) {
     const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
         method: "POST",
         headers: {
@@ -32,9 +32,21 @@ async function generateImageWithOpenRouter(prompt, signal) {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            model: openrouterImageModel,
+            model,
             modalities: ["image", "text"],
-            messages: [{ role: "user", content: prompt }]
+            messages: [{ role: "user", content: prompt }],
+            safety_settings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+            ],
+            safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+            ]
         }),
         signal
     });
@@ -64,7 +76,21 @@ export async function generateImage(prompt, { timeoutMs = 60000 } = {}) {
             return await generateImageWithUno(prompt, controller.signal);
         } catch (err) {
             console.log("UnoRouter image generation failed, falling back to OpenRouter (paid):", err.message);
-            return await generateImageWithOpenRouter(prompt, controller.signal);
+            try {
+                return await generateImageWithOpenRouter(prompt, controller.signal, openrouterImageModel);
+            } catch (openErr) {
+                if (openErr.message === "CONTENT_FILTERED") {
+                    const softFallback = "black-forest-labs/flux.1-schnell:free";
+                    console.log(`OpenRouter ${openrouterImageModel} content_filter, retrying with softer model ${softFallback}`);
+                    try {
+                        return await generateImageWithOpenRouter(prompt, controller.signal, softFallback);
+                    } catch (softErr) {
+                        console.log(`Soft fallback ${softFallback} also failed:`, softErr.message.slice(0, 800));
+                        throw softErr;
+                    }
+                }
+                throw openErr;
+            }
         }
     } finally {
         clearTimeout(timeout);
@@ -108,7 +134,19 @@ async function editImageWithOpenRouter(imageUrl, prompt, signal, model) {
                     { type: "text", text: prompt },
                     { type: "image_url", image_url: { url: imageDataUrl } }
                 ]
-            }]
+            }],
+            safety_settings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+            ],
+            safetySettings: [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_ONLY_HIGH" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_ONLY_HIGH" }
+            ]
         }),
         signal
     });
@@ -140,9 +178,20 @@ export async function editImage(imageUrl, prompt, { timeoutMs = 60000 } = {}) {
             return await editImageWithOpenRouter(imageUrl, prompt, controller.signal, openrouterImageModel);
         } catch (err) {
             console.log(`Primary edit model ${openrouterImageModel} failed:`, err.message.slice(0, 800));
-            const fallback = "google/gemini-2.5-flash-image";
-            console.log(`Trying fallback edit model ${fallback}`);
-            return await editImageWithOpenRouter(imageUrl, prompt, controller.signal, fallback);
+            const isFiltered = err.message === "CONTENT_FILTERED";
+            const fallback = isFiltered ? "black-forest-labs/flux.1-schnell:free" : "google/gemini-2.5-flash-image";
+            console.log(`Trying fallback edit model ${fallback} ${isFiltered ? "(soft filter retry)" : ""}`);
+            try {
+                return await editImageWithOpenRouter(imageUrl, prompt, controller.signal, fallback);
+            } catch (fallbackErr) {
+                if (isFiltered && fallbackErr.message !== "CONTENT_FILTERED") throw fallbackErr;
+                if (isFiltered) {
+                    const secondFallback = "google/gemini-2.5-flash-image";
+                    console.log(`Soft fallback also filtered, trying ${secondFallback}`);
+                    return await editImageWithOpenRouter(imageUrl, prompt, controller.signal, secondFallback);
+                }
+                throw fallbackErr;
+            }
         }
     } finally {
         clearTimeout(timeout);

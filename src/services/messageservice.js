@@ -109,7 +109,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
         } catch (err) {
             console.log("Image generation failed:", err.message);
             const reply = err.message === "CONTENT_FILTERED"
-                ? "I can't generate that image — it got blocked by content filters. Try a different prompt."
+                ? "That prompt is near our filter limit — I already tried a softer model and it still flagged it. Please rephrase slightly with more neutral wording and try again."
                 : "Something went wrong. Please try again.";
             await sendBotMessage(bot, chatid, reply, options);
             await userquery.findOneAndUpdate({ userid: chatid }, {
@@ -142,7 +142,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
         } catch (err) {
             console.log("Image edit failed:", err.message);
             const reply = err.message === "CONTENT_FILTERED"
-                ? "I can't edit that image — it got blocked by content filters. Try a different prompt."
+                ? "That edit is near our filter limit — I already tried a softer model and it still flagged it. Please rephrase slightly with more neutral wording and try again."
                 : "Something went wrong. Please try again.";
             await sendBotMessage(bot, chatid, reply, options);
             await userquery.findOneAndUpdate({ userid: chatid }, {
