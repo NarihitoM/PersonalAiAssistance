@@ -44,6 +44,8 @@ async function generateImageWithOpenRouter(prompt, signal) {
     }
 
     const data = await response.json();
+    if (data.choices?.[0]?.finish_reason === "content_filter") throw new Error("CONTENT_FILTERED");
+
     const image = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     if (!image) throw new Error("OpenRouter returned no image data");
 
@@ -117,6 +119,8 @@ async function editImageWithOpenRouter(imageUrl, prompt, signal, model) {
     }
 
     const data = await response.json();
+    if (data.choices?.[0]?.finish_reason === "content_filter") throw new Error("CONTENT_FILTERED");
+
     const image = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     if (!image) {
         console.log("OpenRouter edit no image, full response:", JSON.stringify(data).slice(0, 4000));

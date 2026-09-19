@@ -108,9 +108,12 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             }, { upsert: true });
         } catch (err) {
             console.log("Image generation failed:", err.message);
-            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
+            const reply = err.message === "CONTENT_FILTERED"
+                ? "I can't generate that image — it got blocked by content filters. Try a different prompt."
+                : "Something went wrong. Please try again.";
+            await sendBotMessage(bot, chatid, reply, options);
             await userquery.findOneAndUpdate({ userid: chatid }, {
-                $push: { messages: { role: "assistant", content: "Something went wrong. Please try again." } }
+                $push: { messages: { role: "assistant", content: reply } }
             }, { upsert: true });
         }
         return;
@@ -138,9 +141,12 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
             }, { upsert: true });
         } catch (err) {
             console.log("Image edit failed:", err.message);
-            await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
+            const reply = err.message === "CONTENT_FILTERED"
+                ? "I can't edit that image — it got blocked by content filters. Try a different prompt."
+                : "Something went wrong. Please try again.";
+            await sendBotMessage(bot, chatid, reply, options);
             await userquery.findOneAndUpdate({ userid: chatid }, {
-                $push: { messages: { role: "assistant", content: "Something went wrong. Please try again." } }
+                $push: { messages: { role: "assistant", content: reply } }
             }, { upsert: true });
         }
         return;
