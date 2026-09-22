@@ -1,4 +1,4 @@
-import { UNO_BASE_URL, unoImageModel, OPENROUTER_BASE_URL, openrouterImageModel, UNO_KEY, OPENROUTER_KEY } from "../config/image.js";
+import { UNO_BASE_URL, unoImageModel, unoEditImageModel, OPENROUTER_BASE_URL, openrouterImageModel, UNO_KEY, OPENROUTER_KEY } from "../config/image.js";
 
 async function generateImageWithUno(prompt, signal) {
     const response = await fetch(`${UNO_BASE_URL}/images/generations`, {
@@ -97,7 +97,7 @@ export async function generateImage(prompt, { timeoutMs = 60000 } = {}) {
     }
 }
 
-async function editImageWithOpenRouter(imageUrl, prompt, signal, model) {
+async function fetchImageAsDataUrl(imageUrl, signal) {
     const res = await fetch(imageUrl, { signal, redirect: "error" });
     if (!res.ok) throw new Error(`Failed to fetch source image: ${res.status} ${await res.text().catch(() => "")}`);
     const buf = Buffer.from(await res.arrayBuffer());
@@ -117,12 +117,16 @@ async function editImageWithOpenRouter(imageUrl, prompt, signal, model) {
         }
     }
     ct = ct.split(";")[0].trim();
-    const imageDataUrl = `data:${ct};base64,${buf.toString("base64")}`;
+    return `data:${ct};base64,${buf.toString("base64")}`;
+}
 
-    const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
+async function editImageWithProvider(baseUrl, apiKey, providerName, imageUrl, prompt, signal, model) {
+    const imageDataUrl = await fetchImageAsDataUrl(imageUrl, signal);
+
+    const response = await fetch(`${baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
-            "Authorization": `Bearer ${OPENROUTER_KEY}`,
+            "Authorization": `Bearer ${apiKey}`,
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
@@ -153,7 +157,7 @@ async function editImageWithOpenRouter(imageUrl, prompt, signal, model) {
 
     if (!response.ok) {
         const text = await response.text();
-        throw new Error(`OpenRouter image edit failed (${model}): ${response.status} ${text}`);
+        throw new Error(`${providerName} image edit failed (${model}): ${response.status} ${text}`);
     }
 
     const data = await response.json();
@@ -161,8 +165,8 @@ async function editImageWithOpenRouter(imageUrl, prompt, signal, model) {
 
     const image = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     if (!image) {
-        console.log("OpenRouter edit no image, full response:", JSON.stringify(data).slice(0, 4000));
-        throw new Error("OpenRouter returned no edited image data");
+        console.log(`${providerName} edit no image, full response:`, JSON.stringify(data).slice(0, 4000));
+        throw new Error(`${providerName} returned no edited image data`);
     }
 
     return image.startsWith("data:")
@@ -170,27 +174,41 @@ async function editImageWithOpenRouter(imageUrl, prompt, signal, model) {
         : image;
 }
 
+function editImageWithUno(imageUrl, prompt, signal, model = unoEditImageModel) {
+    return editImageWithProvider(UNO_BASE_URL, UNO_KEY, "UnoRouter", imageUrl, prompt, signal, model);
+}
+
+function editImageWithOpenRouter(imageUrl, prompt, signal, model) {
+    return editImageWithProvider(OPENROUTER_BASE_URL, OPENROUTER_KEY, "OpenRouter", imageUrl, prompt, signal, model);
+}
+
 export async function editImage(imageUrl, prompt, { timeoutMs = 60000 } = {}) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
         try {
-            return await editImageWithOpenRouter(imageUrl, prompt, controller.signal, openrouterImageModel);
-        } catch (err) {
-            console.log(`Primary edit model ${openrouterImageModel} failed:`, err.message.slice(0, 800));
-            const isFiltered = err.message === "CONTENT_FILTERED";
-            const fallback = isFiltered ? "black-forest-labs/flux.1-schnell:free" : "google/gemini-2.5-flash-image";
-            console.log(`Trying fallback edit model ${fallback} ${isFiltered ? "(soft filter retry)" : ""}`);
+            return await editImageWithUno(imageUrl, prompt, controller.signal);
+        } catch (unoErr) {
+            console.log("UnoRouter image edit failed, falling back to OpenRouter (paid):", unoErr.message.slice(0, 800));
+
             try {
-                return await editImageWithOpenRouter(imageUrl, prompt, controller.signal, fallback);
-            } catch (fallbackErr) {
-                if (isFiltered && fallbackErr.message !== "CONTENT_FILTERED") throw fallbackErr;
-                if (isFiltered) {
-                    const secondFallback = "google/gemini-2.5-flash-image";
-                    console.log(`Soft fallback also filtered, trying ${secondFallback}`);
-                    return await editImageWithOpenRouter(imageUrl, prompt, controller.signal, secondFallback);
+                return await editImageWithOpenRouter(imageUrl, prompt, controller.signal, openrouterImageModel);
+            } catch (err) {
+                console.log(`Primary edit model ${openrouterImageModel} failed:`, err.message.slice(0, 800));
+                const isFiltered = err.message === "CONTENT_FILTERED";
+                const fallback = isFiltered ? "black-forest-labs/flux.1-schnell:free" : "google/gemini-2.5-flash-image";
+                console.log(`Trying fallback edit model ${fallback} ${isFiltered ? "(soft filter retry)" : ""}`);
+                try {
+                    return await editImageWithOpenRouter(imageUrl, prompt, controller.signal, fallback);
+                } catch (fallbackErr) {
+                    if (isFiltered && fallbackErr.message !== "CONTENT_FILTERED") throw fallbackErr;
+                    if (isFiltered) {
+                        const secondFallback = "google/gemini-2.5-flash-image";
+                        console.log(`Soft fallback also filtered, trying ${secondFallback}`);
+                        return await editImageWithOpenRouter(imageUrl, prompt, controller.signal, secondFallback);
+                    }
+                    throw fallbackErr;
                 }
-                throw fallbackErr;
             }
         }
     } finally {
