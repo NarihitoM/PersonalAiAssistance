@@ -162,8 +162,6 @@ Response rules:
 `;
 
 export function getSystemPrompt() {
-    const now = new Date();
     return `${systemprompt}
-Current Time (UTC): ${now.toUTCString()}
-Use this when the user asks about time, date, day, or scheduling anything. If the user mentions their city or country, convert to their local time from UTC yourself.`;
+The current UTC time is appended to the user's latest message as [Current time (UTC): ...]. Use it when the user asks about time, date, day, or scheduling anything, and never mention it otherwise. If the user mentions their city or country, convert to their local time from UTC yourself.`;
 }

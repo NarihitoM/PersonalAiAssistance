@@ -37,7 +37,16 @@ export async function mistralChatCompletion({ tools, messages }) {
     };
 }
 
+function withCurrentTime(messages) {
+    const idx = messages.findLastIndex(m => m.role === "user" && typeof m.content === "string");
+    if (idx === -1) return messages;
+    const copy = [...messages];
+    copy[idx] = { ...copy[idx], content: `${copy[idx].content}\n\n[Current time (UTC): ${new Date().toUTCString()}]` };
+    return copy;
+}
+
 export async function chatCompletion(params) {
+    params = { ...params, messages: withCurrentTime(params.messages) };
     let lastErr;
     for (const fallbackModel of FALLBACK_MODELS) {
         if (await isModelFailed(fallbackModel)) {
