@@ -18,6 +18,18 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 //SUPER MESSAGE
 const MAX_AI_RETRIES = 3;
 
+function describeReply(msg) {
+    const r = msg.reply_to_message;
+    if (!r) return "";
+    const who = r.from?.is_bot ? "your earlier message" : "an earlier message";
+    const quote = msg.quote?.text ? ` The user highlighted this part: "${msg.quote.text}".` : "";
+    const text = r.text || r.caption;
+    if (r.document) return ` [Replying to ${who} with the file "${r.document.file_name}"${text ? `, caption: "${text.slice(0, 500)}"` : ""} - if user asks to change this file, call edit_file.${quote}]`;
+    if (text) return ` [Replying to ${who}: "${text.slice(0, 1500)}".${quote}]`;
+    const kind = r.voice ? "voice message" : r.audio ? "audio file" : r.video ? "video" : r.sticker ? `sticker ${r.sticker.emoji || ""}` : r.poll ? `poll "${r.poll.question}"` : r.location ? "location" : "message";
+    return ` [Replying to ${who}: a ${kind}.${quote}]`;
+}
+
 export const message = (bot) => async (msg, businessConnectionId, attempt = 1) => {
     const chatid = msg.chat.id;
     console.log(msg);
@@ -44,7 +56,9 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                     replyImageUrl = await bot.getFileLink(msg.reply_to_message.document.file_id);
                 } catch {}
             }
-            const replyPart = replyImageUrl ? ` [Replying to image at URL: ${replyImageUrl} - if user asks to edit this image, call edit_image with this image_url]` : "";
+            const replyPart = replyImageUrl
+                ? ` [Replying to image at URL: ${replyImageUrl} - if user asks to edit this image, call edit_image with this image_url]`
+                : describeReply(msg);
             const youtubeLink = msg.text.match(/https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|live\/)|youtu\.be\/)[\w-]{11}\S*/)?.[0];
             const youtubePart = youtubeLink ? ` [YouTube video link detected: ${youtubeLink} - call youtube_transcript with this url to get its content before answering]` : "";
             const message = `text : ${msg.text}${replyPart}${youtubePart}`;
