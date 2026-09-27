@@ -45,7 +45,9 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                 } catch {}
             }
             const replyPart = replyImageUrl ? ` [Replying to image at URL: ${replyImageUrl} - if user asks to edit this image, call edit_image with this image_url]` : "";
-            const message = `text : ${msg.text}${replyPart}`;
+            const youtubeLink = msg.text.match(/https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|live\/)|youtu\.be\/)[\w-]{11}\S*/)?.[0];
+            const youtubePart = youtubeLink ? ` [YouTube video link detected: ${youtubeLink} - call youtube_transcript with this url to get its content before answering]` : "";
+            const message = `text : ${msg.text}${replyPart}${youtubePart}`;
 
             if (attempt === 1) await userquery.findOneAndUpdate({
                 userid: chatid
