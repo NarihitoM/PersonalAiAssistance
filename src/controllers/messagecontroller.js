@@ -363,6 +363,10 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
         }
         //Video Transcript - tool-driven via transcribe_video
         else if (msg.video) {
+            if (msg.video.file_size > 5 * 1024 * 1024) {
+                await sendBotMessage(bot, chatid, "This video is larger than 5MB. Please reduce the video size and send it again.", options);
+                return;
+            }
             const fileid = msg.video.file_id;
             const filelink = await bot.getFileLink(fileid);
             const captiontext = msg.caption ? `Caption : ${msg.caption}` : "";
