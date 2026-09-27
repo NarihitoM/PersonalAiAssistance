@@ -485,6 +485,16 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
     await sendGeneratedFile(bot, chatid, options, args);
 }
 
+const KATEX_HEAD = `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\\\[', right: '\\\\]', display: true }, { left: '$', right: '$', display: false }, { left: '\\\\(', right: '\\\\)', display: false }] })"></script>`;
+
+function withMathRendering(html) {
+    if (!/\$|\\\(|\\\[/.test(html) || html.includes("katex")) return html;
+    if (/<\/head>/i.test(html)) return html.replace(/<\/head>/i, (head) => `${KATEX_HEAD}\n${head}`);
+    return `${KATEX_HEAD}\n${html}`;
+}
+
 async function sendGeneratedFile(bot, chatid, options, { filename, filetype, filecontent, message }) {
     await withChatAction(bot, chatid, "upload_document", options, async () => {
         await userquery.findOneAndUpdate({ userid: chatid }, {
@@ -511,7 +521,9 @@ async function sendGeneratedFile(bot, chatid, options, { filename, filetype, fil
             const filePath = path.join(os.tmpdir(), filename);
             const content = filetype === "txt" || filetype === "text"
                 ? stripInlineMarkdown(filecontent)
-                : filecontent;
+                : filetype === "html"
+                    ? withMathRendering(filecontent)
+                    : filecontent;
             fs.writeFileSync(filePath, content, "utf-8");
 
             await bot.sendDocument(chatid, filePath, {
