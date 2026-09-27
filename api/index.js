@@ -3,6 +3,7 @@ import { createbot } from "../src/config/botconfig.js";
 import { message } from "../src/controllers/messagecontroller.js";
 import usersession from "../src/models/usersession.js";
 import processedMessage from "../src/models/processedMessage.js";
+import { markOwnerActive, isOwnerActive } from "../src/services/rediscache.js";
 
 configDotenv();
 
@@ -18,12 +19,18 @@ export default async function handler(req, res) {
     const msg = req.body.message || req.body.business_message;
 
     if (msg) {
+        const chatid = msg.chat.id;
+
         if (msg.from.id === Number(process.env.CHATID) && msg.business_connection_id) {
+            await markOwnerActive(chatid);
             return res.status(200).send("Ok")
         }
 
-        const chatid = msg.chat.id;
         const businessConnectionId = req.body.business_message?.business_connection_id;
+        if (businessConnectionId && await isOwnerActive(chatid)) {
+            console.log(`Owner active in chat ${chatid}, skipping AI auto-reply`);
+            return res.status(200).send("OK");
+        }
         const dedupKey = `${chatid}:${msg.message_id}`;
         try {
             await processedMessage.create({ key: dedupKey, chatId: String(chatid), messageId: msg.message_id });
