@@ -13,6 +13,7 @@ import https from "https";
 import fs from "fs";
 import PDFDocument from "pdfkit";
 import streamBuffers from "stream-buffers";
+import { renderMarkdownToPdf, stripInlineMarkdown } from "../utils/markdownpdf.js";
 import { withPhotoAction, withTypingAction, withChatAction, checkImageCooldown, sendBotMessage } from "../utils/utils.js";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
@@ -461,11 +462,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
 
             pdfDoc.pipe(writableStream);
 
-            pdfDoc.font("Helvetica")
-                .fontSize(12)
-                .text(args.filecontent, {
-                    align: "left"
-                });
+            renderMarkdownToPdf(pdfDoc, args.filecontent);
 
             pdfDoc.end();
 
@@ -481,7 +478,10 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
                 caption: args.message
             });
         } else {
-            fs.writeFileSync(filename, args.filecontent, "utf-8");
+            const content = args.filetype === "txt" || args.filetype === "text"
+                ? stripInlineMarkdown(args.filecontent)
+                : args.filecontent;
+            fs.writeFileSync(filename, content, "utf-8");
 
             await bot.sendDocument(chatid, filename, {
                 ...options,
