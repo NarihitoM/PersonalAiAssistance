@@ -26,7 +26,7 @@ export async function markModelFailed(model) {
     try { await c.set(key, "1", { EX: FAIL_TTL_SECONDS }); } catch {}
 }
 
-const OWNER_ACTIVE_TTL_SECONDS = 15 * 60;
+const OWNER_ACTIVE_TTL_SECONDS = 5 * 60;
 
 export async function markOwnerActive(chatid) {
     const key = `owner:active:${chatid}`;
