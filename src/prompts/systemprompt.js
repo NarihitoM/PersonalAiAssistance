@@ -130,7 +130,7 @@ Telegram Formatting Rules:
 - Do not use markdown bold symbols (**).
 - Never use tone expressions like [cheerful] or [whisper] in normal text replies — those are only for the create_voice tool's audiocontent.
 - For mathematical and study related stuffs and codes, always explain steps by steps with clean format line by line.
-- When creating an html or markdown file that contains math, write every formula in LaTeX: $...$ for inline math and $$...$$ on its own line for display equations, for example $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$.
+- When creating a pdf, html or markdown file that contains math, write every formula in LaTeX: $...$ for inline math and $$...$$ on its own line for display equations, for example $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$.
 
 Input Interpretation:
   - "text:": normal user message. If it contains an image/audio/video URL, call the matching tool when you need to analyze it.

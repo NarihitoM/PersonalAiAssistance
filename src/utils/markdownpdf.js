@@ -1,3 +1,34 @@
+import { mathjax } from "mathjax-full/js/mathjax.js";
+import { TeX } from "mathjax-full/js/input/tex.js";
+import { SVG } from "mathjax-full/js/output/svg.js";
+import { liteAdaptor } from "mathjax-full/js/adaptors/liteAdaptor.js";
+import { RegisterHTMLHandler } from "mathjax-full/js/handlers/html.js";
+import { AllPackages } from "mathjax-full/js/input/tex/AllPackages.js";
+import SVGtoPDF from "svg-to-pdfkit";
+
+const adaptor = liteAdaptor();
+RegisterHTMLHandler(adaptor);
+const mathDocument = mathjax.document("", {
+    InputJax: new TeX({ packages: AllPackages }),
+    OutputJax: new SVG({ fontCache: "none" })
+});
+
+const INLINE_MATH = /\$\$([^$]+?)\$\$|\\\((.+?)\\\)|\$(?=\S)([^$\n]+?)(?<=\S)\$(?!\d)/g;
+
+function renderMath(latex, display, size) {
+    try {
+        const svg = adaptor.innerHTML(mathDocument.convert(latex, { display }));
+        if (svg.includes("data-mjx-error") || svg.includes("merror")) return null;
+        const ex = size / 2;
+        const width = parseFloat(svg.match(/width="([\d.]+)ex"/)[1]) * ex;
+        const height = parseFloat(svg.match(/height="([\d.]+)ex"/)[1]) * ex;
+        const depth = -parseFloat(svg.match(/vertical-align:\s*(-?[\d.]+)ex/)?.[1] ?? 0) * ex;
+        return { svg, width, height, depth };
+    } catch {
+        return null;
+    }
+}
+
 const BOLD_OF = {
     "Helvetica": "Helvetica-Bold",
     "Helvetica-Oblique": "Helvetica-BoldOblique",
@@ -16,6 +47,20 @@ export function stripInlineMarkdown(text) {
 
 function inlineRuns(text) {
     const runs = [];
+    let last = 0;
+    let m;
+    INLINE_MATH.lastIndex = 0;
+    while ((m = INLINE_MATH.exec(text))) {
+        if (m.index > last) runs.push(...formatRuns(text.slice(last, m.index)));
+        runs.push({ math: m[1] ?? m[2] ?? m[3], font: "Helvetica" });
+        last = m.index + m[0].length;
+    }
+    if (last < text.length) runs.push(...formatRuns(text.slice(last)));
+    return runs;
+}
+
+function formatRuns(text) {
+    const runs = [];
     const re = /(\*\*\*[^*]+\*\*\*|\*\*[^*]+\*\*|__[^_]+__|\*[^*\s][^*]*\*|`[^`]+`)/g;
     let last = 0;
     let m;
@@ -32,10 +77,83 @@ function inlineRuns(text) {
     return runs.filter(r => r.text);
 }
 
+function flowRuns(doc, runs, size, { bold = false, indent = 0 }) {
+    const left = doc.page.margins.left + indent;
+    const maxWidth = doc.page.width - doc.page.margins.right - left;
+    const items = [];
+
+    for (const r of runs) {
+        const math = r.math ? renderMath(r.math, false, size) : null;
+        if (math) {
+            items.push({ math, width: math.width });
+            continue;
+        }
+        const font = r.math ? "Courier" : bold ? BOLD_OF[r.font] : r.font;
+        for (const part of (r.math ?? r.text).split(/(\s+)/)) {
+            if (!part) continue;
+            items.push({ text: part, font, space: /^\s+$/.test(part), width: doc.font(font).fontSize(size).widthOfString(part) });
+        }
+    }
+
+    const flush = (line) => {
+        while (line.length && line[line.length - 1].space) line.pop();
+        if (!line.length) return;
+        const ascent = Math.max(size * 0.8, ...line.filter(i => i.math).map(i => i.math.height - i.math.depth));
+        const descent = Math.max(size * 0.25, ...line.filter(i => i.math).map(i => i.math.depth));
+        if (doc.y + ascent + descent > doc.page.height - doc.page.margins.bottom) doc.addPage();
+        const baseline = doc.y + ascent;
+        let x = left;
+        for (const item of line) {
+            if (item.math) {
+                SVGtoPDF(doc, item.math.svg, x, baseline - (item.math.height - item.math.depth), { width: item.math.width, height: item.math.height });
+            } else if (!item.space) {
+                doc.font(item.font).fontSize(size);
+                doc.text(item.text, x, baseline - (doc._font.ascender / 1000) * size, { lineBreak: false });
+            }
+            x += item.width;
+        }
+        doc.x = doc.page.margins.left;
+        doc.y = baseline + descent + size * 0.15;
+    };
+
+    let line = [];
+    let lineWidth = 0;
+    for (const item of items) {
+        if (item.space && !line.length) continue;
+        if (lineWidth + item.width > maxWidth && line.length && !item.space) {
+            flush(line);
+            line = [];
+            lineWidth = 0;
+        }
+        line.push(item);
+        lineWidth += item.width;
+    }
+    flush(line);
+}
+
+function displayMath(doc, latex) {
+    const left = doc.page.margins.left;
+    const width = doc.page.width - left - doc.page.margins.right;
+    const math = renderMath(latex, true, 13);
+    if (!math) {
+        doc.font("Courier").fontSize(11).text(latex, left, doc.y, { width, align: "center" });
+        doc.moveDown(0.5);
+        return;
+    }
+    const scale = Math.min(1, width / math.width);
+    const w = math.width * scale;
+    const h = math.height * scale;
+    if (doc.y + h + 12 > doc.page.height - doc.page.margins.bottom) doc.addPage();
+    SVGtoPDF(doc, math.svg, left + (width - w) / 2, doc.y + 6, { width: w, height: h });
+    doc.x = left;
+    doc.y += h + 12;
+}
+
 function writeRuns(doc, runs, size, { bold = false, indent = 0 } = {}) {
     const left = doc.page.margins.left;
     const width = doc.page.width - left - doc.page.margins.right - indent;
     if (runs.length === 0) return;
+    if (runs.some(r => r.math)) return flowRuns(doc, runs, size, { bold, indent });
     runs.forEach((r, i) => {
         doc.font(bold ? BOLD_OF[r.font] : r.font).fontSize(size);
         const continued = i < runs.length - 1;
@@ -87,6 +205,21 @@ export function renderMarkdownToPdf(doc, markdown) {
             while (i < lines.length && !lines[i].trim().startsWith("```")) code.push(lines[i++]);
             doc.font("Courier").fontSize(10).text(code.join("\n"), left, doc.y, { width });
             doc.moveDown(0.5);
+            continue;
+        }
+
+        const oneLineDisplay = t.match(/^\$\$(.+)\$\$$/) || t.match(/^\\\[(.+)\\\]$/);
+        if (oneLineDisplay) {
+            displayMath(doc, oneLineDisplay[1]);
+            continue;
+        }
+
+        if (t === "$$" || t === "\\[") {
+            const closing = t === "$$" ? "$$" : "\\]";
+            const block = [];
+            i++;
+            while (i < lines.length && lines[i].trim() !== closing) block.push(lines[i++]);
+            displayMath(doc, block.join("\n"));
             continue;
         }
 
