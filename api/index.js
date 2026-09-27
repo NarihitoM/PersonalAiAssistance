@@ -50,6 +50,16 @@ export default async function handler(req, res) {
             return await bot.sendMessage(targetId, text, options);
         };
 
+        const command = msg.text?.split(/[\s@]/)[0];
+        if (command === "/start") {
+            await sendReply(chatid, "Hello! This is Narihito's Personal AI Assistant. You can start messaging.");
+            return res.status(200).send("OK");
+        }
+        if (command === "/owner") {
+            await sendReply(chatid, "Created by Narihito (Hein Htet Aung)");
+            return res.status(200).send("OK");
+        }
+
 
         let session;
         try {
