@@ -10,13 +10,38 @@ configDotenv();
 const token = process.env.TOKEN;
 let botInstance = null;
 
+function toEditedMessage(body) {
+    const edited = body.edited_message || body.edited_business_message;
+    if (!edited?.text) return null;
+    return {
+        ...edited,
+        text: `[Activity: the user edited one of their earlier messages. The new version is:] ${edited.text}`,
+        dedupSuffix: `:edit:${edited.edit_date}`
+    };
+}
+
+function toReactionMessage(reaction) {
+    if (!reaction?.user || reaction.user.is_bot || !reaction.new_reaction?.length) return null;
+    const emojis = reaction.new_reaction
+        .map(r => r.type === "emoji" ? r.emoji : r.type === "paid" ? "a paid star" : "a custom emoji")
+        .join(" ");
+    return {
+        message_id: reaction.message_id,
+        chat: reaction.chat,
+        from: reaction.user,
+        date: reaction.date,
+        text: `[Activity: the user reacted ${emojis} to one of your earlier messages. Reply with one short, natural sentence that fits the reaction and the conversation. Only if you already responded to a reaction right before this, reply with exactly NO_REPLY instead.]`,
+        dedupSuffix: `:reaction:${reaction.date}`
+    };
+}
+
 export default async function handler(req, res) {
     if (req.method !== "POST") return res.status(200).send("Bot running ✅");
 
     if (!botInstance) botInstance = await createbot(token);
     const bot = botInstance;
 
-    const msg = req.body.message || req.body.business_message;
+    const msg = req.body.message || req.body.business_message || toEditedMessage(req.body) || toReactionMessage(req.body.message_reaction);
 
     if (msg) {
         const chatid = msg.chat.id;
@@ -26,12 +51,12 @@ export default async function handler(req, res) {
             return res.status(200).send("Ok")
         }
 
-        const businessConnectionId = req.body.business_message?.business_connection_id;
+        const businessConnectionId = msg.business_connection_id;
         if (businessConnectionId && await isOwnerActive(chatid)) {
             console.log(`Owner active in chat ${chatid}, skipping AI auto-reply`);
             return res.status(200).send("OK");
         }
-        const dedupKey = `${chatid}:${msg.message_id}`;
+        const dedupKey = `${chatid}:${msg.message_id}${msg.dedupSuffix || ""}`;
         try {
             await processedMessage.create({ key: dedupKey, chatId: String(chatid), messageId: msg.message_id });
         } catch (err) {

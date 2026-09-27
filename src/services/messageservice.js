@@ -33,6 +33,8 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
     if (!toolCall) {
         let aimessage = responseMessage.content;
 
+        if (String(aimessage || "").trim() === "NO_REPLY") return;
+
         if (!aimessage || !String(aimessage).trim()) {
             console.log("handleAIResponse: empty content, raw response:", JSON.stringify(responseMessage).slice(0, 2000));
             aimessage = responseMessage.content || "";
