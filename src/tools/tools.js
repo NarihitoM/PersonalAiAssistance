@@ -19,6 +19,21 @@ export const tools = [
     {
         type: "function",
         function: {
+            name: "edit_file",
+            description: "Edit the most recent file (one you created or a txt/pdf the user sent) and send it back with the same filename. Use this instead of create_file when the user asks to change, update, fix, add to, or remove something from an existing file.",
+            parameters: {
+                type: "object",
+                properties: {
+                    message: { type: "string", description: "Message to send along with the edited file" },
+                    instruction: { type: "string", description: "Exactly what to change in the file, in detail" }
+                },
+                required: ["message", "instruction"]
+            }
+        }
+    },
+    {
+        type: "function",
+        function: {
             name: "create_voice",
             description: "Generate a spoken voice message for the user",
             parameters: {

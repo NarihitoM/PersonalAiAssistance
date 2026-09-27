@@ -438,56 +438,84 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
         return handleAIResponse(bot, chatid, options, followUp, messages, depth + 1);
     }
 
+    if (toolCall.function.name === "edit_file") {
+        const user = await userquery.findOne({ userid: chatid });
+        const lastFile = user?.lastFile;
+        if (!lastFile?.filecontent) {
+            const reply = "There is no file to edit yet. Please send a file or ask me to create one first.";
+            await sendBotMessage(bot, chatid, reply, options);
+            await userquery.findOneAndUpdate({ userid: chatid }, {
+                $push: { messages: { role: "assistant", content: reply } }
+            }, { upsert: true });
+            return;
+        }
+
+        try {
+            const edited = await withChatAction(bot, chatid, "upload_document", options, () => chatCompletion({
+                messages: [
+                    {
+                        role: "system",
+                        content: `You edit files. Apply the user's instruction to the file below and return ONLY the full updated file content. Keep everything the instruction does not mention exactly as it is. No explanations, no code fences.\n\nFilename: ${lastFile.filename}\n\n${lastFile.filecontent}`
+                    },
+                    { role: "user", content: args.instruction }
+                ]
+            }));
+            const newContent = String(edited.choices[0].message.content || "")
+                .replace(/^```[\w-]*\n/, "")
+                .replace(/\n```\s*$/, "")
+                .trim();
+            if (!newContent) throw new Error("empty edit result");
+
+            await sendGeneratedFile(bot, chatid, options, {
+                filename: lastFile.filename,
+                filetype: lastFile.filetype,
+                filecontent: newContent,
+                message: args.message
+            });
+        } catch (err) {
+            console.log("File edit failed:", err.message);
+            await sendBotMessage(bot, chatid, "Something went wrong while editing the file. Please try again.", options);
+        }
+        return;
+    }
+
     // create_file
+    await sendGeneratedFile(bot, chatid, options, args);
+}
+
+async function sendGeneratedFile(bot, chatid, options, { filename, filetype, filecontent, message }) {
     await withChatAction(bot, chatid, "upload_document", options, async () => {
-        await userquery.findOneAndUpdate({
-            userid: chatid
-        }, {
-            $push: {
-                messages: {
-                    role: "assistant",
-                    content: args.message
-                }
-            }
-        }, {
-            upsert: true
-        });
+        await userquery.findOneAndUpdate({ userid: chatid }, {
+            $push: { messages: { role: "assistant", content: `${message}\n[Sent file: ${filename}. To change this file later, call edit_file.]` } },
+            $set: { lastFile: { filename, filetype, filecontent } }
+        }, { upsert: true });
 
-        const tempDir = os.tmpdir();
-        const filename = path.join(tempDir, args.filename);
-
-        if (args.filetype === "pdf") {
+        if (filetype === "pdf") {
             const pdfDoc = new PDFDocument({ margin: 50 });
             const writableStream = new streamBuffers.WritableStreamBuffer();
 
             pdfDoc.pipe(writableStream);
-
-            renderMarkdownToPdf(pdfDoc, args.filecontent);
-
+            renderMarkdownToPdf(pdfDoc, filecontent);
             pdfDoc.end();
 
-            await new Promise(resolve =>
-                writableStream.on("close", resolve)
-            );
+            await new Promise(resolve => writableStream.on("close", resolve));
 
-            const buffer = writableStream.getContents();
-
-            await bot.sendDocument(chatid, buffer, {
+            await bot.sendDocument(chatid, writableStream.getContents(), {
                 ...options,
-                title: args.filename,
-                caption: args.message
-            });
+                title: filename,
+                caption: message
+            }, { filename, contentType: "application/pdf" });
         } else {
-            const content = args.filetype === "txt" || args.filetype === "text"
-                ? stripInlineMarkdown(args.filecontent)
-                : args.filecontent;
-            fs.writeFileSync(filename, content, "utf-8");
+            const filePath = path.join(os.tmpdir(), filename);
+            const content = filetype === "txt" || filetype === "text"
+                ? stripInlineMarkdown(filecontent)
+                : filecontent;
+            fs.writeFileSync(filePath, content, "utf-8");
 
-            await bot.sendDocument(chatid, filename, {
+            await bot.sendDocument(chatid, filePath, {
                 ...options,
-                caption: args.message
+                caption: message
             });
         }
     });
-    return;
 }

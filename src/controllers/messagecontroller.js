@@ -433,7 +433,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             role: "user",
                             content: `${textfiledata},${captiontext}`
                         }
-                    }
+                    },
+                    $set: { lastFile: { filename: msg.document.file_name || "file.txt", filetype: "txt", filecontent: data } }
                 }, {
                     upsert: true
                 });
@@ -476,7 +477,8 @@ export const message = (bot) => async (msg, businessConnectionId, attempt = 1) =
                             role: "user",
                             content: `${pdffiledata},${captiontext}`
                         }
-                    }
+                    },
+                    $set: { lastFile: { filename: msg.document.file_name || "file.pdf", filetype: "pdf", filecontent: pdfText } }
                 }, {
                     upsert: true
                 });
