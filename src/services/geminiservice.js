@@ -1,6 +1,6 @@
 import dns from "dns/promises";
 import net from "net";
-import { gemini, visionmodel, geminiChatModel as cfgGeminiChatModel, geminiOpenAI } from "../config/gemini.js";
+import { visionModels, geminiChatModel as cfgGeminiChatModel, geminiOpenAI } from "../config/gemini.js";
 
 export const geminiChatModel = cfgGeminiChatModel;
 
@@ -61,11 +61,19 @@ export async function analyzeImage(systemPrompt, imageUrl, captionText = "", kno
 }
 
 export async function analyzeImageBuffer(systemPrompt, buffer, captionText = "", mimeType = "image/jpeg") {
-    const result = await visionmodel.generateContent([
-        systemPrompt,
-        captionText,
-        { inlineData: { data: buffer.toString("base64"), mimeType } }
-    ]);
-
-    return result.response.text();
+    let lastErr;
+    for (const { name, client } of visionModels) {
+        try {
+            const result = await client.generateContent([
+                systemPrompt,
+                captionText,
+                { inlineData: { data: buffer.toString("base64"), mimeType } }
+            ]);
+            return result.response.text();
+        } catch (err) {
+            console.log(`Vision model ${name} failed:`, err.message.slice(0, 200));
+            lastErr = err;
+        }
+    }
+    throw lastErr;
 }

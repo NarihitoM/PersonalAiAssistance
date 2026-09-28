@@ -1,9 +1,9 @@
 import { configDotenv } from "dotenv";
 import { createbot } from "../src/config/botconfig.js";
-import { message } from "../src/controllers/messagecontroller.js";
+import { message, messageBatch } from "../src/controllers/messagecontroller.js";
 import usersession from "../src/models/usersession.js";
 import processedMessage from "../src/models/processedMessage.js";
-import { markOwnerActive, isOwnerActive } from "../src/services/rediscache.js";
+import { markOwnerActive, isOwnerActive, collectAlbum } from "../src/services/rediscache.js";
 
 configDotenv();
 
@@ -103,7 +103,14 @@ export default async function handler(req, res) {
 
         if (session.session === "chat") {
             try {
-                await message(bot)(msg, businessConnectionId);
+                if (msg.media_group_id) {
+                    const album = await collectAlbum(msg);
+                    if (!album) return res.status(200).send("OK");
+                    if (album.length > 1) await messageBatch(bot)(album, businessConnectionId);
+                    else await message(bot)(album[0], businessConnectionId);
+                } else {
+                    await message(bot)(msg, businessConnectionId);
+                }
             } catch (err) {
                 console.error("message handler failed:", err);
                 try { await processedMessage.deleteOne({ key: dedupKey }); } catch {}

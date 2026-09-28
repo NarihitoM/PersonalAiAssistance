@@ -49,6 +49,25 @@ export async function isOwnerActive(chatid) {
     }
 }
 
+const ALBUM_WAIT_MS = 2000;
+
+export async function collectAlbum(msg) {
+    const c = await getRedisClient();
+    if (!c) return [msg];
+    const key = `album:${msg.chat.id}:${msg.media_group_id}`;
+    try {
+        const position = await c.rPush(key, JSON.stringify(msg));
+        await c.expire(key, 60);
+        await new Promise(resolve => setTimeout(resolve, ALBUM_WAIT_MS));
+        if (await c.lLen(key) > position) return null;
+        const [items] = await c.multi().lRange(key, 0, -1).del(key).exec();
+        if (!items?.length) return null;
+        return items.map(item => JSON.parse(item)).sort((a, b) => a.message_id - b.message_id);
+    } catch {
+        return [msg];
+    }
+}
+
 export async function clearModelFailed(model) {
     const key = `fail:model:${model}`;
     memoryCache.delete(key);
