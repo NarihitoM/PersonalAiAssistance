@@ -70,7 +70,7 @@ export const tools = [
             parameters: {
                 type: "object",
                 properties: {
-                    image_url: { type: "string", description: "Exact image URL from the user's 'User sent an image at URL: ...' message - copy it verbatim" },
+                    image_url: { type: "string", description: "Exact image reference from the user's 'User sent an image at URL: ...' message, usually a tg-file:... reference - copy it verbatim" },
                     prompt: { type: "string", description: "Detailed edit instruction, e.g. 'make background blur, add sunglasses, change to anime style while keeping face identity'" },
                     message: { type: "string", description: "Caption/message to send along with the edited image" }
                 },
@@ -212,7 +212,7 @@ export const tools = [
             parameters: {
                 type: "object",
                 properties: {
-                    image_url: { type: "string", description: "Publicly accessible image URL to analyze (Telegram file link or any https URL)" },
+                    image_url: { type: "string", description: "Image to analyze: a tg-file:... reference from the user's message copied verbatim, or any public https URL" },
                     prompt: { type: "string", description: "Optional question or instruction about what to focus on in the image" }
                 },
                 required: ["image_url"]
@@ -227,7 +227,7 @@ export const tools = [
             parameters: {
                 type: "object",
                 properties: {
-                    audio_url: { type: "string", description: "Publicly accessible audio/voice file URL to transcribe (Telegram file link or any https URL)" },
+                    audio_url: { type: "string", description: "Audio or voice file to transcribe: a tg-file:... reference from the user's message copied verbatim, or any public https URL" },
                     prompt: { type: "string", description: "Optional prompt to guide transcription (e.g. language hint)" }
                 },
                 required: ["audio_url"]
@@ -257,7 +257,7 @@ export const tools = [
             parameters: {
                 type: "object",
                 properties: {
-                    video_url: { type: "string", description: "Publicly accessible video file URL to transcribe (Telegram file link or any https URL)" },
+                    video_url: { type: "string", description: "Video file to transcribe: a tg-file:... reference from the user's message copied verbatim, or any public https URL" },
                     caption: { type: "string", description: "Optional caption or question about the video" }
                 },
                 required: ["video_url"]

@@ -11,7 +11,7 @@ import path from "path";
 import os from "os";
 import https from "https";
 import fs from "fs";
-import { withTypingAction, sendBotMessage, getPdfTextFromUrl } from "../utils/utils.js";
+import { withTypingAction, sendBotMessage, getPdfTextFromUrl, fileRef } from "../utils/utils.js";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -30,16 +30,17 @@ function describeReply(msg) {
     return ` [Replying to ${who}: a ${kind}.${quote}]`;
 }
 
-async function describeImage(url, caption, label, preAnalyze) {
+async function describeImage(bot, fileId, caption, label, preAnalyze) {
+    const ref = fileRef(fileId);
     if (preAnalyze) {
         try {
-            const analysis = await analyzeImage(systempromptforimage, url, caption);
-            return `${label} at URL: ${url} ${caption} - This image is already analyzed, do not call analyze_image for it. What the image shows: ${analysis}`;
+            const analysis = await analyzeImage(systempromptforimage, await bot.getFileLink(fileId), caption);
+            return `${label} at URL: ${ref} ${caption} - This image is already analyzed, do not call analyze_image for it. What the image shows: ${analysis}`;
         } catch (err) {
             console.log("Image pre-analysis failed:", err.message);
         }
     }
-    return `${label} at URL: ${url} ${caption} - Call analyze_image with image_url to inspect it before answering.`;
+    return `${label} at URL: ${ref} ${caption} - Call analyze_image with image_url to inspect it before answering.`;
 }
 
 async function describeAnimation(bot, msg, options) {
@@ -106,7 +107,7 @@ async function describeDocument(bot, msg, options, preAnalyze) {
         return { content: `DOCX : ${result.value},${captiontext}` };
     }
     if (mime === "image/png" || mime === "image/jpeg") {
-        return { content: await describeImage(filelink, captiontext, "User sent an image document", preAnalyze) };
+        return { content: await describeImage(bot, fileid, captiontext, "User sent an image document", preAnalyze) };
     }
     return null;
 }
@@ -115,14 +116,9 @@ async function describeMessage(bot, msg, options, { preAnalyze = false } = {}) {
     if (msg.text) {
         let replyImageUrl = "";
         if (msg.reply_to_message?.photo) {
-            try {
-                const rid = msg.reply_to_message.photo[msg.reply_to_message.photo.length - 1].file_id;
-                replyImageUrl = await bot.getFileLink(rid);
-            } catch {}
+            replyImageUrl = fileRef(msg.reply_to_message.photo[msg.reply_to_message.photo.length - 1].file_id);
         } else if (msg.reply_to_message?.document?.mime_type?.startsWith("image/")) {
-            try {
-                replyImageUrl = await bot.getFileLink(msg.reply_to_message.document.file_id);
-            } catch {}
+            replyImageUrl = fileRef(msg.reply_to_message.document.file_id);
         }
         const replyPart = replyImageUrl
             ? ` [Replying to image at URL: ${replyImageUrl} - if user asks to edit this image, call edit_image with this image_url]`
@@ -133,9 +129,8 @@ async function describeMessage(bot, msg, options, { preAnalyze = false } = {}) {
     }
 
     if (msg.photo) {
-        const filelink = await bot.getFileLink(msg.photo[msg.photo.length - 1].file_id);
         const captionmsg = msg.caption ? `Caption : ${msg.caption}` : "";
-        return { content: await describeImage(filelink, captionmsg, "User sent an image", preAnalyze) };
+        return { content: await describeImage(bot, msg.photo[msg.photo.length - 1].file_id, captionmsg, "User sent an image", preAnalyze) };
     }
 
     if (msg.animation) return describeAnimation(bot, msg, options);
@@ -149,29 +144,25 @@ async function describeMessage(bot, msg, options, { preAnalyze = false } = {}) {
         if (msg.sticker.is_video || msg.sticker.is_animated) {
             return { content: `Gif : The user sent an animated/video sticker showing the emoji: "${emoji}".` };
         }
-        const filelink = await bot.getFileLink(msg.sticker.file_id);
-        return { content: `User sent a sticker image at URL: ${filelink} Emoji: ${emoji} - Call analyze_image with image_url to inspect it before answering.` };
+        return { content: `User sent a sticker image at URL: ${fileRef(msg.sticker.file_id)} Emoji: ${emoji} - Call analyze_image with image_url to inspect it before answering.` };
     }
 
     if (msg.voice) {
-        const filelink = await bot.getFileLink(msg.voice.file_id);
-        return { content: `User sent a voice message at URL: ${filelink} - Call transcribe_audio with audio_url to transcribe it before answering.` };
+        return { content: `User sent a voice message at URL: ${fileRef(msg.voice.file_id)} - Call transcribe_audio with audio_url to transcribe it before answering.` };
     }
 
     if (msg.video) {
         if (msg.video.file_size > 5 * 1024 * 1024) {
             return { reject: "This video is larger than 5MB. Please reduce the video size and send it again." };
         }
-        const filelink = await bot.getFileLink(msg.video.file_id);
         const captiontext = msg.caption ? `Caption : ${msg.caption}` : "";
-        return { content: `User sent a video at URL: ${filelink} ${captiontext} - Call transcribe_video with video_url to transcribe it before answering.` };
+        return { content: `User sent a video at URL: ${fileRef(msg.video.file_id)} ${captiontext} - Call transcribe_video with video_url to transcribe it before answering.` };
     }
 
     if (msg.document) return describeDocument(bot, msg, options, preAnalyze);
 
     if (msg.audio) {
-        const filelink = await bot.getFileLink(msg.audio.file_id);
-        return { content: `User sent an audio file at URL: ${filelink} Title: ${msg.audio.title || ""} Performer: ${msg.audio.performer || ""} - Call transcribe_audio with audio_url to transcribe it before answering.` };
+        return { content: `User sent an audio file at URL: ${fileRef(msg.audio.file_id)} Title: ${msg.audio.title || ""} Performer: ${msg.audio.performer || ""} - Call transcribe_audio with audio_url to transcribe it before answering.` };
     }
 
     return null;

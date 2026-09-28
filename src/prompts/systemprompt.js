@@ -134,6 +134,7 @@ Telegram Formatting Rules:
 
 Input Interpretation:
   - "text:": normal user message. If it contains an image/audio/video URL, call the matching tool when you need to analyze it.
+  - Uploaded files are given as tg-file:... references instead of web links. Pass them to tools exactly as written, and never show them to the user.
   - "User sent an image at URL:": user uploaded an image — call analyze_image with that image_url to see it before answering.
   - "User sent a voice message at URL:" / "User sent an audio file at URL:": user uploaded audio — call transcribe_audio with audio_url to get the spoken text before answering.
   - "User sent a video at URL:": user uploaded a video — call transcribe_video with video_url to get transcript with timestamps before answering.

@@ -5,6 +5,21 @@ import PDFParser from "pdf2json";
 
 export const IMAGE_COOLDOWN_MS = 1 * 60 * 1000;
 
+const FILE_REF_PREFIX = "tg-file:";
+
+export function fileRef(fileId) {
+    return `${FILE_REF_PREFIX}${fileId}`;
+}
+
+export function isFileRef(value) {
+    return String(value || "").trim().startsWith(FILE_REF_PREFIX);
+}
+
+export async function resolveFileUrl(bot, value) {
+    const text = String(value || "").trim();
+    return isFileRef(text) ? bot.getFileLink(text.slice(FILE_REF_PREFIX.length)) : text;
+}
+
 export async function withPhotoAction(bot, chatid, options, task) {
     try { await bot.sendChatAction(chatid, "upload_photo", options); } catch {}
     const interval = setInterval(() => { bot.sendChatAction(chatid, "upload_photo", options).catch(() => {}); }, 4000);

@@ -14,11 +14,19 @@ import fs from "fs";
 import PDFDocument from "pdfkit";
 import streamBuffers from "stream-buffers";
 import { renderMarkdownToPdf, stripInlineMarkdown } from "../utils/markdownpdf.js";
-import { withPhotoAction, withTypingAction, withChatAction, checkImageCooldown, sendBotMessage } from "../utils/utils.js";
+import { withPhotoAction, withTypingAction, withChatAction, checkImageCooldown, sendBotMessage, resolveFileUrl, isFileRef } from "../utils/utils.js";
+import { toFile } from "groq-sdk";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
 const MAX_TOOL_DEPTH = 5;
+
+async function downloadAsFile(url, baseName) {
+    const res = await fetch(url, { redirect: "error" });
+    if (!res.ok) throw new Error(`Failed to download file: ${res.status}`);
+    const ext = url.split("?")[0].split(".").pop().toLowerCase();
+    return toFile(Buffer.from(await res.arrayBuffer()), `${baseName}.${ext === "oga" ? "ogg" : ext}`);
+}
 
 
 
@@ -130,7 +138,11 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
         }
 
         try {
-            const image = await withPhotoAction(bot, chatid, options, () => editImage(args.image_url, args.prompt, { timeoutMs: 60000 }));
+            const image = await withPhotoAction(bot, chatid, options, async () => {
+                const imageUrl = await resolveFileUrl(bot, args.image_url);
+                await assertPublicHttpsUrl(imageUrl);
+                return editImage(imageUrl, args.prompt, { timeoutMs: 60000 });
+            });
 
             await userquery.findOneAndUpdate({ userid: chatid }, { lastImageGeneratedAt: new Date() });
 
@@ -348,7 +360,7 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
     if (toolCall.function.name === "analyze_image") {
         let results;
         try {
-            results = await withTypingAction(bot, chatid, options, () => analyzeImage(systempromptforimage, args.image_url, args.prompt || ""));
+            results = await withTypingAction(bot, chatid, options, async () => analyzeImage(systempromptforimage, await resolveFileUrl(bot, args.image_url), args.prompt || ""));
         } catch (err) {
             console.log("Analyze image failed:", err.message);
             await sendBotMessage(bot, chatid, "Something went wrong. Please try again.", options);
@@ -366,10 +378,14 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
         let results;
         try {
             results = await withTypingAction(bot, chatid, options, async () => {
-                await assertPublicHttpsUrl(args.audio_url);
+                const audioUrl = await resolveFileUrl(bot, args.audio_url);
+                await assertPublicHttpsUrl(audioUrl);
+                const source = isFileRef(args.audio_url)
+                    ? { file: await downloadAsFile(audioUrl, "audio") }
+                    : { url: audioUrl };
                 const tr = await groq.audio.transcriptions.create({
                     model: transcriptmodel,
-                    url: args.audio_url,
+                    ...source,
                     prompt: args.prompt || undefined,
                     language: "en"
                 });
@@ -392,12 +408,13 @@ export async function handleAIResponse(bot, chatid, options, response, messages,
         let results;
         try {
             results = await withTypingAction(bot, chatid, options, async () => {
-                await assertPublicHttpsUrl(args.video_url);
+                const videoUrl = await resolveFileUrl(bot, args.video_url);
+                await assertPublicHttpsUrl(videoUrl);
                 const tmpVideoPath = path.join(os.tmpdir(), `${Date.now()}-toolvideo.mp4`);
                 const tmpAudioPath = path.join(os.tmpdir(), `${Date.now()}-toolvideo.mp3`);
                 await new Promise((resolve, reject) => {
                     const file = fs.createWriteStream(tmpVideoPath);
-                    const req = https.get(args.video_url, (res) => {
+                    const req = https.get(videoUrl, (res) => {
                         if (res.statusCode >= 300 && res.statusCode < 400) {
                             req.destroy();
                             reject(new Error("redirects not allowed"));
